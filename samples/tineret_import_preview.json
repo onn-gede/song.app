@@ -1,0 +1,824 @@
+[
+  {
+    "source_file": "001 Am fost nascut in pacat.pptx",
+    "song_number": "001",
+    "title": "Am fost născut în păcat",
+    "default_key": null,
+    "lyrics_text": "Am fost născut în păcat\nDar Isus pentru mine s-a dat,\nViaţa mea de-acum e-n mâna Sa.\nŞi până îl voi vedea,\nAm nevoie de lumina Sa\nCăci ce-a făcut nicicând nu voi uita.\n\nCondu-mă, Doamne, ziua,\nCondu-mă, e ruga mea,\nPrin toate necazurile acestei lumi.\nCondu-mă, Doamne, noaptea,\nCondu-mă, prin lumina Ta,\nCăci numai Tu poţi conduce viaţa mea.\n\nDumnezeu ne iubeşte mereu,\nPentru noi a dat singurul Fiu,\nCa noi să fim salvaţi azi de păcat.\nDeci vino cu inima ta,\nDe păcat El o va spăla\nŞi de-azi vei fi şi tu-n lumina Sa\n\nCondu-mă, Doamne, ziua,\nCondu-mă, e ruga mea,\nPrin toate necazurile acestei lumi.\nCondu-mă, Doamne, noaptea,\nCondu-mă, prin lumina Ta,\nCăci numai Tu poţi conduce viaţa mea.",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Am fost născut în păcat\nDar Isus pentru mine s-a dat,\nViaţa mea de-acum e-n mâna Sa.\nŞi până îl voi vedea,\nAm nevoie de lumina Sa\nCăci ce-a făcut nicicând nu voi uita."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Condu-mă, Doamne, ziua,\nCondu-mă, e ruga mea,\nPrin toate necazurile acestei lumi.\nCondu-mă, Doamne, noaptea,\nCondu-mă, prin lumina Ta,\nCăci numai Tu poţi conduce viaţa mea."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Dumnezeu ne iubeşte mereu,\nPentru noi a dat singurul Fiu,\nCa noi să fim salvaţi azi de păcat.\nDeci vino cu inima ta,\nDe păcat El o va spăla\nŞi de-azi vei fi şi tu-n lumina Sa"
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Condu-mă, Doamne, ziua,\nCondu-mă, e ruga mea,\nPrin toate necazurile acestei lumi.\nCondu-mă, Doamne, noaptea,\nCondu-mă, prin lumina Ta,\nCăci numai Tu poţi conduce viaţa mea."
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "001b.Doamne, binecuvanta.pptx",
+    "song_number": "001b",
+    "title": "Doamne, binecuvântă!",
+    "default_key": null,
+    "lyrics_text": "Doamne, binecuvântă!\nDoamne, binecuvântă!\nDoamne, binecuvântă\nAcest micuţ copilaş!\n\nŞi mâna Ta ocrotitoare\nSă fie-asupra lui mereu,\n/: Dă-i sănătate şi fericire\nŞi fă-l s-ajungă copilul Tău.:/\n\nCreşte-l clipă de clipă,\nCreşte-l prin Duhul Tău Sfânt,\nPoartă-l pe-a Ta aripă\nCât va trăi pe pământ.\n\nŞi mâna Ta ocrotitoare\nSă fie-asupra lui mereu,\n/: Dă-i sănătate şi fericire\nŞi fă-l s-ajungă copilul Tău.:/\n\nDoamne, revarsă-Ţi mila\nPeste odrasla-aceasta;\nDă binecuvântare\nŞi ţine-o-n dragostea Ta.\n\nŞi mâna Ta ocrotitoare\nSă fie-asupra lui mereu,\n/: Dă-i sănătate şi fericire\nŞi fă-l s-ajungă copilul Tău.:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Doamne, binecuvântă!\nDoamne, binecuvântă!\nDoamne, binecuvântă\nAcest micuţ copilaş!"
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Şi mâna Ta ocrotitoare\nSă fie-asupra lui mereu,\n/: Dă-i sănătate şi fericire\nŞi fă-l s-ajungă copilul Tău.:/"
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Creşte-l clipă de clipă,\nCreşte-l prin Duhul Tău Sfânt,\nPoartă-l pe-a Ta aripă\nCât va trăi pe pământ."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Şi mâna Ta ocrotitoare\nSă fie-asupra lui mereu,\n/: Dă-i sănătate şi fericire\nŞi fă-l s-ajungă copilul Tău.:/"
+      },
+      {
+        "position": 5,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "Doamne, revarsă-Ţi mila\nPeste odrasla-aceasta;\nDă binecuvântare\nŞi ţine-o-n dragostea Ta."
+      },
+      {
+        "position": 6,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Şi mâna Ta ocrotitoare\nSă fie-asupra lui mereu,\n/: Dă-i sănătate şi fericire\nŞi fă-l s-ajungă copilul Tău.:/"
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "002 Cand furtuni in viata-mi vin.pptx",
+    "song_number": "002",
+    "title": "Când furtuni în viaţă-mi vin",
+    "default_key": null,
+    "lyrics_text": "Când furtuni în viaţă-mi vin\nPe acest pământ străin,\nDoamne bun, întinde-Ţi mâna-asupra mea!\nPe genunchi, în rugă-ţi cer\nSă-mi ajuţi Tu către cer,\nDoamne bun, întinde-Ţi mâna-asupra mea!\n\nCând drumul vieţii e greu\nIar crucea îmi pare grea,\nAtunci cu gândul la Calvar\nEu las povara mea.\nDiavolul în orice zi\nDe necaz nu m-ar scuti,\nDoamne bun, întinde-Ţi mâna-asupra mea!\n\nCând duşmani în cale-mi stau\nPe Isus drept scut îl iau,\nDoamne bun, întinde-Ţi mâna-asupra mea!\nDoamne, Ţie mă predau\nŞi-a mea inimă Ţi-o dau,\nDoamne bun, întinde-Ţi mâna-asupra mea!\n\nCând drumul vieţii e greu\nIar crucea îmi pare grea,\nAtunci cu gândul la Calvar\nEu las povara mea.\nDiavolul în orice zi\nDe necaz nu m-ar scuti,\n/:Doamne bun, întinde-Ţi mâna-asupra mea!:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Când furtuni în viaţă-mi vin\nPe acest pământ străin,\nDoamne bun, întinde-Ţi mâna-asupra mea!\nPe genunchi, în rugă-ţi cer\nSă-mi ajuţi Tu către cer,\nDoamne bun, întinde-Ţi mâna-asupra mea!"
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Când drumul vieţii e greu\nIar crucea îmi pare grea,\nAtunci cu gândul la Calvar\nEu las povara mea.\nDiavolul în orice zi\nDe necaz nu m-ar scuti,\nDoamne bun, întinde-Ţi mâna-asupra mea!"
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Când duşmani în cale-mi stau\nPe Isus drept scut îl iau,\nDoamne bun, întinde-Ţi mâna-asupra mea!\nDoamne, Ţie mă predau\nŞi-a mea inimă Ţi-o dau,\nDoamne bun, întinde-Ţi mâna-asupra mea!"
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Când drumul vieţii e greu\nIar crucea îmi pare grea,\nAtunci cu gândul la Calvar\nEu las povara mea.\nDiavolul în orice zi\nDe necaz nu m-ar scuti,\n/:Doamne bun, întinde-Ţi mâna-asupra mea!:/"
+      }
+    ],
+    "parser_notes": ""
+  },
+  {
+    "source_file": "003 El este domn si domneste in ceruri.pptx",
+    "song_number": "003",
+    "title": "El este domn si domneste in ceruri",
+    "default_key": null,
+    "lyrics_text": "1. EI este Domn şi domneşte în ceruri 003\n/: EI este Domn şi domneşte în ceruri\nEl este Domn.\nÎntunericului i-a zis: „Să fii Lumină!”\nEl este Domn.:/\n\nR. EI este Domn şi domneşte în ceruri 003\nArată-Ţi puterea, o Domnul meu!\nArată-Ţi puterea, o Domnul meu!\nO, Domnul meu!\n\n2. EI este Domn şi domneşte în ceruri 003\nCine-i ca El? N-are sfârşit la zile,\nEl este Domn.\nPrin a Sa-ndurare avem mântuire,\nEl este Domn.\n\nR. EI este Domn şi domneşte în ceruri 003\nArată-Ţi puterea, o Domnul meu!\nArată-Ţi puterea, o Domnul meu!\nO, Domnul meu!\n\n3. EI este Domn şi domneşte în ceruri 003\nEl vine-n putere când chemi\nal Său Nume,\nE Dumnezeu.\nPe cei păcătoşi înainte-I aducem,\nE Dumnezeu.\n\nR. EI este Domn şi domneşte în ceruri 003\n/:Arată-Ţi puterea, o Domnul meu!\nArată-Ţi puterea, o Domnul meu!:/\nO, Domnul meu!",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "1. EI este Domn şi domneşte în ceruri 003\n/: EI este Domn şi domneşte în ceruri\nEl este Domn.\nÎntunericului i-a zis: „Să fii Lumină!”\nEl este Domn.:/"
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. EI este Domn şi domneşte în ceruri 003\nArată-Ţi puterea, o Domnul meu!\nArată-Ţi puterea, o Domnul meu!\nO, Domnul meu!"
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "2. EI este Domn şi domneşte în ceruri 003\nCine-i ca El? N-are sfârşit la zile,\nEl este Domn.\nPrin a Sa-ndurare avem mântuire,\nEl este Domn."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. EI este Domn şi domneşte în ceruri 003\nArată-Ţi puterea, o Domnul meu!\nArată-Ţi puterea, o Domnul meu!\nO, Domnul meu!"
+      },
+      {
+        "position": 5,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "3. EI este Domn şi domneşte în ceruri 003\nEl vine-n putere când chemi\nal Său Nume,\nE Dumnezeu.\nPe cei păcătoşi înainte-I aducem,\nE Dumnezeu."
+      },
+      {
+        "position": 6,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. EI este Domn şi domneşte în ceruri 003\n/:Arată-Ţi puterea, o Domnul meu!\nArată-Ţi puterea, o Domnul meu!:/\nO, Domnul meu!"
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "004 Iata-ma naintea Ta.pptx",
+    "song_number": "004",
+    "title": "Iata-ma naintea Ta",
+    "default_key": null,
+    "lyrics_text": "R. lată-mă 'naintea Ta 004\n/: lată-mă 'naintea Ta\nMâini spre cer ridicând curate,\nlată-mă dându-Ţi slavă\nPentru lucrările-Ţi toate.:/\n\n1. lată-mă 'naintea Ta 004\nN-am crezut vreodată\nSă fie-aşa frumos.\nN-am crezut vreodată\nCă-Ţi pot fi de folos.\nDar m-ai găsit, Te-ai dat pentru al meu păcat\nŞi m-ai primit cu dragoste ca pe un fiu iertat.\n\nR. lată-mă 'naintea Ta 004\nlată-mă 'naintea Ta\nMâini spre cer ridicând curate,\nlată-mă dându-Ţi slavă\nPentru lucrările-Ţi toate.\n\n2. lată-mă 'naintea Ta 004\nN-am ştiut vreodată\nSă-ţi spun tot ce simt\nŞi nu ştiu\nCum să-Ţi mulţumesc.\nDar m-ai găsit, Te-ai dat pentru al meu păcat\nŞi m-ai primit cu dragoste ca pe un fiu iertat.\n\nR. lată-mă 'naintea Ta 004\n/: lată-mă 'naintea Ta\nMâini spre cer ridicând curate,\nlată-mă dându-Ţi slavă\nPentru lucrările-Ţi toate.:/\nlată-mă 'naintea Ta...",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. lată-mă 'naintea Ta 004\n/: lată-mă 'naintea Ta\nMâini spre cer ridicând curate,\nlată-mă dându-Ţi slavă\nPentru lucrările-Ţi toate.:/"
+      },
+      {
+        "position": 2,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "1. lată-mă 'naintea Ta 004\nN-am crezut vreodată\nSă fie-aşa frumos.\nN-am crezut vreodată\nCă-Ţi pot fi de folos.\nDar m-ai găsit, Te-ai dat pentru al meu păcat\nŞi m-ai primit cu dragoste ca pe un fiu iertat."
+      },
+      {
+        "position": 3,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. lată-mă 'naintea Ta 004\nlată-mă 'naintea Ta\nMâini spre cer ridicând curate,\nlată-mă dându-Ţi slavă\nPentru lucrările-Ţi toate."
+      },
+      {
+        "position": 4,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "2. lată-mă 'naintea Ta 004\nN-am ştiut vreodată\nSă-ţi spun tot ce simt\nŞi nu ştiu\nCum să-Ţi mulţumesc.\nDar m-ai găsit, Te-ai dat pentru al meu păcat\nŞi m-ai primit cu dragoste ca pe un fiu iertat."
+      },
+      {
+        "position": 5,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. lată-mă 'naintea Ta 004\n/: lată-mă 'naintea Ta\nMâini spre cer ridicând curate,\nlată-mă dându-Ţi slavă\nPentru lucrările-Ţi toate.:/\nlată-mă 'naintea Ta..."
+      }
+    ],
+    "parser_notes": ""
+  },
+  {
+    "source_file": "005 Al meu Domn, Parinte.pptx",
+    "song_number": "005",
+    "title": "Al meu Domn, Părinte",
+    "default_key": null,
+    "lyrics_text": "Al meu Domn, Părinte, nimeni ca Tine nu e,\nCât voi trăi Îţi voi slăvi\nLucrarea mâinilor Tale.\nRefugiu, scăpare în braţul Tău eu găsesc,\nPrin gura mea, cu tot ce am,\nTotdeauna laudă-Ţi voi da.\n\nStrig către Tine, o, Doamne, Te caut,\nTu eşti împăratul, puterea Ţi-o laud,\nMunţii se pleacă şi mările tac\nCând rostim Numele Tău.\nTot ce-ai creat în splendoare azi stă,\nEu veşnic mă-nchin şi îţi dau laudă,\nPrin Tine exist şi prin harul Tău sfânt, EU SUNT.\n\nAl meu Domn, Părinte, nimeni ca Tine nu e,\nCât voi trăi Îţi voi slăvi lucrarea mâinilor Tale.\nRefugiu, scăpare în braţul Tău eu găsesc,\nPrin gura mea, cu tot ce am,\nTotdeauna laudă-Ţi voi da.\n\n/:Strig către Tine, o, Doamne, Te caut,\nTu eşti împăratul, puterea Ţi-o laud,\nMunţii se pleacă şi mările tac\nCând rostim Numele Tău.\nTot ce-ai creat în splendoare azi stă,\nEu veşnic mă-nchin şi îţi dau laudă,\n/:Prin Tine exist şi prin harul Tău sfânt, EU SUNT.:/ X3",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Al meu Domn, Părinte, nimeni ca Tine nu e,\nCât voi trăi Îţi voi slăvi\nLucrarea mâinilor Tale.\nRefugiu, scăpare în braţul Tău eu găsesc,\nPrin gura mea, cu tot ce am,\nTotdeauna laudă-Ţi voi da."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Strig către Tine, o, Doamne, Te caut,\nTu eşti împăratul, puterea Ţi-o laud,\nMunţii se pleacă şi mările tac\nCând rostim Numele Tău.\nTot ce-ai creat în splendoare azi stă,\nEu veşnic mă-nchin şi îţi dau laudă,\nPrin Tine exist şi prin harul Tău sfânt, EU SUNT."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Al meu Domn, Părinte, nimeni ca Tine nu e,\nCât voi trăi Îţi voi slăvi lucrarea mâinilor Tale.\nRefugiu, scăpare în braţul Tău eu găsesc,\nPrin gura mea, cu tot ce am,\nTotdeauna laudă-Ţi voi da."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/:Strig către Tine, o, Doamne, Te caut,\nTu eşti împăratul, puterea Ţi-o laud,\nMunţii se pleacă şi mările tac\nCând rostim Numele Tău.\nTot ce-ai creat în splendoare azi stă,\nEu veşnic mă-nchin şi îţi dau laudă,\n/:Prin Tine exist şi prin harul Tău sfânt, EU SUNT.:/ X3"
+      }
+    ],
+    "parser_notes": ""
+  },
+  {
+    "source_file": "006 Doamne, azi eu vin.pptx",
+    "song_number": "006",
+    "title": "Doamne, azi eu vin",
+    "default_key": null,
+    "lyrics_text": "Doamne, azi eu vin\nÎn faţa Ta să mă închin\nŞi să fiu umplut de har divin.\nPrin iubirea Ta aş vrea mai mult\nSă îmi cunosc slăbiciunile\nŞi să cresc în iubirea Ta.\n\nCheamă-mă şi voi veni la Tine,\nCând sunt slab Tu mă întăreşti.\nCa vulturul spre cer mă voi înălţa\nŞi veşnic voi trăi, mereu voi locui\nPrin iubirea Ta.\n\nDoamne, vreau să fiu\nÎn stare să-nţeleg cum eşti\nŞi care-i calea Ta, să merg pe ea.\nŞi din pacea Ta, în suflet să-mi reverşi\nUn strop\nCa cei din jur să bea şi să stea\nÎn iubirea Ta.\n\nCheamă-mă şi voi veni la Tine,\nCând sunt slab Tu mă întăreşti.\nCa vulturul spre cer mă voi înălţa\nŞi veşnic voi trăi, mereu voi locui\nPrin iubirea Ta.\n\nCheamă-mă şi voi veni la Tine,\nCând sunt slab Tu mă întăreşti.\nCa vulturul spre cer mă voi înălţa\n/: Şi veşnic voi trăi, mereu voi locui\nPrin iubirea Ta.:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Doamne, azi eu vin\nÎn faţa Ta să mă închin\nŞi să fiu umplut de har divin.\nPrin iubirea Ta aş vrea mai mult\nSă îmi cunosc slăbiciunile\nŞi să cresc în iubirea Ta."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Cheamă-mă şi voi veni la Tine,\nCând sunt slab Tu mă întăreşti.\nCa vulturul spre cer mă voi înălţa\nŞi veşnic voi trăi, mereu voi locui\nPrin iubirea Ta."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Doamne, vreau să fiu\nÎn stare să-nţeleg cum eşti\nŞi care-i calea Ta, să merg pe ea.\nŞi din pacea Ta, în suflet să-mi reverşi\nUn strop\nCa cei din jur să bea şi să stea\nÎn iubirea Ta."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Cheamă-mă şi voi veni la Tine,\nCând sunt slab Tu mă întăreşti.\nCa vulturul spre cer mă voi înălţa\nŞi veşnic voi trăi, mereu voi locui\nPrin iubirea Ta."
+      },
+      {
+        "position": 5,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Cheamă-mă şi voi veni la Tine,\nCând sunt slab Tu mă întăreşti.\nCa vulturul spre cer mă voi înălţa\n/: Şi veşnic voi trăi, mereu voi locui\nPrin iubirea Ta.:/"
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "007 O lume intreaga sta in nepasare.pptx",
+    "song_number": "007",
+    "title": "O lume întreagă stă în nepăsare",
+    "default_key": "D",
+    "lyrics_text": "O lume întreagă stă în nepăsare\nŞi caută adăpost când vine o-ncercare,\nDar eu nu mă tem, dar eu nu mă tem.\nÎn ceasul cel bun e stăpână pe toate,\nCând Domnul îi vorbeşte - i-e frică de moarte,\nDar eu nu mă tem, dar eu nu mă tem.\n\nDar eu nu mă tem,\nChiar dacă cei din jur mă părăsesc,\nDar eu nu mă tem orice-ar veni.\nViaţa mea\nE-n mâna Celui ce-a murit pe lemn,\nCu mine Îl chem şi eu nu mă tem.\n\nAdes’ vine-ncercarea năvalnic ca marea,\nŞi norii negri grabnic întunecă zarea.\nDar eu nu mă tem, dar eu nu mă tem.\nSe spulberă gândul şi orice speranţă,\nŞi nici măcar o clipă nu ai siguranţă,\nDar eu nu mă tem, dar eu nu mă tem.\n\nDar eu nu mă tem,\nChiar dacă cei din jur mă părăsesc,\nDar eu nu mă tem orice-ar veni.\nViaţa mea\nE-n mâna Celui ce-a murit pe lemn,\nCu mine Îl chem şi eu nu mă tem.\n\nChiar oamenii cei răi mă-nconjoară cu ură,\nDin cupa lor să-mi dea să beau o picătură,\nDar eu nu mă tem, dar eu nu mă tem.\nCu Domnul meu eu trec biruitor prin toate,\nDin apă şi din foc să mă scape El poate,\nDar eu nu mă tem, dar eu nu mă tem.\n\n/:Dar eu nu mă tem,\nChiar dacă cei din jur mă părăsesc,\nDar eu nu mă tem orice-ar veni.\nViaţa mea\nE-n mâna Celui ce-a murit pe lemn,\nCu mine Îl chem şi eu nu mă tem.:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "O lume întreagă stă în nepăsare\nŞi caută adăpost când vine o-ncercare,\nDar eu nu mă tem, dar eu nu mă tem.\nÎn ceasul cel bun e stăpână pe toate,\nCând Domnul îi vorbeşte - i-e frică de moarte,\nDar eu nu mă tem, dar eu nu mă tem."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Dar eu nu mă tem,\nChiar dacă cei din jur mă părăsesc,\nDar eu nu mă tem orice-ar veni.\nViaţa mea\nE-n mâna Celui ce-a murit pe lemn,\nCu mine Îl chem şi eu nu mă tem."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Ades’ vine-ncercarea năvalnic ca marea,\nŞi norii negri grabnic întunecă zarea.\nDar eu nu mă tem, dar eu nu mă tem.\nSe spulberă gândul şi orice speranţă,\nŞi nici măcar o clipă nu ai siguranţă,\nDar eu nu mă tem, dar eu nu mă tem."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Dar eu nu mă tem,\nChiar dacă cei din jur mă părăsesc,\nDar eu nu mă tem orice-ar veni.\nViaţa mea\nE-n mâna Celui ce-a murit pe lemn,\nCu mine Îl chem şi eu nu mă tem."
+      },
+      {
+        "position": 5,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "Chiar oamenii cei răi mă-nconjoară cu ură,\nDin cupa lor să-mi dea să beau o picătură,\nDar eu nu mă tem, dar eu nu mă tem.\nCu Domnul meu eu trec biruitor prin toate,\nDin apă şi din foc să mă scape El poate,\nDar eu nu mă tem, dar eu nu mă tem."
+      },
+      {
+        "position": 6,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/:Dar eu nu mă tem,\nChiar dacă cei din jur mă părăsesc,\nDar eu nu mă tem orice-ar veni.\nViaţa mea\nE-n mâna Celui ce-a murit pe lemn,\nCu mine Îl chem şi eu nu mă tem.:/"
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "008 Suntem prin Domnul Isus.pptx",
+    "song_number": "008",
+    "title": "Suntem prin Domnul Isus",
+    "default_key": "F",
+    "lyrics_text": "Suntem prin Domnul Isus popor de biruinţă,\nNe-a dat iertarea în sângele Lui,\nCântăm cu bucurie şi cu recunoştinţă,\nSuntem pe veci copii ai Mielului.\nSuntem chiar în ispite popor de biruinţă,\nDar chiar puţini noi unitari vom fi\nŞi nu pe altă cale ci numai prin credinţă\nPutea-vom pân’ la capăt birui.\n\n/: Noi ştim că Domnul Isus vine Să ne ia la Sine,\nŞtim că slava ne-o va da,\nA Sa împărăţie, cununa vieţii vie,\nCredinţa şi dragostea Sa.\nÎn cer nu va mai fi tristeţe, lacrimi, bătrâneţe,\nCu Isus când noi vom fi,\nVa fi doar veşnicia, pacea, bucuria\nÎn veci vor dăinui.:/\n\nSuntem prin Domnul Isus popor de biruinţă,\nNe-a dat iertarea în sângele Lui,\nCântăm cu bucurie şi cu recunoştinţă,\nSuntem pe veci copii ai Mielului.\nSuntem chiar în ispite popor de biruinţă,\nDar chiar puţini noi unitari vom fi\nŞi nu pe altă cale ci numai prin credinţă\nPutea-vom pân’ la capăt birui.\n\n/: Noi ştim că Domnul Isus vine Să ne ia la Sine,\nŞtim că slava ne-o va da,\nA Sa împărăţie, cununa vieţii vie,\nCredinţa şi dragostea Sa.\nÎn cer nu va mai fi tristeţe, lacrimi, bătrâneţe,\nCu Isus când noi vom fi,\nVa fi doar veşnicia, pacea, bucuria\nÎn veci vor dăinui.:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Suntem prin Domnul Isus popor de biruinţă,\nNe-a dat iertarea în sângele Lui,\nCântăm cu bucurie şi cu recunoştinţă,\nSuntem pe veci copii ai Mielului.\nSuntem chiar în ispite popor de biruinţă,\nDar chiar puţini noi unitari vom fi\nŞi nu pe altă cale ci numai prin credinţă\nPutea-vom pân’ la capăt birui."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/: Noi ştim că Domnul Isus vine Să ne ia la Sine,\nŞtim că slava ne-o va da,\nA Sa împărăţie, cununa vieţii vie,\nCredinţa şi dragostea Sa.\nÎn cer nu va mai fi tristeţe, lacrimi, bătrâneţe,\nCu Isus când noi vom fi,\nVa fi doar veşnicia, pacea, bucuria\nÎn veci vor dăinui.:/"
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Suntem prin Domnul Isus popor de biruinţă,\nNe-a dat iertarea în sângele Lui,\nCântăm cu bucurie şi cu recunoştinţă,\nSuntem pe veci copii ai Mielului.\nSuntem chiar în ispite popor de biruinţă,\nDar chiar puţini noi unitari vom fi\nŞi nu pe altă cale ci numai prin credinţă\nPutea-vom pân’ la capăt birui."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/: Noi ştim că Domnul Isus vine Să ne ia la Sine,\nŞtim că slava ne-o va da,\nA Sa împărăţie, cununa vieţii vie,\nCredinţa şi dragostea Sa.\nÎn cer nu va mai fi tristeţe, lacrimi, bătrâneţe,\nCu Isus când noi vom fi,\nVa fi doar veşnicia, pacea, bucuria\nÎn veci vor dăinui.:/"
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "009 Ochii Domnului plini de dragoste privesc.pptx",
+    "song_number": "009",
+    "title": "Ochii Domnului, plini de dragoste privesc",
+    "default_key": "G",
+    "lyrics_text": "Ochii Domnului, plini de dragoste privesc,\nInimile tuturor care nu-L cunosc.\nMâna Domnului întinsă e şi azi spre noi,\nÎntinde mâna ta şi tu, nu mai privi 'napoi.\nÎnapoi de mergi nu mai ai ce întâlni,\nDoar viaţa plină de necaz.\nÎntoarce-te la Domnul azi!\n\nŞopteşte: „Iartă-mă, ia vina mea!”,\nIsus e lângă tine, vrea să intre-n viaţa ta.\nŞopteşte: „Iartă-mă, ia vina mea!”,\nIsus e lângă tine, vrea să intre-n viaţa ta.\n\nOchii Domnului, plini de dragoste privesc,\nInimile tuturor care nu-L cunosc.\nMâna Domnului întinsă e şi azi spre noi,\nÎntinde mâna ta şi tu, nu mai privi 'napoi.\nÎnapoi de mergi nu mai ai ce întâlni,\nDoar viaţa plină de necaz.\nÎntoarce-te la Domnul azi!\n\n/:Şopteşte: „Iartă-mă, ia vina mea!”,\nIsus e lângă tine, vrea să intre-n viaţa ta.\nŞopteşte: „Iartă-mă, ia vina mea!”,\nIsus e lângă tine, vrea să intre-n viaţa ta.:/ X2",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Ochii Domnului, plini de dragoste privesc,\nInimile tuturor care nu-L cunosc.\nMâna Domnului întinsă e şi azi spre noi,\nÎntinde mâna ta şi tu, nu mai privi 'napoi.\nÎnapoi de mergi nu mai ai ce întâlni,\nDoar viaţa plină de necaz.\nÎntoarce-te la Domnul azi!"
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Şopteşte: „Iartă-mă, ia vina mea!”,\nIsus e lângă tine, vrea să intre-n viaţa ta.\nŞopteşte: „Iartă-mă, ia vina mea!”,\nIsus e lângă tine, vrea să intre-n viaţa ta."
+      },
+      {
+        "position": 3,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Ochii Domnului, plini de dragoste privesc,\nInimile tuturor care nu-L cunosc.\nMâna Domnului întinsă e şi azi spre noi,\nÎntinde mâna ta şi tu, nu mai privi 'napoi.\nÎnapoi de mergi nu mai ai ce întâlni,\nDoar viaţa plină de necaz.\nÎntoarce-te la Domnul azi!"
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/:Şopteşte: „Iartă-mă, ia vina mea!”,\nIsus e lângă tine, vrea să intre-n viaţa ta.\nŞopteşte: „Iartă-mă, ia vina mea!”,\nIsus e lângă tine, vrea să intre-n viaţa ta.:/ X2"
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "010 In Casa Ta, Doamne, aud Cuvantul Sfant.pptx",
+    "song_number": "010",
+    "title": "În casa Ta, Doamne, aud Cuvântul Sfânt",
+    "default_key": "G",
+    "lyrics_text": "În casa Ta, Doamne, aud Cuvântul Sfânt\nŞi nu-i loc mai ales niciunde pe pământ.\nCuvântul Tău e plin de-nvăţături şi har\nCăci El e DA, AMIN! şi nu-i spus în zadar.\n\nO zi cu Tine, dă bucurii depline\nŞi răsplătiri divine,\nCând simţi al Duhului Sfânt foc.\nO zi cu Tine, Doamne, eu ştiu prea bine,\nMai mult e pentru mine decât o mie în alt loc.\n\nÎn casa Ta, Doamne, aud cântări şi vers\nCum nu mai pot s-aud niciunde-n univers,\nŞi sufletu-mi nu vrea din alt izvor să bea;\nDecât din cel divin, izvor din casa Ta.\n\nO zi cu Tine, dă bucurii depline\nŞi răsplătiri divine,\nCând simţi al Duhului Sfânt foc.\nO zi cu Tine, Doamne, eu ştiu prea bine,\nMai mult e pentru mine decât o mie în alt loc.\n\nÎn casa Ta, Doamne, genunchiul când mi-l plec,\nClipe de părtăşii cu Tine eu petrec,\nŞi simt cum torni din plin în vasul însetat,\nLa glasul Tău, „Amin!” răspund neîncetat.\n\nO zi cu Tine, dă bucurii depline\nŞi răsplătiri divine,\nCând simţi al Duhului Sfânt foc.\nO zi cu Tine, Doamne, eu ştiu prea bine,\nMai mult e pentru mine decât o mie în alt loc.",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "În casa Ta, Doamne, aud Cuvântul Sfânt\nŞi nu-i loc mai ales niciunde pe pământ.\nCuvântul Tău e plin de-nvăţături şi har\nCăci El e DA, AMIN! şi nu-i spus în zadar."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "O zi cu Tine, dă bucurii depline\nŞi răsplătiri divine,\nCând simţi al Duhului Sfânt foc.\nO zi cu Tine, Doamne, eu ştiu prea bine,\nMai mult e pentru mine decât o mie în alt loc."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "În casa Ta, Doamne, aud cântări şi vers\nCum nu mai pot s-aud niciunde-n univers,\nŞi sufletu-mi nu vrea din alt izvor să bea;\nDecât din cel divin, izvor din casa Ta."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "O zi cu Tine, dă bucurii depline\nŞi răsplătiri divine,\nCând simţi al Duhului Sfânt foc.\nO zi cu Tine, Doamne, eu ştiu prea bine,\nMai mult e pentru mine decât o mie în alt loc."
+      },
+      {
+        "position": 5,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "În casa Ta, Doamne, genunchiul când mi-l plec,\nClipe de părtăşii cu Tine eu petrec,\nŞi simt cum torni din plin în vasul însetat,\nLa glasul Tău, „Amin!” răspund neîncetat."
+      },
+      {
+        "position": 6,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "O zi cu Tine, dă bucurii depline\nŞi răsplătiri divine,\nCând simţi al Duhului Sfânt foc.\nO zi cu Tine, Doamne, eu ştiu prea bine,\nMai mult e pentru mine decât o mie în alt loc."
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "011 Ne despartim, la drum pornim.pptx",
+    "song_number": "011",
+    "title": "Ne despărţim, la drum pornim",
+    "default_key": "E",
+    "lyrics_text": "Ne despărţim, la drum pornim\n|: Frumoase clipe s-au încheiat\nCăci timpul trece neîncetat.\nFiţi bucuroşi, fiţi sănătoşi!:|\n\nPace şi har e-al nostru dar\n|: Suntem în mâna Domnului\nNe poartă El după Voia Lui.\nFiţi bucuroşi, fiţi sănătoşi!:|\n\nFiţi bucuroşi! Fiţi sănătoşi!\n|: Chiar dacă ultima oară-ar fi\nCând pe pământ ne vom întâlni,\nÎn cer dorim să ne-ntâlnim!:|",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Ne despărţim, la drum pornim\n|: Frumoase clipe s-au încheiat\nCăci timpul trece neîncetat.\nFiţi bucuroşi, fiţi sănătoşi!:|"
+      },
+      {
+        "position": 2,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Pace şi har e-al nostru dar\n|: Suntem în mâna Domnului\nNe poartă El după Voia Lui.\nFiţi bucuroşi, fiţi sănătoşi!:|"
+      },
+      {
+        "position": 3,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "Fiţi bucuroşi! Fiţi sănătoşi!\n|: Chiar dacă ultima oară-ar fi\nCând pe pământ ne vom întâlni,\nÎn cer dorim să ne-ntâlnim!:|"
+      }
+    ],
+    "parser_notes": ""
+  },
+  {
+    "source_file": "012 Eram jos in pacat.pptx",
+    "song_number": "012",
+    "title": "Eram jos în păcat, dar Isus m-a salvat",
+    "default_key": "A",
+    "lyrics_text": "Eram jos în păcat, dar Isus m-a salvat,\nLumina Lui din cer în mine-a strălucit,\nScăldat în harul Său, eu am un nume nou,\nCând stau de vorbă cu Isus sunt fericit.\n\nVino şi stai de vorbă azi cu Isus,\nVino, spune-l Lui ce griji te-apasă,\nEl să-ţi ia al tău suspin\nŞi să-ţi dea pacea Sa din plin.\nCând simţi că vrei să stai în rugăciune,\nCând te arde-un dor şi nu-l poţi spune,\nNumai pe genunchi lângă Isus eşti fericit.\n\nCărarea când e grea şi roze nu-s pe ea,\nŞi norii de-ndoială soarele-au umbrit,\nCând ceaţa de păcat cerul a-ntunecat,\nEu stau de vorbă cu Isus şi-s fericit.\n\nVino şi stai de vorbă azi cu Isus,\nVino, spune-l Lui ce griji te-apasă,\nEl să-ţi ia al tău suspin\nŞi să-ţi dea pacea Sa din plin.\nCând simţi că vrei să stai în rugăciune,\nCând te arde-un dor şi nu-l poţi spune,\nNumai pe genunchi lângă Isus eşti fericit.\n\nCând umbrele se sting şi ochii mei când plâng,\nAtunci Isus e-al meu Prieten neclintit,\nÎn rugăciune ia povara mea cea grea,\nCând stau de vorbă cu Isus sunt fericit.\n\nVino şi stai de vorbă azi cu Isus,\nVino, spune-l Lui ce griji te-apasă,\nEl să-ţi ia al tău suspin\nŞi să-ţi dea pacea Sa din plin.\nCând simţi că vrei să stai în rugăciune,\nCând te arde-un dor şi nu-l poţi spune,\nNumai pe genunchi lângă Isus eşti fericit.",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Eram jos în păcat, dar Isus m-a salvat,\nLumina Lui din cer în mine-a strălucit,\nScăldat în harul Său, eu am un nume nou,\nCând stau de vorbă cu Isus sunt fericit."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Vino şi stai de vorbă azi cu Isus,\nVino, spune-l Lui ce griji te-apasă,\nEl să-ţi ia al tău suspin\nŞi să-ţi dea pacea Sa din plin.\nCând simţi că vrei să stai în rugăciune,\nCând te arde-un dor şi nu-l poţi spune,\nNumai pe genunchi lângă Isus eşti fericit."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Cărarea când e grea şi roze nu-s pe ea,\nŞi norii de-ndoială soarele-au umbrit,\nCând ceaţa de păcat cerul a-ntunecat,\nEu stau de vorbă cu Isus şi-s fericit."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Vino şi stai de vorbă azi cu Isus,\nVino, spune-l Lui ce griji te-apasă,\nEl să-ţi ia al tău suspin\nŞi să-ţi dea pacea Sa din plin.\nCând simţi că vrei să stai în rugăciune,\nCând te arde-un dor şi nu-l poţi spune,\nNumai pe genunchi lângă Isus eşti fericit."
+      },
+      {
+        "position": 5,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "Când umbrele se sting şi ochii mei când plâng,\nAtunci Isus e-al meu Prieten neclintit,\nÎn rugăciune ia povara mea cea grea,\nCând stau de vorbă cu Isus sunt fericit."
+      },
+      {
+        "position": 6,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Vino şi stai de vorbă azi cu Isus,\nVino, spune-l Lui ce griji te-apasă,\nEl să-ţi ia al tău suspin\nŞi să-ţi dea pacea Sa din plin.\nCând simţi că vrei să stai în rugăciune,\nCând te arde-un dor şi nu-l poţi spune,\nNumai pe genunchi lângă Isus eşti fericit."
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "013 Viaţă tinerească, plină de elan .pptx",
+    "song_number": "013",
+    "title": "Viaţă tinerească, plină de elan",
+    "default_key": "G",
+    "lyrics_text": "Viaţă tinerească, plină de elan,\nFrumuseţe, daruri, toate câte am,\nLe închin de-a-ntregul pentru Dumnezeu.\nDe viaţa mea dispune Domnul meu.\n\nÎnvăţător (este Isus),\nConducător (este Isus),\nEu nu cunosc (nici un altul)\nDecât Isus Cristos (da, Isus).\n\nNu mă întineze duhul celui rău,\nSă nu mă atragă jos din braţul Său.\nInima şi gândul să le umple dar\nPe deplin Isus Slăvitul cu-al Său har.\n\nÎnvăţător (este Isus),\nConducător (este Isus),\nEu nu cunosc (nici un altul)\nDecât Isus Cristos (da, Isus).\n\nCât de fericită viaţa mi-o trăiesc;\nÎn Isus aflat-am totul ce doresc;\nEl mi-a dat iertare, mântuirea mea;\nPrin credinţă, El mă duce-n slava Sa.\n\nÎnvăţător (este Isus),\nConducător (este Isus),\nEu nu cunosc (nici un altul)\nDecât Isus Cristos (da, Isus).",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Viaţă tinerească, plină de elan,\nFrumuseţe, daruri, toate câte am,\nLe închin de-a-ntregul pentru Dumnezeu.\nDe viaţa mea dispune Domnul meu."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Învăţător (este Isus),\nConducător (este Isus),\nEu nu cunosc (nici un altul)\nDecât Isus Cristos (da, Isus)."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Nu mă întineze duhul celui rău,\nSă nu mă atragă jos din braţul Său.\nInima şi gândul să le umple dar\nPe deplin Isus Slăvitul cu-al Său har."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Învăţător (este Isus),\nConducător (este Isus),\nEu nu cunosc (nici un altul)\nDecât Isus Cristos (da, Isus)."
+      },
+      {
+        "position": 5,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "Cât de fericită viaţa mi-o trăiesc;\nÎn Isus aflat-am totul ce doresc;\nEl mi-a dat iertare, mântuirea mea;\nPrin credinţă, El mă duce-n slava Sa."
+      },
+      {
+        "position": 6,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Învăţător (este Isus),\nConducător (este Isus),\nEu nu cunosc (nici un altul)\nDecât Isus Cristos (da, Isus)."
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "014 Ne-a arata raul vietii cel lin.pptx",
+    "song_number": "014",
+    "title": "Ne-a arata raul vietii cel lin",
+    "default_key": "A",
+    "lyrics_text": "1. Ne-a arătat râul vieţii cel lin - A 014\nNe-a arătat râul vieţii cel lin,\nCa un cristal limpede şi curat.\nEl izvora chiar din Tronul divin,\nPe care Mielul era-ncoronat.\n\nR. Ne-a arătat râul vieţii cel lin 014\n/: Blesteme nu vor mai fi acolo,\nCăci faţa-l sfântă va lumina.\nDe pace fi-va împărăţită\nŞi dragostea Sa ne va lega.:/\n\n2. Ne-a arătat râul vieţii cel lin 014\nNoapte n-a fi, nici lumina de-aici,\nNici soarele nu va mai lumina,\nCăci Dumnezeu însuşi va-mpărăţi\nŞi-n strălucirea cea sfântă vom sta.\n\nR. Ne-a arătat râul vieţii cel lin 014\n/: Blesteme nu vor mai fi acolo,\nCăci faţa-l sfântă va lumina.\nDe pace fi-va împărăţită\nŞi dragostea Sa ne va lega.:/\n\n3. Ne-a arătat râul vieţii cel lin 014\nlată-n curând pe pământ va veni\nIsus Hristos pentru a ne lua.\nFerice fi-va de cel ce-a citit\nCuvântul Sfânt şi apoi l-a-mplinit.\n\nR. Ne-a arătat râul vieţii cel lin 014\n/: Blesteme nu vor mai fi acolo,\nCăci faţa-l sfântă va lumina.\nDe pace fi-va împărăţită\nŞi dragostea Sa ne va lega.:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "1. Ne-a arătat râul vieţii cel lin - A 014\nNe-a arătat râul vieţii cel lin,\nCa un cristal limpede şi curat.\nEl izvora chiar din Tronul divin,\nPe care Mielul era-ncoronat."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. Ne-a arătat râul vieţii cel lin 014\n/: Blesteme nu vor mai fi acolo,\nCăci faţa-l sfântă va lumina.\nDe pace fi-va împărăţită\nŞi dragostea Sa ne va lega.:/"
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "2. Ne-a arătat râul vieţii cel lin 014\nNoapte n-a fi, nici lumina de-aici,\nNici soarele nu va mai lumina,\nCăci Dumnezeu însuşi va-mpărăţi\nŞi-n strălucirea cea sfântă vom sta."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. Ne-a arătat râul vieţii cel lin 014\n/: Blesteme nu vor mai fi acolo,\nCăci faţa-l sfântă va lumina.\nDe pace fi-va împărăţită\nŞi dragostea Sa ne va lega.:/"
+      },
+      {
+        "position": 5,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "3. Ne-a arătat râul vieţii cel lin 014\nlată-n curând pe pământ va veni\nIsus Hristos pentru a ne lua.\nFerice fi-va de cel ce-a citit\nCuvântul Sfânt şi apoi l-a-mplinit."
+      },
+      {
+        "position": 6,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. Ne-a arătat râul vieţii cel lin 014\n/: Blesteme nu vor mai fi acolo,\nCăci faţa-l sfântă va lumina.\nDe pace fi-va împărăţită\nŞi dragostea Sa ne va lega.:/"
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "015 Nu este munte prea nalt.pptx",
+    "song_number": "015",
+    "title": "Nu este munte prea 'nalt",
+    "default_key": "A",
+    "lyrics_text": "Nu este munte prea 'nalt să nu îl mişte,\nNu e problemă prea grea să n-o rezolve El.\nNu e furtună prea rea să n-o liniştească,\nNu e durere prea grea să n-o aline El.\n\n/: El purtat-a pe umerii Săi povara lumii\nŞi poate lua chiar acum povara ta:/\n\nNu este munte prea 'nalt să nu îl mişte,\nNu e problemă prea grea să n-o rezolve El.\nNu e furtună prea rea să n-o liniştească,\nNu e durere prea grea să n-o aline El.\n\n/: El purtat-a pe umerii Săi povara lumii\nŞi poate lua chiar acum povara ta.\nÎndrăzneşte, prietene drag, Isus te cheamă\nInima să l-o deschizi, pacea să-ţi dea.:/\nInima să l-o deschizi, pacea să-ţi dea.",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Nu este munte prea 'nalt să nu îl mişte,\nNu e problemă prea grea să n-o rezolve El.\nNu e furtună prea rea să n-o liniştească,\nNu e durere prea grea să n-o aline El."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/: El purtat-a pe umerii Săi povara lumii\nŞi poate lua chiar acum povara ta:/"
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Nu este munte prea 'nalt să nu îl mişte,\nNu e problemă prea grea să n-o rezolve El.\nNu e furtună prea rea să n-o liniştească,\nNu e durere prea grea să n-o aline El."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/: El purtat-a pe umerii Săi povara lumii\nŞi poate lua chiar acum povara ta.\nÎndrăzneşte, prietene drag, Isus te cheamă\nInima să l-o deschizi, pacea să-ţi dea.:/\nInima să l-o deschizi, pacea să-ţi dea."
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "016 O, de-ai vrea sa vii la El.pptx",
+    "song_number": "016",
+    "title": "O, de-ai vrea sa vii la El",
+    "default_key": "G",
+    "lyrics_text": "1. O, de-ai vrea să vii Ia El - G 016\nO, de-ai vrea să vii Ia El,\nLa Isus, Divinul Miel,\nViaţa ta se va schimba\nDupă voia Sa.\n\nR. O, de-ai vrea să vii Ia El 016\nTe roagă Isus ca să vii, căci vrea fericit ca să fii.\nRenunţă la ce-i păcătos şi să vii la Cristos.\nConştiinţa îţi cere să vii căci vrea fericit ca să fii,\nDe-ajuns cât ai tot neglijat\nŞi ai stat atât de mult străin, azi auzi cântec divin,\nChiar Isus s-ar bucura de schimbarea ta.\n\n2. O, de-ai vrea să vii Ia El 016\nAzi auzi mesaj ceresc\nDe la cei ce te iubesc,\nCer şi toţi doresc în cor\nSă fii frate-al lor.\n\nR. O, de-ai vrea să vii Ia El 016\nTe roagă Isus ca să vii, căci vrea fericit ca să fii.\nRenunţă la ce-i păcătos şi să vii la Cristos.\nConştiinţa îţi cere să vii căci vrea fericit ca să fii,\nDe-ajuns cât ai tot neglijat\nŞi ai stat atât de mult străin, azi auzi cântec divin,\nChiar Isus s-ar bucura de schimbarea ta.\n\n3. O, de-ai vrea să vii Ia El 016\nNu conta pe mâine zi\nPentru a te pocăi,\nAzi pe Isus de-L primeşti\nTu te mântuieşti.\n\nR. O, de-ai vrea să vii Ia El 016\nTe roagă Isus ca să vii, căci vrea fericit ca să fii.\nRenunţă la ce-i păcătos şi să vii la Cristos.\nConştiinţa îţi cere să vii căci vrea fericit ca să fii,\nDe-ajuns cât ai tot neglijat\nŞi ai stat atât de mult străin, azi auzi cântec divin,\nChiar Isus s-ar bucura de schimbarea ta.",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "1. O, de-ai vrea să vii Ia El - G 016\nO, de-ai vrea să vii Ia El,\nLa Isus, Divinul Miel,\nViaţa ta se va schimba\nDupă voia Sa."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. O, de-ai vrea să vii Ia El 016\nTe roagă Isus ca să vii, căci vrea fericit ca să fii.\nRenunţă la ce-i păcătos şi să vii la Cristos.\nConştiinţa îţi cere să vii căci vrea fericit ca să fii,\nDe-ajuns cât ai tot neglijat\nŞi ai stat atât de mult străin, azi auzi cântec divin,\nChiar Isus s-ar bucura de schimbarea ta."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "2. O, de-ai vrea să vii Ia El 016\nAzi auzi mesaj ceresc\nDe la cei ce te iubesc,\nCer şi toţi doresc în cor\nSă fii frate-al lor."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. O, de-ai vrea să vii Ia El 016\nTe roagă Isus ca să vii, căci vrea fericit ca să fii.\nRenunţă la ce-i păcătos şi să vii la Cristos.\nConştiinţa îţi cere să vii căci vrea fericit ca să fii,\nDe-ajuns cât ai tot neglijat\nŞi ai stat atât de mult străin, azi auzi cântec divin,\nChiar Isus s-ar bucura de schimbarea ta."
+      },
+      {
+        "position": 5,
+        "section_label": "3",
+        "section_type": "verse",
+        "content": "3. O, de-ai vrea să vii Ia El 016\nNu conta pe mâine zi\nPentru a te pocăi,\nAzi pe Isus de-L primeşti\nTu te mântuieşti."
+      },
+      {
+        "position": 6,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "R. O, de-ai vrea să vii Ia El 016\nTe roagă Isus ca să vii, căci vrea fericit ca să fii.\nRenunţă la ce-i păcătos şi să vii la Cristos.\nConştiinţa îţi cere să vii căci vrea fericit ca să fii,\nDe-ajuns cât ai tot neglijat\nŞi ai stat atât de mult străin, azi auzi cântec divin,\nChiar Isus s-ar bucura de schimbarea ta."
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "017 Pe Isus L-am primit cand m-a chemat.pptx",
+    "song_number": "017",
+    "title": "Pe Isus L-am primit când m-a chemat",
+    "default_key": "G",
+    "lyrics_text": "Pe Isus L-am primit când m-a chemat,\nPăcatul mi-a luat, păcatul mi-a luat,\nŞi pacea Lui îndată El mi-a dat\nPăcatul mi-a luat.\n\n/: Păcatul mi-a luat, păcatul mi-a luat,\nDe-aceea-l cânt neîncetat: ALELUIA!\nPe Isus L-am primit când m-a chemat,\nPăcatul mi-a luat.:/\n\nDe-ai să-L primeşti azi pe Isus Hristos\nPăcatu-ţi va lua, păcatu-ţi va lua,\nŞi fericit vei merge bucuros,\nPăcatu-ţi va lua.\n\n/: Păcatul mi-a luat, păcatul mi-a luat,\nDe-aceea-l cânt neîncetat: ALELUIA!\nPe Isus L-am primit când m-a chemat,\nPăcatul mi-a luat.:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Pe Isus L-am primit când m-a chemat,\nPăcatul mi-a luat, păcatul mi-a luat,\nŞi pacea Lui îndată El mi-a dat\nPăcatul mi-a luat."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/: Păcatul mi-a luat, păcatul mi-a luat,\nDe-aceea-l cânt neîncetat: ALELUIA!\nPe Isus L-am primit când m-a chemat,\nPăcatul mi-a luat.:/"
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "De-ai să-L primeşti azi pe Isus Hristos\nPăcatu-ţi va lua, păcatu-ţi va lua,\nŞi fericit vei merge bucuros,\nPăcatu-ţi va lua."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/: Păcatul mi-a luat, păcatul mi-a luat,\nDe-aceea-l cânt neîncetat: ALELUIA!\nPe Isus L-am primit când m-a chemat,\nPăcatul mi-a luat.:/"
+      }
+    ],
+    "parser_notes": "Unele sectiuni par repetate; verifica daca refrenul trebuie pastrat o singura data sau in structura completa."
+  },
+  {
+    "source_file": "018 Pentru tine, un pacatos.pptx",
+    "song_number": "018",
+    "title": "Pentru tine-un păcătos – a",
+    "default_key": null,
+    "lyrics_text": "Pentru tine-un păcătos,\nPentru mine-un ticălos,\nPentru noi, iubite suflet,\nA murit Isus Hristos.\nA murit pe lemnul crucii,\nCa noi doi să fim salvaţi\nDe-ale noastre mari păcate.\n\nEste greu, da, este greu\nSă trăieşti făr’ Dumnezeu.\nDar, te rog, nu te uita\nLa viaţa ta cea grea.\nUită-te doar la Isus\nCe la cruce El s-a dus\nCa să moară pentru tine.\n\nDeci, acum când tu doreşti\nPe Isus ca să-L primeşti\nTu în dragoste să stai,\nCa în lume să nu te pierzi.\nŞi-ntr-o veşnică iubire,\nCu Isus ca să rămâi\nDoar o lumină vie.\n\n/:Este greu, da, este greu\nSă trăieşti făr’ Dumnezeu.\nDar, te rog, nu te uita\nLa viaţa ta cea grea.\nUită-te doar la Isus\nCe la cruce El s-a dus\nCa să moară pentru tine.:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Pentru tine-un păcătos,\nPentru mine-un ticălos,\nPentru noi, iubite suflet,\nA murit Isus Hristos.\nA murit pe lemnul crucii,\nCa noi doi să fim salvaţi\nDe-ale noastre mari păcate."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Este greu, da, este greu\nSă trăieşti făr’ Dumnezeu.\nDar, te rog, nu te uita\nLa viaţa ta cea grea.\nUită-te doar la Isus\nCe la cruce El s-a dus\nCa să moară pentru tine."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Deci, acum când tu doreşti\nPe Isus ca să-L primeşti\nTu în dragoste să stai,\nCa în lume să nu te pierzi.\nŞi-ntr-o veşnică iubire,\nCu Isus ca să rămâi\nDoar o lumină vie."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/:Este greu, da, este greu\nSă trăieşti făr’ Dumnezeu.\nDar, te rog, nu te uita\nLa viaţa ta cea grea.\nUită-te doar la Isus\nCe la cruce El s-a dus\nCa să moară pentru tine.:/"
+      }
+    ],
+    "parser_notes": ""
+  },
+  {
+    "source_file": "019 Pleaca-ti genunchii, Isus e aici.pptx",
+    "song_number": "019",
+    "title": "Pleacă-ţi genunchii, Isus e aici",
+    "default_key": "C",
+    "lyrics_text": "Pleacă-ţi genunchii, Isus e aici,\nRidică mâini curate spre cer,\nTronul de mărire e-n faţa ta,\nSlava se coboară din cer.\nÎndrăzneşte de intră în Locul Sfânt,\nSpălat în sângele Mielului,\nVino cu cântări de mărire,\nOsana Mielului Preasfânt.\n\nRege-al regilor,\nDomn al Domnilor,\nIsus, Isus.\n\nVino cu povara din viaţa ta,\nDurerea ce te-apasă mereu,\nMâna lui Isus poate vindeca\nDurerea şi păcatul cel greu.\nSlava ce coboară din cerul sfânt,\nDragostea şi roadele ei,\nÎnţelepciunea şi credinţa de neclintit,\nTotul poţi avea, doar să vrei.\n\n/:Rege-al regilor,\nDomn al Domnilor,\n/:Isus, Isus.:/ X2",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Pleacă-ţi genunchii, Isus e aici,\nRidică mâini curate spre cer,\nTronul de mărire e-n faţa ta,\nSlava se coboară din cer.\nÎndrăzneşte de intră în Locul Sfânt,\nSpălat în sângele Mielului,\nVino cu cântări de mărire,\nOsana Mielului Preasfânt."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Rege-al regilor,\nDomn al Domnilor,\nIsus, Isus."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Vino cu povara din viaţa ta,\nDurerea ce te-apasă mereu,\nMâna lui Isus poate vindeca\nDurerea şi păcatul cel greu.\nSlava ce coboară din cerul sfânt,\nDragostea şi roadele ei,\nÎnţelepciunea şi credinţa de neclintit,\nTotul poţi avea, doar să vrei."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "/:Rege-al regilor,\nDomn al Domnilor,\n/:Isus, Isus.:/ X2"
+      }
+    ],
+    "parser_notes": ""
+  },
+  {
+    "source_file": "020 Domn peste pamant.pptx",
+    "song_number": "020",
+    "title": "Domn peste pământ",
+    "default_key": "C",
+    "lyrics_text": "Domn peste pământ,\nPeste Univers şi peste noi,\nEşti Dumnezeu şi Creator\nAl nostru Domn.\n\nSuntem ai Tăi,\nCopii pentru vecii,\nAzi Te rugăm prin Duhul Tău\nLuminează peste noi.\n\nPrin lumina Ta\nVrem mereu să stăm pe calea Ta,\nDuh din Duhul Tău\nRevarsă azi peste noi.\n\nPrivind în noi\nGăsim iubirea Ta\nNe-ai mântuit, ne-ai fericit\nSă fii veşnic preamărit.\n\nSuntem ai Tăi,\nCopii pentru vecii,\nAzi Te rugăm prin Duhul Tău\n/: Luminează peste noi.:/",
+    "sections": [
+      {
+        "position": 1,
+        "section_label": "1",
+        "section_type": "verse",
+        "content": "Domn peste pământ,\nPeste Univers şi peste noi,\nEşti Dumnezeu şi Creator\nAl nostru Domn."
+      },
+      {
+        "position": 2,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Suntem ai Tăi,\nCopii pentru vecii,\nAzi Te rugăm prin Duhul Tău\nLuminează peste noi."
+      },
+      {
+        "position": 3,
+        "section_label": "2",
+        "section_type": "verse",
+        "content": "Prin lumina Ta\nVrem mereu să stăm pe calea Ta,\nDuh din Duhul Tău\nRevarsă azi peste noi."
+      },
+      {
+        "position": 4,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Privind în noi\nGăsim iubirea Ta\nNe-ai mântuit, ne-ai fericit\nSă fii veşnic preamărit."
+      },
+      {
+        "position": 5,
+        "section_label": "R",
+        "section_type": "chorus",
+        "content": "Suntem ai Tăi,\nCopii pentru vecii,\nAzi Te rugăm prin Duhul Tău\n/: Luminează peste noi.:/"
+      }
+    ],
+    "parser_notes": ""
+  }
+]
