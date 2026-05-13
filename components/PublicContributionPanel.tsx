@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addPublicSongContributionAction, publicSearchSongsAction, type PublicSongSearchResult } from "@/app/program/actions";
+import { addPublicSongContributionAction, publicSearchSongsAction, type PublicPositionOption, type PublicSongSearchResult } from "@/app/program/actions";
 
 function compactLyrics(text?: string | null) {
   return (text || "")
@@ -12,10 +12,11 @@ function compactLyrics(text?: string | null) {
     .join("\n");
 }
 
-export function PublicContributionPanel({ slug }: { slug: string }) {
+export function PublicContributionPanel({ slug, positionOptions }: { slug: string; positionOptions: PublicPositionOption[] }) {
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [query, setQuery] = useState("");
+  const [proposedPosition, setProposedPosition] = useState("");
   const [results, setResults] = useState<PublicSongSearchResult[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +27,11 @@ export function PublicContributionPanel({ slug }: { slug: string }) {
     setMessage(nextMessage);
     setError(nextError);
     setModalOpen(true);
+  }
+
+  function selectedPositionNumber() {
+    const parsed = Number(proposedPosition);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
   function search() {
@@ -51,10 +57,11 @@ export function PublicContributionPanel({ slug }: { slug: string }) {
           slug,
           songId: song.song_id,
           isBackup,
+          proposedPosition: selectedPositionNumber(),
           contributorName: name || null,
           notes: notes || null
         });
-        openStatus("Propunerea a fost trimisă. Va apărea cu roșu până este aprobată.");
+        openStatus("Propunerea a fost trimisă. Va apărea discret cu roșu până este aprobată.");
       } catch (err) {
         openStatus(null, err instanceof Error ? err.message : "Nu am putut trimite propunerea.");
       }
@@ -67,13 +74,19 @@ export function PublicContributionPanel({ slug }: { slug: string }) {
         <div>
           <div className="eyebrow">Propuneri externe</div>
           <h2>Adaugă în program</h2>
-          <p className="muted small">Poți propune cântări din baza de date sau intervenții text. Propunerile apar cu roșu până sunt aprobate.</p>
+          <p className="muted small">Propune cântări sau intervenții. Poți indica și poziția dorită în program.</p>
         </div>
       </div>
 
-      <div className="public-edit-grid">
+      <div className="public-edit-grid public-edit-grid-v38">
         <label className="label">Numele tău, opțional
           <input className="input" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Andrei" />
+        </label>
+        <label className="label">Poziție propusă
+          <select className="select" value={proposedPosition} onChange={(event) => setProposedPosition(event.target.value)}>
+            <option value="">La finalul programului</option>
+            {positionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
         </label>
         <label className="label">Notă, opțional
           <input className="input" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex: cântare de final" />

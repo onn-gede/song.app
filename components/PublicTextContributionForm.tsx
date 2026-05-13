@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addPublicTextContributionAction } from "@/app/program/actions";
+import { addPublicTextContributionAction, type PublicPositionOption } from "@/app/program/actions";
 
-export function PublicTextContributionForm({ slug }: { slug: string }) {
+export function PublicTextContributionForm({ slug, positionOptions }: { slug: string; positionOptions: PublicPositionOption[] }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -15,7 +15,7 @@ export function PublicTextContributionForm({ slug }: { slug: string }) {
     startTransition(async () => {
       try {
         await addPublicTextContributionAction(formData);
-        setMessage("Propunerea a fost trimisă. Va apărea cu roșu până este aprobată.");
+        setMessage("Propunerea a fost trimisă. Va apărea discret cu roșu până este aprobată.");
         setOpen(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Nu am putut trimite propunerea.");
@@ -33,6 +33,12 @@ export function PublicTextContributionForm({ slug }: { slug: string }) {
         <label className="label">Numele tău, opțional
           <input className="input" name="contributor_name" placeholder="Ex: Andrei" />
         </label>
+        <label className="label">Poziție propusă
+          <select className="select" name="proposed_position" defaultValue="">
+            <option value="">La finalul programului</option>
+            {positionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>
         <label className="label">Tip
           <select className="select" name="contribution_type" defaultValue="text">
             <option value="text">Poezie</option>
@@ -43,7 +49,7 @@ export function PublicTextContributionForm({ slug }: { slug: string }) {
           </select>
         </label>
         <label className="label">Titlu
-          <input className="input" name="custom_title" placeholder="Ex: Rugăciune pentru misiune" />
+          <input className="input" name="custom_title" placeholder="Poezie / Rugăciune / Îndemn / Mesaj" />
         </label>
         <label className="label">Text
           <textarea className="textarea" name="custom_text" placeholder="Scrie intervenția propusă" />

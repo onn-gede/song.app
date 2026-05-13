@@ -1724,3 +1724,75 @@ h2 { font-size: 20px; margin-bottom: 10px; }
 }
 .public-item-notes { margin-top: 5px; }
 .public-lyrics { display: none; }
+
+/* v38: public editable share polish */
+.public-edit-grid-v38 {
+  grid-template-columns: minmax(180px, .8fr) minmax(220px, 1fr) minmax(180px, .9fr);
+}
+.external-proposal-card-v38 {
+  border-color: #e7c9c9;
+  background: #fffafa;
+  border-left: 3px solid #b94a48;
+  border-radius: 8px;
+}
+.subtle-red-badge,
+.external-badge {
+  background: #fff1f1;
+  color: #8a2f2f;
+  border-color: #efc8c8;
+}
+.external-actions-v38 {
+  align-self: center;
+}
+.external-history-section {
+  border-color: #e5e5df;
+}
+.external-history-row {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+.external-history-accepted { border-left: 3px solid #3e7a51; }
+.external-history-rejected { border-left: 3px solid #9a4a4a; opacity: .86; }
+.public-external-item {
+  border-left: 3px solid #b94a48;
+  background: #fffafa;
+  border-radius: 8px;
+}
+.public-external-item-accepted { border-left-color: #3e7a51; background: #fbfffc; }
+.public-external-item-rejected { border-left-color: #9a4a4a; opacity: .86; }
+.public-history-time { margin: 6px 0 0; }
+@media (max-width: 860px) {
+  .public-edit-grid-v38 { grid-template-columns: 1fr; }
+}
+
+.history-toggle-card {
+  padding: 0;
+  overflow: hidden;
+}
+.history-toggle-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.history-toggle-summary::-webkit-details-marker { display: none; }
+.history-toggle-summary::after {
+  content: "Deschide";
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.history-toggle-card[open] .history-toggle-summary::after { content: "Închide"; }
+.history-toggle-content {
+  border-top: 1px solid var(--border);
+  padding: 12px 14px 14px;
+}

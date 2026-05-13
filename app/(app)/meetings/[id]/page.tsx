@@ -26,30 +26,39 @@ type PublicMeetingContribution = {
   custom_title: string | null;
   custom_text: string | null;
   is_backup: boolean;
+  proposed_position: number | null;
+  status: string;
   contributor_name: string | null;
   notes: string | null;
   created_at: string;
+  reviewed_at: string | null;
   songs: { id: string; title: string; default_key: string | null; bpm: number | null } | { id: string; title: string; default_key: string | null; bpm: number | null }[] | null;
 };
+
+function externalTypeLabel(type: string) {
+  return ({ text: "Poezie", prayer: "Rugăciune", encouragement: "Îndemn", message: "Mesaj", break: "Pauză", song: "Cântare" } as Record<string, string>)[type] || "Element";
+}
 
 function ExternalContributionCard({ meetingId, item }: { meetingId: string; item: PublicMeetingContribution }) {
   const song = Array.isArray(item.songs) ? item.songs[0] : item.songs;
   const title = song?.title || item.custom_title || "Propunere externă";
   return (
-    <div className="external-proposal-card">
+    <div className="external-proposal-card external-proposal-card-v38">
       <div className="row-main">
         <div className="program-title">{title}</div>
         <div className="badges compact-badges">
-          <span className="badge external-badge">adăugată de user extern</span>
-          <span className="badge">{item.contribution_type}</span>
+          <span className="badge external-badge subtle-red-badge">propus extern</span>
+          <span className="badge">{song ? "Cântare" : externalTypeLabel(item.contribution_type)}</span>
+          {item.proposed_position ? <span className="badge">poziție propusă: {item.proposed_position}</span> : null}
           {item.is_backup ? <span className="badge backup">backup</span> : null}
           {item.contributor_name ? <span className="badge">{item.contributor_name}</span> : null}
           {song?.default_key ? <span className="badge">{song.default_key}</span> : null}
         </div>
         {item.custom_text ? <p className="lyrics compact-text-v10 external-proposal-text">{item.custom_text}</p> : null}
         {item.notes ? <p className="muted small compact-note-clean">{item.notes}</p> : null}
+        <p className="muted small compact-note-clean">Trimisă: {formatDateTime(item.created_at)}</p>
       </div>
-      <div className="inline-form nowrap">
+      <div className="inline-form nowrap external-actions-v38">
         <form action={acceptPublicContributionAction}>
           <input type="hidden" name="meeting_id" value={meetingId} />
           <input type="hidden" name="contribution_id" value={item.id} />
@@ -61,6 +70,26 @@ function ExternalContributionCard({ meetingId, item }: { meetingId: string; item
           <button className="btn secondary btn-compact" type="submit">Respinge</button>
         </form>
       </div>
+    </div>
+  );
+}
+
+function ExternalContributionHistoryCard({ item }: { item: PublicMeetingContribution }) {
+  const song = Array.isArray(item.songs) ? item.songs[0] : item.songs;
+  const title = song?.title || item.custom_title || "Propunere externă";
+  const statusLabel = item.status === "accepted" ? "acceptată" : item.status === "rejected" ? "respinsă" : "în așteptare";
+  return (
+    <div className={`external-history-row external-history-${item.status}`}>
+      <div>
+        <strong>{title}</strong>
+        <div className="badges compact-badges">
+          <span className="badge">{statusLabel}</span>
+          <span className="badge">{song ? "Cântare" : externalTypeLabel(item.contribution_type)}</span>
+          {item.proposed_position ? <span className="badge">poziție: {item.proposed_position}</span> : null}
+          {item.contributor_name ? <span className="badge">{item.contributor_name}</span> : null}
+        </div>
+      </div>
+      <p className="muted small compact-note-clean">Trimisă: {formatDateTime(item.created_at)}{item.reviewed_at ? ` · Procesată: ${formatDateTime(item.reviewed_at)}` : ""}</p>
     </div>
   );
 }
@@ -81,7 +110,8 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     { data: meeting },
     { data: items },
     { data: shareLinks },
-    { data: publicContributions }
+    { data: publicContributions },
+    { data: publicContributionHistory }
   ] = await Promise.all([
     supabase.from("meetings").select("*").eq("id", id).single(),
     supabase
@@ -96,10 +126,17 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       .order("created_at", { ascending: false }),
     supabase
       .from("public_meeting_contributions")
-      .select("id,contribution_type,song_id,custom_title,custom_text,is_backup,contributor_name,notes,created_at,songs(id,title,default_key,bpm)")
+      .select("id,contribution_type,song_id,custom_title,custom_text,is_backup,proposed_position,status,contributor_name,notes,created_at,reviewed_at,songs(id,title,default_key,bpm)")
       .eq("meeting_id", id)
       .eq("status", "pending")
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("public_meeting_contributions")
+      .select("id,contribution_type,song_id,custom_title,custom_text,is_backup,proposed_position,status,contributor_name,notes,created_at,reviewed_at,songs(id,title,default_key,bpm)")
+      .eq("meeting_id", id)
+      .neq("status", "pending")
+      .order("reviewed_at", { ascending: false })
+      .limit(12)
   ]);
 
   if (!meeting) notFound();
@@ -123,6 +160,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
   const publicUrl = activeLink ? `${siteUrl}/program/${activeLink.public_slug}` : null;
   const recentUsage = buildRecentUsageMap(recentUsageRows);
   const pendingContributions = ((publicContributions || []) as unknown as PublicMeetingContribution[]);
+  const processedContributions = ((publicContributionHistory || []) as unknown as PublicMeetingContribution[]);
 
   return (
     <>
@@ -164,11 +202,29 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             <section className="card external-proposals-section">
               <div className="eyebrow external-eyebrow">Propuneri externe</div>
               <h2>Adăugate din link public</h2>
-              <p className="muted small">Aceste elemente sunt evidențiate cu roșu și intră în program doar după ce le accepți.</p>
+              <p className="muted small">Aceste elemente sunt evidențiate discret cu roșu și intră în program doar după ce le accepți. Poziția propusă este respectată automat când este posibil.</p>
               <div className="grid compact-list">
                 {pendingContributions.map((item) => <ExternalContributionCard key={item.id} meetingId={meeting.id} item={item} />)}
               </div>
             </section>
+          ) : null}
+
+
+
+          {processedContributions.length > 0 ? (
+            <details className="card external-proposals-section external-history-section history-toggle-card">
+              <summary className="history-toggle-summary">
+                <span>Vezi istoricul propunerilor</span>
+                <span className="badge">{processedContributions.length}</span>
+              </summary>
+              <div className="history-toggle-content">
+                <div className="eyebrow">Istoric propuneri</div>
+                <h2>Procesate recent</h2>
+                <div className="grid compact-list">
+                  {processedContributions.map((item) => <ExternalContributionHistoryCard key={item.id} item={item} />)}
+                </div>
+              </div>
+            </details>
           ) : null}
 
           <AddSongsPanel meetingId={meeting.id} recentUsage={recentUsage} />

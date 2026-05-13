@@ -12,6 +12,11 @@ export type PublicSongSearchResult = {
   lyrics_text: string | null;
 };
 
+export type PublicPositionOption = {
+  value: string;
+  label: string;
+};
+
 function clean(value: unknown) {
   return String(value || "").trim();
 }
@@ -35,6 +40,7 @@ export async function addPublicSongContributionAction(input: {
   slug: string;
   songId: string;
   isBackup?: boolean;
+  proposedPosition?: number | null;
   contributorName?: string | null;
   notes?: string | null;
 }) {
@@ -48,6 +54,7 @@ export async function addPublicSongContributionAction(input: {
     p_custom_title: null,
     p_custom_text: null,
     p_is_backup: Boolean(input.isBackup),
+    p_proposed_position: input.proposedPosition || null,
     p_contributor_name: input.contributorName || null,
     p_notes: input.notes || null
   });
@@ -60,6 +67,8 @@ export async function addPublicTextContributionAction(formData: FormData) {
   const slug = clean(formData.get("slug"));
   const contributionType = clean(formData.get("contribution_type")) || "text";
   const contributorName = clean(formData.get("contributor_name"));
+  const proposedPositionRaw = clean(formData.get("proposed_position"));
+  const proposedPosition = proposedPositionRaw ? Number(proposedPositionRaw) : null;
   const customTitle = clean(formData.get("custom_title"));
   const customText = clean(formData.get("custom_text"));
   const notes = clean(formData.get("notes"));
@@ -76,6 +85,7 @@ export async function addPublicTextContributionAction(formData: FormData) {
     p_custom_title: customTitle || null,
     p_custom_text: customText || null,
     p_is_backup: isBackup,
+    p_proposed_position: Number.isFinite(proposedPosition || NaN) ? proposedPosition : null,
     p_contributor_name: contributorName || null,
     p_notes: notes || null
   });

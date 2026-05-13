@@ -31,8 +31,10 @@ type PublicMeetingItem = {
 type PublicContribution = {
   id: string;
   created_at: string;
+  reviewed_at?: string | null;
   contribution_type: string;
   status: string;
+  proposed_position?: number | null;
   is_backup: boolean;
   custom_title: string | null;
   custom_text: string | null;
@@ -94,24 +96,38 @@ function PublicItem({ item, index }: { item: PublicMeetingItem; index: number })
 
 function PublicContributionItem({ item, index }: { item: PublicContribution; index: number }) {
   const title = item.song?.title || item.custom_title || "Propunere";
+  const statusLabel = item.status === "accepted" ? "acceptată" : item.status === "rejected" ? "respinsă" : "în așteptare";
   return (
-    <div className="public-program-item public-external-item">
+    <div className={`public-program-item public-external-item public-external-item-${item.status}`}>
       <div className="program-position external-position">E{index + 1}</div>
       <div className="program-main">
         <div className="program-title public-program-title-compact">{title}</div>
         <div className="badges compact-badges">
-          <span className="badge external-badge">adăugată de user extern</span>
+          <span className="badge external-badge">propusă extern</span>
+          <span className="badge">{statusLabel}</span>
           <span className="badge">{item.song ? "Cântare" : (itemTypeLabels[item.contribution_type] || "Element")}</span>
           {sourceBadge(item.song)}
+          {item.proposed_position ? <span className="badge">poziție propusă: {item.proposed_position}</span> : null}
           {item.is_backup ? <span className="badge backup">backup</span> : null}
           {item.contributor_name ? <span className="badge">{item.contributor_name}</span> : null}
           {item.song?.default_key ? <span className="badge">Tonalitate: {item.song.default_key}</span> : null}
         </div>
         {item.song ? <LyricsDetails text={item.song.lyrics_text} /> : <LyricsDetails text={item.custom_text} />}
         {item.notes ? <p className="muted small public-item-notes">{item.notes}</p> : null}
+        <p className="muted small public-history-time">Trimisă: {formatDateTime(item.created_at)}{item.reviewed_at ? ` · Procesată: ${formatDateTime(item.reviewed_at)}` : ""}</p>
       </div>
     </div>
   );
+}
+
+function buildPositionOptions(items: PublicMeetingItem[]) {
+  const main = items.filter((item) => !item.is_backup).sort((a, b) => a.position - b.position);
+  const options = [{ value: "1", label: "La început" }];
+  main.forEach((item, index) => {
+    const title = item.song?.title || item.custom_title || itemTypeLabels[item.item_type] || "Element";
+    options.push({ value: String(index + 2), label: `După ${index + 1}. ${title}` });
+  });
+  return options;
 }
 
 export default async function PublicProgramPage({ params }: PageProps) {
@@ -126,6 +142,8 @@ export default async function PublicProgramPage({ params }: PageProps) {
   const mainItems = items.filter((item) => !item.is_backup);
   const backupItems = items.filter((item) => item.is_backup);
   const contributions = (((data as any).contributions || []) as PublicContribution[]);
+  const contributionHistory = (((data as any).contribution_history || []) as PublicContribution[]);
+  const positionOptions = buildPositionOptions(items);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const publicUrl = `${siteUrl}/program/${slug}`;
 
@@ -174,9 +192,25 @@ export default async function PublicProgramPage({ params }: PageProps) {
         ) : null}
       </section>
 
-      <PublicContributionPanel slug={slug} />
+      <PublicContributionPanel slug={slug} positionOptions={positionOptions} />
 
-      <PublicTextContributionForm slug={slug} />
+      <PublicTextContributionForm slug={slug} positionOptions={positionOptions} />
+
+      {contributionHistory.length > 0 ? (
+        <details className="card public-program-card print-hide history-toggle-card">
+          <summary className="history-toggle-summary">
+            <span>Vezi istoricul propunerilor</span>
+            <span className="badge">{contributionHistory.length}</span>
+          </summary>
+          <div className="history-toggle-content">
+            <div className="eyebrow">Istoric propuneri</div>
+            <h2>Ultimele propuneri trimise</h2>
+            <div className="public-program-list">
+              {contributionHistory.map((item, index) => <PublicContributionItem key={item.id} item={item} index={index} />)}
+            </div>
+          </div>
+        </details>
+      ) : null}
     </main>
   );
 }
