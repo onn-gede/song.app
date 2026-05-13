@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { buildStableBibleSourceUrl, getLocalFreeBibleText } from "@/lib/freeBibleText";
+import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
 function readString(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
@@ -121,7 +122,7 @@ export async function updateSongLyricsAction(formData: FormData) {
   }>;
 
   for (let index = 0; index < sectionsCount; index += 1) {
-    const content = readString(formData, `section_content_${index}`);
+    const content = stripRepeatedSongTitleLines(readString(formData, `section_content_${index}`), title);
     if (!content) continue;
 
     sections.push({

@@ -351,12 +351,16 @@ async function upsertParsedSong(args: { parsed: ParsedExternalSong; sourceId: st
   const { parsed, sourceId, collectionId, overwrite } = args;
   const supabase = await createClient();
   const hash = crypto.createHash("sha256").update(parsed.title + "\n" + parsed.lyrics).digest("hex");
-  const sections = parsed.sections.map((section, index) => ({
-    section_type: section.section_type || "verse",
-    section_label: section.section_label,
-    position: index + 1,
-    content: section.content
-  }));
+  const sections = parsed.sections
+    .map((section, index) => ({
+      section_type: section.section_type || "verse",
+      section_label: section.section_label,
+      position: index + 1,
+      content: stripRepeatedSongTitleLines(section.content, parsed.title)
+    }))
+    .filter((section) => section.content.length > 0);
+
+  const cleanLyrics = sections.length > 0 ? sections.map((section) => `${section.section_label || (section.section_type === "chorus" ? "Refren" : "Strofa")}\n${section.content}`).join("\n\n") : stripRepeatedSongTitleLines(parsed.lyrics, parsed.title);
 
   const { data, error } = await supabase.rpc("upsert_external_song_title_lyrics", {
     p_external_source_id: sourceId,
@@ -364,7 +368,7 @@ async function upsertParsedSong(args: { parsed: ParsedExternalSong; sourceId: st
     p_external_id: parsed.externalId,
     p_external_url: parsed.url,
     p_title: parsed.title,
-    p_lyrics_text: parsed.lyrics,
+    p_lyrics_text: cleanLyrics,
     p_sections: sections,
     p_content_hash: hash,
     p_overwrite: overwrite

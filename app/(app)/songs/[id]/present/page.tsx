@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SongPresentation } from "@/components/SongPresentation";
+import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -29,7 +30,7 @@ export default async function SongPresentationPage({ params }: PageProps) {
   const slides = (sections || []).map((section: any, index: number) => ({
     id: section.id || `section-${index}`,
     label: labelForSection(section, index),
-    content: section.content || "",
+    content: stripRepeatedSongTitleLines(section.content || "", song.title),
   }));
 
   return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} />;

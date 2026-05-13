@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { buildStableBibleSourceUrl } from "@/lib/freeBibleText";
+import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 import {
   addSongBibleReferenceAction,
   addSuggestedBibleReferencesAction,
@@ -14,6 +15,8 @@ import {
   serializeBibleVerseSuggestion,
   suggestBibleVersesForSong,
 } from "@/lib/bibleSuggestions";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -58,12 +61,21 @@ export default async function SongVersesPage({
   const query = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: song }, { data: refs }] = await Promise.all([
+  const [{ data: song }, { data: sections }, { data: sources }, { data: refs }] = await Promise.all([
     supabase
       .from("songs")
       .select("id,title,lyrics_text,default_key,bpm,structure")
       .eq("id", id)
       .single(),
+    supabase
+      .from("song_sections")
+      .select("content,position")
+      .eq("song_id", id)
+      .order("position"),
+    supabase
+      .from("song_sources")
+      .select("song_number")
+      .eq("song_id", id),
     supabase
       .from("song_bible_references")
       .select(
@@ -82,9 +94,15 @@ export default async function SongVersesPage({
       .map((item: any) => item.bible_references?.reference_label)
       .filter(Boolean),
   );
+  const sourceNumbers = (sources || []).map((source: any) => String(source.song_number || "")).filter(Boolean);
+  const cleanedLyricsForSuggestions = ((sections || []).length > 0
+    ? (sections || []).map((section: any) => stripRepeatedSongTitleLines(section.content, song.title, sourceNumbers)).join("\n\n")
+    : stripRepeatedSongTitleLines(song.lyrics_text, song.title, sourceNumbers)
+  ).trim();
+
   const suggestions = suggestBibleVersesForSong({
     title: song.title,
-    lyricsText: song.lyrics_text,
+    lyricsText: cleanedLyricsForSuggestions,
     limit: 10,
   }).filter(
     (suggestion) => !existingReferenceLabels.has(suggestion.referenceLabel),
@@ -135,7 +153,7 @@ export default async function SongVersesPage({
               <div>
                 <h2>Sugestii tematice</h2>
                 <p className="muted small">
-                  Sugestiile sunt generate local pe baza cântării. Pentru textul biblic folosim fallback local Cornilescu 1921 pentru versetele cunoscute, fără apeluri repetate către API-uri externe.
+                  Sugestiile sunt generate în momentul deschiderii acestei pagini, pe baza titlului și versurilor cântării curente. Nu mai afișăm fallback generic dacă nu există potriviri tematice reale.
                 </p>
               </div>
               <span className="badge">draft</span>
@@ -172,7 +190,7 @@ export default async function SongVersesPage({
                           {suggestion.matchedKeywords.length > 0 ? (
                             <p className="muted small">Potrivire după: {suggestion.matchedKeywords.join(", ")}</p>
                           ) : (
-                            <p className="muted small">Sugestie generală pentru cântări creștine. Verifică manual potrivirea.</p>
+                            <p className="muted small">Potrivire tematică calculată din cântarea curentă.</p>
                           )}
                         </div>
                       </label>
@@ -182,7 +200,7 @@ export default async function SongVersesPage({
                 <button className="btn" type="submit">Salvează sugestiile bifate</button>
               </form>
             ) : (
-              <p className="muted">Nu mai există sugestii noi pentru această cântare.</p>
+              <p className="muted">Nu am găsit sugestii biblice suficient de specifice pe baza titlului și versurilor acestei cântări, sau toate sugestiile relevante sunt deja salvate.</p>
             )}
           </section>
 

@@ -3,6 +3,19 @@ import { createClient } from "@/lib/supabase/server";
 import { SongSearch } from "@/components/SongSearch";
 import { formatDateTime } from "@/lib/format";
 
+function DashboardStat({ href, value, label, meta }: { href?: string; value: number | string; label: string; meta: string }) {
+  const content = (
+    <>
+      <span className="dashboard-stat-value">{value}</span>
+      <span className="dashboard-stat-label">{label}</span>
+      <small>{meta}</small>
+    </>
+  );
+
+  if (href) return <Link className="dashboard-stat-card" href={href}>{content}</Link>;
+  return <div className="dashboard-stat-card">{content}</div>;
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -16,57 +29,88 @@ export default async function DashboardPage() {
     supabase.from("meetings").select("id,title,meeting_date,status").order("meeting_date", { ascending: false }).limit(5)
   ]);
 
+  const reviewTotal = reviewCount ?? 0;
+  const recentWarnings = (recentUsage || []).slice(0, 5);
+  const meetings = recentMeetings || [];
+
   return (
-    <>
-      <div className="top-row">
-        <div>
+    <div className="dashboard-v39">
+      <section className="dashboard-hero-v39">
+        <div className="dashboard-hero-copy-v39">
           <div className="eyebrow">Dashboard</div>
-          <h1>Caută, alege și construiește programul</h1>
+          <h1>Planificare cântări pentru întâlniri</h1>
+          <p className="muted">Caută rapid în bibliotecă, verifică importurile și pregătește playlisturi pentru fiecare program.</p>
+          <div className="dashboard-actions-v39">
+            <Link className="btn" href="/meetings">Creează / vezi programe</Link>
+            <Link className="btn secondary" href="/import">Import cântări</Link>
+            {reviewTotal > 0 ? <Link className="btn ghost-v39" href="/review">{reviewTotal} de verificat</Link> : null}
+          </div>
         </div>
-        <div className="inline-form"><Link className="btn secondary" href="/import">Import fișiere</Link><Link className="btn secondary" href="/review">Verificare import</Link><Link className="btn" href="/meetings">Programe</Link></div>
-      </div>
+        <div className="dashboard-search-panel-v39">
+          <span className="panel-kicker-v39">Căutare rapidă</span>
+          <SongSearch autofocus />
+        </div>
+      </section>
 
-      <div className="grid grid-4" style={{ marginBottom: 16 }}>
-        <div className="stat"><strong>{songsCount ?? 0}</strong><span>cântări în bibliotecă</span></div>
-        <Link className="stat" href="/collections"><strong>{collectionsCount ?? 0}</strong><span>colecții / surse</span></Link>
-        <div className="stat"><strong>{categoriesCount ?? 0}</strong><span>categorii tematice</span></div>
-        <Link className="stat" href="/review"><strong>{reviewCount ?? 0}</strong><span>importuri de verificat</span></Link>
-      </div>
+      <section className="dashboard-stat-grid-v39" aria-label="Statistici aplicație">
+        <DashboardStat value={songsCount ?? 0} label="Cântări" meta="în biblioteca activă" href="/songs" />
+        <DashboardStat value={meetingsCount ?? 0} label="Programe" meta="create până acum" href="/meetings" />
+        <DashboardStat value={collectionsCount ?? 0} label="Colecții" meta="surse organizate" href="/collections" />
+        <DashboardStat value={categoriesCount ?? 0} label="Categorii" meta="tematici definite" href="/categories" />
+        <DashboardStat value={reviewTotal} label="De verificat" meta="importuri recente" href="/review" />
+      </section>
 
-      <SongSearch autofocus />
-
-      <div className="grid grid-2" style={{ marginTop: 16 }}>
-        <section className="card">
-          <h2>Programe recente</h2>
-          <div className="list">
-            {(recentMeetings || []).map((meeting: any) => (
-              <Link className="row" href={`/meetings/${meeting.id}`} key={meeting.id}>
+      <section className="dashboard-content-grid-v39">
+        <div className="dashboard-card-v39">
+          <div className="dashboard-card-head-v39">
+            <div>
+              <span className="panel-kicker-v39">Activitate</span>
+              <h2>Programe recente</h2>
+            </div>
+            <Link className="text-action-v39" href="/meetings">Vezi toate</Link>
+          </div>
+          <div className="list compact-list">
+            {meetings.map((meeting: any) => (
+              <Link className="dashboard-row-v39" href={`/meetings/${meeting.id}`} key={meeting.id}>
                 <span className="row-main">
                   <span className="row-title">{meeting.title}</span>
-                  <span className="muted small">{formatDateTime(meeting.meeting_date)} · {meeting.status}</span>
+                  <span className="muted small">{formatDateTime(meeting.meeting_date)}</span>
                 </span>
+                <span className="row-arrow-v39">→</span>
               </Link>
             ))}
-            {(!recentMeetings || recentMeetings.length === 0) ? <p className="muted">Nu există programe încă.</p> : null}
+            {meetings.length === 0 ? <p className="muted">Nu există programe încă.</p> : null}
           </div>
-        </section>
+        </div>
 
-        <section className="card">
-          <h2>Avertizări 30 zile</h2>
-          <div className="list">
-            {(recentUsage || []).slice(0, 5).map((item: any) => (
-              <Link className="row" href={`/songs/${item.song_id}`} key={item.song_id}>
+        <div className="dashboard-card-v39">
+          <div className="dashboard-card-head-v39">
+            <div>
+              <span className="panel-kicker-v39">Atenție</span>
+              <h2>Folosite în ultimele 30 zile</h2>
+            </div>
+            <Link className="text-action-v39" href="/songs">Caută alternative</Link>
+          </div>
+          <div className="list compact-list">
+            {recentWarnings.map((item: any) => (
+              <Link className="dashboard-row-v39" href={`/songs/${item.song_id}`} key={item.song_id}>
                 <span className="row-main">
                   <span className="row-title">{item.title}</span>
                   <span className="muted small">Ultima folosire: {formatDateTime(item.last_used_at)} · {item.last_meeting_title}</span>
                 </span>
-                <span className="badge warning">{item.times_used}x</span>
+                <span className="badge danger-soft-v39">{item.times_used}x</span>
               </Link>
             ))}
-            {(!recentUsage || recentUsage.length === 0) ? <p className="muted">Nu există încă folosiri în ultimele 30 de zile.</p> : null}
+            {recentWarnings.length === 0 ? <p className="muted">Nu există încă folosiri în ultimele 30 de zile.</p> : null}
           </div>
-        </section>
-      </div>
-    </>
+        </div>
+      </section>
+
+      <section className="dashboard-quick-grid-v39">
+        <Link href="/external-sources" className="quick-tile-v39"><strong>Surse externe</strong><span>Sincronizare și importuri Resurse Creștine</span></Link>
+        <Link href="/duplicates" className="quick-tile-v39"><strong>Duplicate</strong><span>Curăță cântări similare</span></Link>
+        <Link href="/admin" className="quick-tile-v39"><strong>Administrare</strong><span>Resetări și instrumente DB</span></Link>
+      </section>
+    </div>
   );
 }

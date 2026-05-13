@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
 type SectionInput = {
   id?: string;
@@ -13,30 +14,6 @@ type Props = {
   sections: SectionInput[];
   songTitle?: string;
 };
-
-
-function normalizeTextForCompare(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/^[\s\d.\-–—_]+/, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function stripRepeatedSongTitle(content: string, songTitle?: string) {
-  if (!songTitle) return content;
-  const normalizedTitle = normalizeTextForCompare(songTitle);
-  return content
-    .split(/\r?\n/)
-    .filter((line, index) => {
-      if (index > 2) return true;
-      return normalizeTextForCompare(line) !== normalizedTitle;
-    })
-    .join("\n")
-    .trim();
-}
 
 const SECTION_TYPES = [
   { value: "verse", label: "Strofă" },
@@ -63,7 +40,7 @@ export function SongSectionsEditor({ sections, songTitle }: Props) {
         id: section.id || `section-${index}`,
         section_type: section.section_type || "verse",
         section_label: section.section_label || "",
-        content: stripRepeatedSongTitle(section.content || "", songTitle)
+        content: stripRepeatedSongTitleLines(section.content || "", songTitle)
       }));
     }
 

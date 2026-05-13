@@ -467,7 +467,522 @@ const templates: SuggestionTemplate[] = [
     ],
     baseScore: 0.9,
   },
+
+  {
+    book: "Filipeni",
+    chapter: 2,
+    verseStart: 9,
+    verseEnd: 11,
+    referenceLabel: "Filipeni 2:9-11",
+    theme: "Domnia și înălțarea lui Hristos",
+    reason:
+      "Se potrivește cântărilor care afirmă că Isus Hristos este Domnul, vrednic de închinare și înălțat peste toate.",
+    keywords: [
+      "isus hristos e domnul",
+      "isus hristos este domnul",
+      "hristos e domnul",
+      "domnul isus",
+      "domn",
+      "nume",
+      "inaltat",
+      "vrednic",
+      "imparat",
+      "domnie",
+      "genunchi",
+    ],
+    baseScore: 0.92,
+  },
+  {
+    book: "Evrei",
+    chapter: 13,
+    verseStart: 8,
+    verseEnd: null,
+    referenceLabel: "Evrei 13:8",
+    theme: "Hristos neschimbat",
+    reason:
+      "Este potrivit pentru cântări despre credincioșia și neschimbarea Domnului Isus de-a lungul vremurilor.",
+    keywords: [
+      "neschimbat",
+      "acelasi",
+      "ieri",
+      "azi",
+      "vesnic",
+      "ramane",
+      "credincios",
+      "statornic",
+    ],
+    baseScore: 0.86,
+  },
+  {
+    book: "Apocalipsa",
+    chapter: 5,
+    verseStart: 12,
+    verseEnd: null,
+    referenceLabel: "Apocalipsa 5:12",
+    theme: "Mielul este vrednic",
+    reason:
+      "Se potrivește cântărilor care Îl proclamă pe Mielul jertfit ca vrednic de laudă, cinste și slavă.",
+    keywords: [
+      "miel",
+      "vrednic",
+      "jertfit",
+      "lauda",
+      "cinste",
+      "slava",
+      "putere",
+      "mielul",
+    ],
+    baseScore: 0.9,
+  },
+  {
+    book: "Ioan",
+    chapter: 8,
+    verseStart: 12,
+    verseEnd: null,
+    referenceLabel: "Ioan 8:12",
+    theme: "Hristos, lumina lumii",
+    reason:
+      "Este potrivit pentru cântări despre lumină, călăuzire și ieșirea din întuneric prin Hristos.",
+    keywords: [
+      "lumina",
+      "intuneric",
+      "calauzeste",
+      "calea",
+      "straluceste",
+      "soare",
+      "rază",
+      "raza",
+    ],
+    baseScore: 0.86,
+  },
+  {
+    book: "Ioan",
+    chapter: 14,
+    verseStart: 6,
+    verseEnd: null,
+    referenceLabel: "Ioan 14:6",
+    theme: "Hristos, calea, adevărul și viața",
+    reason:
+      "Se potrivește cântărilor care vorbesc despre cale, adevăr, viață și apropierea de Tatăl prin Domnul Isus.",
+    keywords: [
+      "cale",
+      "calea",
+      "adevar",
+      "viata",
+      "tatal",
+      "drum",
+      "urmez",
+      "urmare",
+    ],
+    baseScore: 0.86,
+  },
+  {
+    book: "Plângerile lui Ieremia",
+    chapter: 3,
+    verseStart: 22,
+    verseEnd: 23,
+    referenceLabel: "Plângerile lui Ieremia 3:22-23",
+    theme: "bunătatea și credincioșia Domnului",
+    reason:
+      "Este potrivit pentru cântări despre îndurare, bunătate, credincioșie și har în fiecare zi.",
+    keywords: [
+      "bunatate",
+      "indurare",
+      "mila",
+      "credinciosie",
+      "dimineata",
+      "har",
+      "bun",
+      "mari sunt",
+    ],
+    baseScore: 0.88,
+  },
+  {
+    book: "Psalmii",
+    chapter: 103,
+    verseStart: 1,
+    verseEnd: 5,
+    referenceLabel: "Psalmii 103:1-5",
+    theme: "binecuvântare, iertare și vindecare",
+    reason:
+      "Se potrivește cântărilor care cheamă sufletul la binecuvântarea Domnului și amintesc iertarea și îndurările Lui.",
+    keywords: [
+      "binecuvanteaza",
+      "suflete",
+      "iertare",
+      "vindecare",
+      "indurari",
+      "bunatati",
+      "lauda suflete",
+    ],
+    baseScore: 0.88,
+  },
+  {
+    book: "Psalmii",
+    chapter: 121,
+    verseStart: 1,
+    verseEnd: 2,
+    referenceLabel: "Psalmii 121:1-2",
+    theme: "ajutorul vine de la Domnul",
+    reason:
+      "Este potrivit pentru cântări despre ridicarea privirii spre Dumnezeu, ajutor, pază și sprijin în călătorie.",
+    keywords: [
+      "ajutor",
+      "munti",
+      "privirea",
+      "paza",
+      "pazeste",
+      "calatorie",
+      "drum",
+      "sprijin",
+    ],
+    baseScore: 0.86,
+  },
+  {
+    book: "Romani",
+    chapter: 8,
+    verseStart: 37,
+    verseEnd: 39,
+    referenceLabel: "Romani 8:37-39",
+    theme: "biruință și dragostea lui Hristos",
+    reason:
+      "Se potrivește cântărilor despre biruință, despărțire de frică și siguranța dragostei lui Hristos.",
+    keywords: [
+      "biruinta",
+      "biruitor",
+      "invingator",
+      "desparti",
+      "dragostea lui hristos",
+      "nimic",
+      "frica",
+      "lupta",
+    ],
+    baseScore: 0.88,
+  },
+  {
+    book: "2 Timotei",
+    chapter: 4,
+    verseStart: 7,
+    verseEnd: 8,
+    referenceLabel: "2 Timotei 4:7-8",
+    theme: "alergarea credinței până la capăt",
+    reason:
+      "Este potrivit pentru cântări despre alergare, luptă, credincioșie și nădejdea cununii.",
+    keywords: [
+      "alergare",
+      "lupta",
+      "credinta",
+      "cunună",
+      "cununa",
+      "sfarsit",
+      "pana la capat",
+      "biruit",
+    ],
+    baseScore: 0.84,
+  },
+  {
+    book: "1 Petru",
+    chapter: 1,
+    verseStart: 18,
+    verseEnd: 19,
+    referenceLabel: "1 Petru 1:18-19",
+    theme: "răscumpărare prin sângele lui Hristos",
+    reason:
+      "Se potrivește cântărilor despre răscumpărare, sângele Domnului Isus și prețul jertfei Sale.",
+    keywords: [
+      "rascumparat",
+      "rascumparare",
+      "sange",
+      "pret",
+      "miel",
+      "jertfa",
+      "iertat",
+      "curatit",
+    ],
+    baseScore: 0.9,
+  },
+  {
+    book: "Coloseni",
+    chapter: 3,
+    verseStart: 16,
+    verseEnd: null,
+    referenceLabel: "Coloseni 3:16",
+    theme: "cântare, învățătură și mulțumire",
+    reason:
+      "Este potrivit pentru cântări despre cântarea bisericii, lauda din inimă și mulțumirea adusă Domnului.",
+    keywords: [
+      "cantare",
+      "cantari",
+      "psalmi",
+      "laude",
+      "duhovnicesti",
+      "inima",
+      "multumire",
+      "har",
+    ],
+    baseScore: 0.82,
+  },
+  {
+    book: "Apocalipsa",
+    chapter: 21,
+    verseStart: 3,
+    verseEnd: 4,
+    referenceLabel: "Apocalipsa 21:3-4",
+    theme: "cer nou și mângâiere veșnică",
+    reason:
+      "Se potrivește cântărilor despre cer, lacrimi șterse, veșnicie și nădejdea finală.",
+    keywords: [
+      "cer",
+      "lacrimi",
+      "durere",
+      "moarte",
+      "vesnicie",
+      "acasa",
+      "nou",
+      "mangaiere",
+    ],
+    baseScore: 0.87,
+  },
+  {
+    book: "Psalmii",
+    chapter: 27,
+    verseStart: 1,
+    verseEnd: null,
+    referenceLabel: "Psalmii 27:1",
+    theme: "Domnul este lumină și mântuire",
+    reason: "Se potrivește cântărilor despre lumină, mântuire, curaj și siguranță în Domnul.",
+    keywords: ["lumina", "intuneric", "mantuirea", "frica", "curaj", "sprijinitor", "teama"],
+    baseScore: 0.86,
+  },
+  {
+    book: "Psalmii",
+    chapter: 34,
+    verseStart: 18,
+    verseEnd: null,
+    referenceLabel: "Psalmii 34:18",
+    theme: "Domnul aproape de cei zdrobiți",
+    reason: "Se potrivește cântărilor despre mângâiere, lacrimi, inimă frântă și apropierea Domnului în durere.",
+    keywords: ["lacrimi", "plans", "plang", "durere", "zdrobit", "inima franta", "aproape", "mangaiere", "suflet ranit"],
+    baseScore: 0.86,
+  },
+  {
+    book: "Psalmii",
+    chapter: 40,
+    verseStart: 1,
+    verseEnd: 3,
+    referenceLabel: "Psalmii 40:1-3",
+    theme: "cântare nouă după izbăvire",
+    reason: "Se potrivește cântărilor despre izbăvire, ridicare din groapă și cântare nouă pusă de Dumnezeu în inimă.",
+    keywords: ["cantare noua", "izbavire", "groapa", "mocirla", "stanca", "ridicat", "strigat", "nadejde"],
+    baseScore: 0.88,
+  },
+  {
+    book: "Psalmii",
+    chapter: 51,
+    verseStart: 10,
+    verseEnd: null,
+    referenceLabel: "Psalmii 51:10",
+    theme: "inimă curată și reînnoire",
+    reason: "Se potrivește cântărilor de pocăință, curățire, predare și dorință de înnoire spirituală.",
+    keywords: ["inima curata", "curat", "zideste", "duh nou", "pocainta", "schimba", "renoire", "predare"],
+    baseScore: 0.87,
+  },
+  {
+    book: "Psalmii",
+    chapter: 73,
+    verseStart: 25,
+    verseEnd: 26,
+    referenceLabel: "Psalmii 73:25-26",
+    theme: "Dumnezeu este partea inimii",
+    reason: "Se potrivește cântărilor despre dorul după Dumnezeu, dependență de El și comoara sufletului.",
+    keywords: ["doar tu", "numai tu", "inima mea", "partea mea", "dor", "cer", "pamant", "stanca inimii"],
+    baseScore: 0.86,
+  },
+  {
+    book: "Psalmii",
+    chapter: 100,
+    verseStart: 4,
+    verseEnd: 5,
+    referenceLabel: "Psalmii 100:4-5",
+    theme: "mulțumire și bunătatea Domnului",
+    reason: "Se potrivește cântărilor de mulțumire, intrare înaintea Domnului cu laude și recunoașterea bunătății Lui.",
+    keywords: ["multumire", "multumesc", "bunatate", "bun", "credinciosie", "porti", "curtile", "binecuvantati"],
+    baseScore: 0.86,
+  },
+  {
+    book: "Psalmii",
+    chapter: 118,
+    verseStart: 24,
+    verseEnd: null,
+    referenceLabel: "Psalmii 118:24",
+    theme: "bucurie în ziua Domnului",
+    reason: "Se potrivește cântărilor despre ziua Domnului, bucurie, sărbătoare și veselie în prezența Lui.",
+    keywords: ["ziua", "bucuram", "bucurie", "veselie", "sarbatoare", "astazi", "zi"],
+    baseScore: 0.82,
+  },
+  {
+    book: "Isaia",
+    chapter: 53,
+    verseStart: 5,
+    verseEnd: null,
+    referenceLabel: "Isaia 53:5",
+    theme: "jertfa și rănile lui Hristos",
+    reason: "Se potrivește cântărilor despre Golgota, cruce, răni, suferința Domnului și pacea adusă prin jertfa Lui.",
+    keywords: ["golgota", "cruce", "rani", "strapuns", "zdrobit", "pacatele", "faradelegi", "pace", "tamaduire", "suferinta"],
+    baseScore: 0.91,
+  },
+  {
+    book: "Isaia",
+    chapter: 43,
+    verseStart: 1,
+    verseEnd: null,
+    referenceLabel: "Isaia 43:1",
+    theme: "răscumpărat și chemat pe nume",
+    reason: "Se potrivește cântărilor despre apartenență, răscumpărare, chemare pe nume și siguranță în Dumnezeu.",
+    keywords: ["al tau", "sunt al tau", "rascumparat", "chemat pe nume", "nu te teme", "izbavesc", "apartin", "numele meu"],
+    baseScore: 0.88,
+  },
+  {
+    book: "Ioan",
+    chapter: 10,
+    verseStart: 11,
+    verseEnd: null,
+    referenceLabel: "Ioan 10:11",
+    theme: "Păstorul cel bun",
+    reason: "Se potrivește cântărilor despre Isus ca Păstor, grijă, călăuzire și jertfa pentru oi.",
+    keywords: ["pastor", "pastorul", "bunul pastor", "oile", "calauzeste", "grija", "toiag", "pasuni", "da viata"],
+    baseScore: 0.88,
+  },
+  {
+    book: "Ioan",
+    chapter: 11,
+    verseStart: 25,
+    verseEnd: null,
+    referenceLabel: "Ioan 11:25",
+    theme: "învierea și viața",
+    reason: "Se potrivește cântărilor despre înviere, viață, moarte biruită și nădejde în Hristos.",
+    keywords: ["invierea", "inviat", "viata", "traieste", "moartea", "mormant", "biruit", "viu"],
+    baseScore: 0.91,
+  },
+  {
+    book: "Ioan",
+    chapter: 15,
+    verseStart: 5,
+    verseEnd: null,
+    referenceLabel: "Ioan 15:5",
+    theme: "rămânere în Hristos și rodire",
+    reason: "Se potrivește cântărilor despre rămânere în Domnul, dependență de El și rod spiritual.",
+    keywords: ["raman", "ramai", "vita", "mladite", "rod", "despartiti", "fara tine", "dependenta"],
+    baseScore: 0.84,
+  },
+  {
+    book: "Romani",
+    chapter: 10,
+    verseStart: 9,
+    verseEnd: null,
+    referenceLabel: "Romani 10:9",
+    theme: "mărturisirea lui Isus ca Domn",
+    reason: "Se potrivește cântărilor care proclamă că Isus este Domnul și cheamă la credință în învierea Lui.",
+    keywords: ["isus este domnul", "hristos e domnul", "domn", "marturisesc", "cred", "inviat", "mantuit"],
+    baseScore: 0.9,
+  },
+  {
+    book: "2 Corinteni",
+    chapter: 12,
+    verseStart: 9,
+    verseEnd: null,
+    referenceLabel: "2 Corinteni 12:9",
+    theme: "har suficient în slăbiciune",
+    reason: "Se potrivește cântărilor despre har, slăbiciune, puterea Domnului și sprijin în neputință.",
+    keywords: ["har", "slabiciune", "neputinta", "puterea ta", "ajunge", "indestulator", "putere", "sprijin"],
+    baseScore: 0.87,
+  },
+  {
+    book: "Evrei",
+    chapter: 4,
+    verseStart: 16,
+    verseEnd: null,
+    referenceLabel: "Evrei 4:16",
+    theme: "apropiere de tronul harului",
+    reason: "Se potrivește cântărilor despre rugăciune, apropiere de Dumnezeu, har și ajutor la vreme de nevoie.",
+    keywords: ["rugaciune", "ma apropii", "tron", "scaunul harului", "har", "indurare", "ajutor", "nevoie"],
+    baseScore: 0.86,
+  },
+  {
+    book: "Evrei",
+    chapter: 12,
+    verseStart: 2,
+    verseEnd: null,
+    referenceLabel: "Evrei 12:2",
+    theme: "privirea ațintită la Isus",
+    reason: "Se potrivește cântărilor despre a privi la Isus, credință, cruce și alergare spirituală.",
+    keywords: ["priveste", "ochii", "tinta", "isus", "credinta", "cruce", "alergare", "urma"],
+    baseScore: 0.86,
+  },
+  {
+    book: "Apocalipsa",
+    chapter: 22,
+    verseStart: 20,
+    verseEnd: null,
+    referenceLabel: "Apocalipsa 22:20",
+    theme: "venirea Domnului",
+    reason: "Se potrivește cântărilor despre revenirea Domnului, dorul după cer și chemarea «Vino, Doamne Isuse». ",
+    keywords: ["vino doamne", "maranata", "vine curand", "revenire", "astept", "cer", "acasa", "doamne isuse"],
+    baseScore: 0.89,
+  },
+
 ];
+
+const genericKeywords = new Set([
+  // Păstrăm aici doar cuvinte care apar în aproape orice cântare și nu indică singure o temă.
+  // „Isus”, „Hristos”, „Domnul”, „Dumnezeu” NU sunt tratate ca zgomot, pentru că în titlu
+  // pot orienta corect sugestia spre domnia lui Hristos, mântuire, cruce, înviere etc.
+  "aleluia",
+  "amin",
+  "slava",
+  "slavim",
+  "lauda",
+  "laudati",
+  "cantare",
+  "cantati",
+]);
+
+function keywordVariants(keyword: string) {
+  const normalized = normalizeText(keyword);
+  const variants = new Set([normalized]);
+  if (normalized.endsWith("a")) variants.add(normalized.slice(0, -1));
+  if (normalized.endsWith("e")) variants.add(normalized.slice(0, -1));
+  if (normalized.endsWith("i")) variants.add(normalized.slice(0, -1));
+  if (normalized.endsWith("ul")) variants.add(normalized.slice(0, -2));
+  if (normalized.endsWith("ului")) variants.add(normalized.slice(0, -4));
+  return Array.from(variants).filter((item) => item.length >= 3);
+}
+
+function keywordMatches(normalizedHaystack: string, keyword: string) {
+  const normalizedKeyword = normalizeText(keyword);
+
+  if (normalizedKeyword.includes(" ")) {
+    return keywordVariants(normalizedKeyword).some((variant) => normalizedHaystack.includes(variant));
+  }
+
+  const haystackTokens = normalizedHaystack
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((token) => token.length >= 3);
+
+  const variants = keywordVariants(normalizedKeyword);
+
+  return haystackTokens.some((token) =>
+    variants.some((variant) => {
+      if (variant.length < 3) return false;
+      if (token === variant) return true;
+      // Potrivire morfologică simplă pentru română: înviere/înviat/înviază, mântuire/mântuit, iubire/iubit etc.
+      if (variant.length >= 4 && token.startsWith(variant)) return true;
+      if (token.length >= 4 && variant.startsWith(token)) return true;
+      return false;
+    }),
+  );
+}
 
 function normalizeText(value: string) {
   return value
@@ -480,28 +995,88 @@ function unique<T>(items: T[]) {
   return Array.from(new Set(items));
 }
 
+const titleStopWords = new Set([
+  "este",
+  "esti",
+  "sunt",
+  "suntem",
+  "meu",
+  "mea",
+  "mele",
+  "tale",
+  "tau",
+  "ta",
+  "cel",
+  "cea",
+  "cei",
+  "ale",
+  "care",
+  "prin",
+  "pentru",
+  "intr",
+  "din",
+  "spre",
+]);
+
+function compactTitleTokens(title: string) {
+  return unique(
+    normalizeText(title)
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 4 && !titleStopWords.has(token)),
+  );
+}
+
+function countKeywordMatches(haystack: string, keywords: string[]) {
+  return keywords.filter((keyword) => keywordMatches(haystack, keyword));
+}
+
 export function suggestBibleVersesForSong(input: {
   title?: string | null;
   lyricsText?: string | null;
   limit?: number;
 }) {
-  const normalized = normalizeText(
-    `${input.title || ""}\n${input.lyricsText || ""}`,
-  );
   const titleNormalized = normalizeText(input.title || "");
+  const lyricsNormalized = normalizeText(input.lyricsText || "");
+  const fullNormalized = `${titleNormalized}\n${lyricsNormalized}`;
+  const titleTokens = compactTitleTokens(input.title || "");
   const limit = input.limit ?? 10;
 
   const scored = templates.map((template, index) => {
-    const matchedKeywords = unique(
-      template.keywords.filter((keyword) =>
-        normalized.includes(normalizeText(keyword)),
-      ),
+    const titleMatches = unique(countKeywordMatches(titleNormalized, template.keywords));
+    const lyricMatches = unique(countKeywordMatches(lyricsNormalized, template.keywords));
+    const fullMatches = unique(countKeywordMatches(fullNormalized, template.keywords));
+
+    const meaningfulTitleMatches = titleMatches.filter(
+      (keyword) => !genericKeywords.has(normalizeText(keyword)),
     );
-    const titleMatches = template.keywords.filter((keyword) =>
-      titleNormalized.includes(normalizeText(keyword)),
-    ).length;
-    const matchScore = matchedKeywords.length * 0.045 + titleMatches * 0.035;
-    const score = Math.min(0.98, (template.baseScore ?? 0.75) + matchScore);
+    const meaningfulLyricMatches = lyricMatches.filter(
+      (keyword) => !genericKeywords.has(normalizeText(keyword)),
+    );
+
+    const titleTokenMatches = titleTokens.filter((token) =>
+      template.keywords.some((keyword) => keywordVariants(keyword).includes(token) || normalizeText(keyword).includes(token)),
+    );
+
+    // Titlul cântării are prioritate. Versurile sunt folosite ca al doilea strat de potrivire.
+    // Astfel, „Isus Hristos e Domnul” va primi versete despre domnia lui Hristos,
+    // iar nu aceeași listă generică pentru toate cântările.
+    const titleScore =
+      meaningfulTitleMatches.length * 0.24 +
+      titleMatches.length * 0.07 +
+      titleTokenMatches.length * 0.09;
+    const lyricsScore =
+      meaningfulLyricMatches.length * 0.095 +
+      lyricMatches.length * 0.018;
+    const exactTitlePhraseBonus = template.keywords.some((keyword) =>
+      keyword.includes(" ") && titleNormalized.includes(normalizeText(keyword)),
+    )
+      ? 0.24
+      : 0;
+
+    const matchScore = titleScore + lyricsScore + exactTitlePhraseBonus;
+    const score = Math.min(0.99, Math.max(0.32, (template.baseScore ?? 0.72) - 0.16 + matchScore));
 
     return {
       id: `${template.book}-${template.chapter}-${template.verseStart}-${template.verseEnd || ""}-${index}`.replace(
@@ -514,27 +1089,30 @@ export function suggestBibleVersesForSong(input: {
       verseEnd: template.verseEnd,
       referenceLabel: template.referenceLabel,
       theme: template.theme,
-      reason: template.reason,
-      confidence:
-        matchedKeywords.length > 0
-          ? score
-          : Math.min(0.68, template.baseScore ?? 0.65),
-      matchedKeywords,
-    } satisfies BibleVerseSuggestion;
+      reason:
+        meaningfulTitleMatches.length > 0 || titleTokenMatches.length > 0 || exactTitlePhraseBonus > 0
+          ? `${template.reason} Potrivirea principală vine din titlul cântării.`
+          : template.reason,
+      confidence: score,
+      matchedKeywords: unique([...titleMatches, ...lyricMatches, ...titleTokenMatches]),
+      titleSignalCount: meaningfulTitleMatches.length + titleTokenMatches.length + (exactTitlePhraseBonus > 0 ? 1 : 0),
+      lyricSignalCount: meaningfulLyricMatches.length,
+      totalSignalCount: meaningfulTitleMatches.length + titleTokenMatches.length + meaningfulLyricMatches.length + (exactTitlePhraseBonus > 0 ? 1 : 0),
+      fullMatchCount: fullMatches.length,
+    };
   });
 
-  const withMatches = scored.filter((item) => item.matchedKeywords.length > 0);
-  const fallback = scored
-    .filter((item) => item.matchedKeywords.length === 0)
-    .slice(0, 4);
-
-  return [...withMatches, ...fallback]
+  return scored
+    .filter((item) => item.totalSignalCount > 0 || item.fullMatchCount >= 2)
     .sort(
       (a, b) =>
+        b.titleSignalCount - a.titleSignalCount ||
         b.confidence - a.confidence ||
+        b.lyricSignalCount - a.lyricSignalCount ||
         b.matchedKeywords.length - a.matchedKeywords.length,
     )
-    .slice(0, limit);
+    .slice(0, limit)
+    .map(({ titleSignalCount, lyricSignalCount, totalSignalCount, fullMatchCount, ...item }) => item as BibleVerseSuggestion);
 }
 
 export function serializeBibleVerseSuggestion(

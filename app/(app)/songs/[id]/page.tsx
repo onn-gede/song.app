@@ -4,35 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { AddSongToMeeting } from "@/components/AddSongToMeeting";
 import { DeleteSongButton } from "@/components/DeleteSongButton";
 import { buildStableBibleSourceUrl } from "@/lib/freeBibleText";
+import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
 type PageProps = { params: Promise<{ id: string }> };
-
-function normalizeTextForCompare(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/^[\s\d.\-–—_]+/, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function stripRepeatedSongTitle(content: string | null | undefined, songTitle: string, sourceNumbers: string[] = []) {
-  if (!content) return "";
-  const normalizedTitle = normalizeTextForCompare(songTitle).replace(/\s+/g, "");
-  const normalizedNumbers = sourceNumbers.map((number) => normalizeTextForCompare(number).replace(/\s+/g, "")).filter(Boolean);
-  return content
-    .split(/\r?\n/)
-    .filter((line) => {
-      const normalizedLine = normalizeTextForCompare(line).replace(/\s+/g, "");
-      if (!normalizedLine) return true;
-      if (normalizedTitle && normalizedLine === normalizedTitle) return false;
-      if (normalizedNumbers.some((number) => normalizedLine === number || normalizedLine === `${number}${normalizedTitle}` || normalizedLine === `${normalizedTitle}${number}`)) return false;
-      return true;
-    })
-    .join("\n")
-    .trim();
-}
 
 function stableReferenceUrl(ref: any) {
   const sourceUrl = ref?.source_url as string | null | undefined;
@@ -111,7 +85,7 @@ export default async function SongDetailPage({ params }: PageProps) {
           </div>
           {(sections || []).length === 0 ? <p className="lyrics">{song.lyrics_text || "Nu există versuri."}</p> : null}
           {(sections || []).map((section: any) => {
-            const cleanContent = stripRepeatedSongTitle(section.content, song.title, sourceNumbers);
+            const cleanContent = stripRepeatedSongTitleLines(section.content, song.title, sourceNumbers);
             return (
               <div className="section song-section-card" key={section.id}>
                 <div className="section-label">{section.section_label || section.section_type}</div>
