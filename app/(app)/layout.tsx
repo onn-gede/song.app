@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/app/login/actions";
+import HamburgerMenu from "@/components/HamburgerMenu";
 
 const navGroups = [
   {
@@ -43,21 +44,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq("id", user.id)
     .single();
 
-  if (!profile?.is_active) {
-    await supabase.auth.signOut();
-    redirect("/login");
-  }
+    //momentan
+  // if (!profile?.is_active) {
+  //   await supabase.auth.signOut();
+  //   redirect("/login");
+  // }
 
   const displayName = profile?.full_name || profile?.email || user.email || "Utilizator";
   const initials = displayName
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part.slice(0, 1).toUpperCase())
+    .map((part: string) => part.slice(0, 1).toUpperCase())
     .join("") || "U";
 
   return (
     <div className="page-shell app-shell-v39">
+      <HamburgerMenu
+        navGroups={navGroups}
+        displayName={displayName}
+        initials={initials}
+        userRole={profile?.role || "viewer"}
+      />
       <aside className="sidebar sidebar-v39">
         <Link href="/dashboard" className="brand brand-v39" aria-label="Dashboard biblioteca de cântări">
           <span className="brand-mark brand-mark-v39">♪</span>

@@ -14,12 +14,17 @@ export async function signInAction(_prevState: LoginState, formData: FormData): 
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: "Login nereușit. Verifică emailul, parola și confirmarea userului în Supabase Auth." };
   }
 
+  if (!data?.session) {
+    return { error: "Login nereușit. Verifică emailul și parola." };
+  }
+
+  await supabase.auth.getSession();
   redirect("/dashboard");
 }
 

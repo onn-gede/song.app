@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getBibleVerseSuggestions as fetchBibleVerseSuggestions } from "@/lib/aiBible";
 
 export type MeetingOption = {
   id: string;
@@ -132,6 +133,11 @@ export async function getRecentUsageAction(daysBack = 30): Promise<Record<string
     map[item.song_id] = item;
   });
   return map;
+}
+
+export async function getBibleVerseSuggestionsAction(songTitle: string): Promise<string[]> {
+  if (!songTitle?.trim()) return [];
+  return await fetchBibleVerseSuggestions(songTitle);
 }
 
 export async function addSongToMeetingAction(input: {

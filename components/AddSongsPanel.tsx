@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { addSongToMeetingAction, searchSongsAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
+import { addSongToMeetingAction, getBibleVerseSuggestionsAction, searchSongsAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
 import { RecentUsageIcon } from "@/components/RecentUsageIcon";
-
 export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: string; recentUsage?: Record<string, RecentUsage> }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SongSearchResult[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  const [verseSuggestions, setVerseSuggestions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -42,8 +42,12 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
   function add(song: SongSearchResult, isBackup: boolean) {
     setMessage(null);
     setError(null);
+    setVerseSuggestions([]);
+    //here implement the suggestions of bible verses API
     startTransition(async () => {
       try {
+        const bibleVerses = await getBibleVerseSuggestionsAction(song.title);
+        console.log("Suggested Bible verses for", song.title, ":", bibleVerses);  
         await addSongToMeetingAction({
           meetingId,
           songId: song.song_id,
@@ -51,8 +55,9 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
           selectedKey: song.default_key,
           notes: null
         });
+        setVerseSuggestions(bibleVerses);
         setMessage(isBackup ? "Cântarea a fost adăugată ca backup." : "Cântarea a fost adăugată în program.");
-        router.refresh();
+        window.setTimeout(() => router.refresh(), 2400);
       } catch (error) {
         setError(error instanceof Error ? error.message : "Nu am putut adăuga cântarea.");
       }
@@ -67,6 +72,18 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
         <p className="muted small">Caută după titlu, versuri sau număr. Pictograma mică indică folosire recentă în alt program.</p>
       </div>
       {message ? <p className="success">{message}</p> : null}
+      {verseSuggestions.length > 0 ? (
+        <div className="card-soft">
+          <div className="eyebrow">Versete sugerate</div>
+          <div className="list">
+            {verseSuggestions.map((suggestion, index) => (
+              <div key={index} className="row compact-row" style={{ padding: "12px 14px", background: "rgba(246,247,250,.9)" }}>
+                <span>{suggestion}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {error ? <p className="error">{error}</p> : null}
       <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Caută după titlu, versuri sau număr (ex: 352)" />
       <div className="list compact-list">

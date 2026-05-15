@@ -12,12 +12,13 @@
   "dependencies": {
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
-    "next": "^16.0.7",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "cfb": "latest",
     "jszip": "latest",
+    "next": "^16.2.6",
+    "openai": "^6.37.0",
     "pdf-parse": "latest",
-    "cfb": "latest"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@types/node": "latest",

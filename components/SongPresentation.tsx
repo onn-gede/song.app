@@ -87,7 +87,9 @@ export function SongPresentation({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        router.push(`/songs/${songId}`);
+        // Go back to the previous page instead of forcing the song page —
+        // preserves the user's navigation history (e.g. from meetings, search).
+        router.back();
         return;
       }
       if (["ArrowRight", "PageDown", " ", "Enter"].includes(event.key)) {

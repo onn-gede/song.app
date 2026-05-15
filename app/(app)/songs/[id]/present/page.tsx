@@ -25,7 +25,18 @@ export default async function SongPresentationPage({ params }: PageProps) {
     supabase.from("song_sections").select("id,section_type,section_label,position,content").eq("song_id", id).order("position"),
   ]);
 
-  if (!song) notFound();
+  // Debug: log query result to help diagnose unexpected 404s in present view
+  try {
+    // @ts-ignore - runtime-only debug
+    console.log("[present] song query result:", { song });
+  } catch (e) {}
+
+  if (!song) {
+    // If supabase didn't return the song here but the main song page does,
+    // it indicates an environment/session difference. Log and then 404.
+    try { console.error(`[present] song not found for id=${id}`); } catch (e) {}
+    notFound();
+  }
 
   const slides = (sections || []).map((section: any, index: number) => ({
     id: section.id || `section-${index}`,
