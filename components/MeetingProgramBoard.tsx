@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { effectiveMusicalKey } from "@/lib/musical-key";
 import { useMeetingState } from "./MeetingState";
 import { useRef, useState, useTransition } from "react";
 import {
@@ -70,7 +71,12 @@ function ProgramCard({
 }) {
   const state = useMeetingState();
   const [editing, setEditing] = useState(false);
+  const editorRef=useRef<HTMLDetailsElement>(null);
+  const saving=useRef(false);
+  const [savingInfo,startInfo]=useTransition();
+  const [infoError,setInfoError]=useState("");
   const song = item.songs;
+  const musicalKey=effectiveMusicalKey(item.selected_key,song?.default_key);
   const recentLabel = song ? getRecentUsageTooltip(recentUsage) : null;
   const textItemTitle = itemLabel(item);
 
@@ -94,7 +100,7 @@ function ProgramCard({
               {!song && item.custom_title ? <span className="badge muted-badge">{itemTypeLabels[item.item_type] || "Element"}</span> : null}
               {item.responsible_name ? <span className="badge">Solist: {item.responsible_name}</span> : null}
               {item.is_backup ? <span className="badge backup">backup</span> : null}
-              {song && (item.selected_key || song.default_key) ? <span className="badge">{item.selected_key || song.default_key}</span> : null}
+              {song ? <span className={`badge program-musical-key${musicalKey ? "" : " is-missing"}`} title={musicalKey ? "Tonalitatea cântării în acest program" : "Completează tonalitatea din editorul piesei"}>Tonalitate {musicalKey || "—"}</span> : null}
               {song && (item.selected_bpm || song.bpm) ? <span className="badge">{item.selected_bpm || song.bpm} BPM</span> : null}
               {song?.structure ? <span className="badge">{song.structure}</span> : null}
               {recentLabel ? <RecentUsageIcon usage={recentUsage} /> : null}
@@ -134,12 +140,24 @@ function ProgramCard({
           item.custom_text ? <details className="program-moment-text"><summary>Textul momentului</summary><p className="lyrics compact-text-v10">{item.custom_text}</p></details> : null
         )}
         {!song && item.notes ? <p className="muted small compact-note-clean" title={item.notes}>{item.notes}</p> : null}
-        {canManage ? <details className="responsible-editor print-hide"><summary title="Editează solistul și observațiile" aria-label="Solist și observații">✎</summary>
-          <form action={async data => { const saved = await updateItemResponsibleAction(data); state?.apply(saved); }} className="inline-form">
+        {canManage ? <details ref={editorRef} className="responsible-editor print-hide"><summary title="Editează solistul, observațiile și tonalitatea" aria-label="Solist și observații">✎</summary>
+          <form onSubmit={event=>{
+            event.preventDefault();if(saving.current)return;saving.current=true;setInfoError("");
+            const data=new FormData(event.currentTarget);
+            startInfo(async()=>{try{
+              const saved=await updateItemResponsibleAction(data);state?.apply(saved);
+              if(editorRef.current){editorRef.current.open=false;editorRef.current.querySelector('summary')?.focus({preventScroll:true});}
+            }catch(error){setInfoError(error instanceof Error?error.message:"Salvarea a eșuat.");}
+            finally{saving.current=false;}});
+          }}>
+            <fieldset disabled={savingInfo} className="meeting-form-fields">
             <input type="hidden" name="meeting_id" value={meetingId} /><input type="hidden" name="item_id" value={item.id} />
             <label className="label">Solist<input className="input" name="responsible_name" defaultValue={item.responsible_name || ""} maxLength={120} placeholder="Nume solist / echipă" /></label>
+            {song ? <label className="label">Tonalitate<input className="input" name="selected_key" defaultValue={item.selected_key || ""} maxLength={20} placeholder={song.default_key ? `Implicit: ${song.default_key}` : "Ex.: G, Em, F#"} /></label> : null}
             <label className="label">Observații<textarea className="textarea textarea-tight" name="notes" defaultValue={item.notes || ""} maxLength={5000} placeholder="Observații pentru această piesă" /></label>
-            <button className="btn secondary btn-compact">Salvează</button>
+            <div className="inline-form"><button className="btn secondary btn-compact" type="submit">{savingInfo?"Se salvează…":"Salvează"}</button><button className="btn secondary btn-compact" type="button" onClick={()=>{if(editorRef.current)editorRef.current.open=false;setInfoError("");}}>Închide</button></div>
+            </fieldset>
+            {infoError?<p className="error" role="alert">{infoError}</p>:null}
           </form>
         </details> : null}
       </div>

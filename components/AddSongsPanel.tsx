@@ -6,8 +6,12 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { addSongToMeetingAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
 import { RecentUsageIcon } from "@/components/RecentUsageIcon";
 
-export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: string; recentUsage?: Record<string, RecentUsage> }) {
+export function AddSongsPanel({ meetingId, recentUsage = {}, initiallyOpen = false }: { meetingId: string; recentUsage?: Record<string, RecentUsage>; initiallyOpen?:boolean }) {
   const state = useMeetingState();
+  const [open,setOpen]=useState(initiallyOpen);
+  const inputRef=useRef<HTMLInputElement>(null);
+  const adding=useRef(false);
+  useEffect(()=>{if(open)inputRef.current?.focus({preventScroll:true});},[open]);
   const cache=useRef(new Map<string,SongSearchResult[]>());
   const [searching,setSearching]=useState(false);
   const [query, setQuery] = useState("");
@@ -34,6 +38,7 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
   },[query]);
 
   function add(song: SongSearchResult, isBackup: boolean) {
+    if(adding.current)return;adding.current=true;
     setMessage(null);
     setError(null);
     startTransition(async () => {
@@ -46,23 +51,22 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
           notes: null
         });
         state?.apply(saved);
+        setQuery("");setResults([]);setSearching(false);
+        inputRef.current?.focus({preventScroll:true});
         setMessage(isBackup ? "Cântarea a fost adăugată ca backup." : "Cântarea a fost adăugată în program.");
       } catch (error) {
         setError(error instanceof Error ? error.message : "Nu am putut adăuga cântarea.");
-      }
+      } finally {adding.current=false;}
     });
   }
 
   return (
+    <details className="program-add-tray print-hide" open={open} onToggle={event=>setOpen(event.currentTarget.open)}>
+      <summary>+ Adaugă cântări</summary>
     <section className="card grid">
-      <div>
-
-        <h2>Adaugă cântări</h2>
-
-      </div>
       {message ? <p className="success">{message}</p> : null}
       {error ? <p className="error">{error}</p> : null}
-      <input aria-label="Caută cântări pentru program" autoComplete="off" className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Caută după titlu, versuri sau număr (ex: 352)" />
+      <input ref={inputRef} aria-label="Caută cântări pentru program" autoComplete="off" className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Caută după titlu, versuri sau număr (ex: 352)" />
       <p className="song-search-status" role="status" aria-live="polite">{searching?"Se caută…":results.length?`${results.length} rezultate`:query.trim().length>=2?"Nicio cântare găsită.":"Caută după titlu, versuri sau număr."}</p>
       <div className="list compact-list" aria-busy={searching}>
         {results.map((song) => {
@@ -86,6 +90,6 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
           );
         })}
       </div>
-    </section>
+    </section></details>
   );
 }

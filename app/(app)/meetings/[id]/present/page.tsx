@@ -8,7 +8,7 @@ export default async function ProgramPresentation({ params, searchParams }: {
   const [{ id }, query, { supabase }] = await Promise.all([params, searchParams, requireProfile()]);
   const [{ data: meeting, error: meetingError }, { data: items, error }] = await Promise.all([
     supabase.from("meetings").select("id,title").eq("id",id).maybeSingle(),
-    supabase.from("meeting_items").select("id,position,is_backup,item_type,custom_title,custom_text,songs(title,lyrics_text,song_sections(id,position,section_label,section_type,content))").eq("meeting_id",id).order("position")
+    supabase.from("meeting_items").select("id,position,is_backup,item_type,custom_title,custom_text,selected_key,songs(title,default_key,lyrics_text,song_sections(id,position,section_label,section_type,content))").eq("meeting_id",id).order("position")
   ]);
   if (error || meetingError) throw new Error("Programul nu poate fi încărcat momentan.");
   if (!meeting) notFound();

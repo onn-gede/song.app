@@ -367,9 +367,11 @@ export async function updateItemResponsibleAction(formData: FormData) {
   const itemId = readString(formData,"item_id");
   const name = readString(formData,"responsible_name");
   const notes = readString(formData,"notes");
+  const musicalKey=readString(formData,"selected_key");
+  if(musicalKey.length>20)throw new Error("Tonalitatea poate avea maximum 20 de caractere.");
   if (notes.length > 5000) throw new Error("Observațiile pot avea maximum 5000 de caractere.");
   if (!meetingId || !itemId || name.length > 120) throw new Error("Responsabilul poate avea maximum 120 de caractere.");
-  const { error } = await supabase.from("meeting_items").update({ responsible_name: name || null, notes: notes || null }).eq("id",itemId).eq("meeting_id",meetingId);
+  const { error } = await supabase.from("meeting_items").update({ responsible_name: name || null, notes: notes || null, ...(formData.has("selected_key")?{selected_key:musicalKey||null}:{}) }).eq("id",itemId).eq("meeting_id",meetingId);
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`); revalidatePath("/program", "layout");
   refresh();

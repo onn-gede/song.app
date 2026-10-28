@@ -21,7 +21,7 @@ export default async function SongPresentationPage({ params }: PageProps) {
   const supabase = await createClient();
 
   const [{ data: song }, { data: sections }] = await Promise.all([
-    supabase.from("songs").select("id,title,lyrics_text").eq("id", id).single(),
+    supabase.from("songs").select("id,title,default_key,lyrics_text").eq("id", id).single(),
     supabase.from("song_sections").select("id,section_type,section_label,position,content").eq("song_id", id).order("position"),
   ]);
 
@@ -33,5 +33,5 @@ export default async function SongPresentationPage({ params }: PageProps) {
     content: stripRepeatedSongTitleLines(section.content || "", song.title),
   }));
 
-  return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} />;
+  return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} defaultKey={song.default_key} />;
 }

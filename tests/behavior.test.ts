@@ -70,3 +70,14 @@ test('v46 program completion uses Bucharest calendar day and handles daylight sa
   assert.equal(bucharestDayStart(new Date('2026-03-29T12:00Z')),'2026-03-28T22:00:00.000Z');
   assert.equal(bucharestDayStart(new Date('2026-10-25T12:00Z')),'2026-10-24T21:00:00.000Z');
 });
+
+test('v50 presentation carries each song key, program override wins, and moments do not inherit it',()=>{
+ const song:PresentationItem={id:'a',position:1,is_backup:false,item_type:'song',custom_title:null,custom_text:null,selected_key:' F# ',songs:{title:'Titlu',default_key:'G',lyrics_text:'Strofa unu\n\nStrofa doi',song_sections:[]}};
+ const original:PresentationItem={...song,id:'b',position:2,selected_key:null};
+ const unknown:PresentationItem={...song,id:'c',position:3,selected_key:null,songs:{...song.songs!,default_key:null}};
+ const moment:PresentationItem={id:'m',position:4,is_backup:false,item_type:'prayer',custom_title:'Rugăciune',custom_text:null,songs:null};
+ const slides=buildProgramSlides([song,original,unknown,moment]);
+ assert.deepEqual(slides.map(s=>s.musicalKey),['F#','F#','G','G',null,null,undefined]);
+ const sections:PresentationItem={...song,songs:{...song.songs!,song_sections:[{id:'verse',position:1,section_label:null,section_type:'verse',content:'Versuri'}]}};
+ assert.equal(buildProgramSlides([sections])[0].musicalKey,'F#');
+});

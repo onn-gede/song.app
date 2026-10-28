@@ -8,6 +8,7 @@ type PresentationSlide = {
   id: string;
   label: string;
   content: string;
+  musicalKey?:string|null;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -48,12 +49,14 @@ export function SongPresentation({
   slides,
   fallbackLyrics,
   returnHref,
+  defaultKey,
 }: {
   songId: string;
   title: string;
   slides: PresentationSlide[];
   fallbackLyrics?: string | null;
   returnHref?: string;
+  defaultKey?:string|null;
 }) {
   const router = useRouter();
   const exitHref = returnHref || `/songs/${songId}`;
@@ -71,6 +74,7 @@ export function SongPresentation({
   const [index, setIndex] = useState(0);
   const [fontScale, setFontScale] = useState(92);
   const current = allSlides[index];
+  const musicalKey=current?.musicalKey!==undefined ? current.musicalKey : defaultKey;
   const currentLines = useMemo(() => normalizeLines(current?.content || ""), [current?.content]);
   const autoScale = useMemo(() => calculateAutoScale(currentLines), [currentLines]);
   const combinedScale = autoScale * (fontScale / 100);
@@ -147,7 +151,7 @@ export function SongPresentation({
       </header>
 
       <main className="presentation-slide" onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}>
-        <div className="presentation-label">{current.label}</div>
+        <div className="presentation-slide-heading"><div className="presentation-label">{current.label}</div>{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>
         <div
           className="presentation-lyrics"
           style={{

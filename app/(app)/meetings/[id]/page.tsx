@@ -204,7 +204,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             <p>{formatDateTime(meeting.meeting_date)}</p>
           </div>
 
-          {editable ? <details className="program-add-tray print-hide"><summary>+ Adaugă cântări</summary><AddSongsPanel meetingId={meeting.id} recentUsage={recentUsage} /></details> : null}
+          {editable ? <AddSongsPanel key={meeting.id} meetingId={meeting.id} recentUsage={recentUsage} initiallyOpen={typedItems.length === 0} /> : null}
           <MeetingProgramBoard meetingId={meeting.id} items={typedItems} recentUsage={recentUsage} canManage={editable} />
         </section>
 
