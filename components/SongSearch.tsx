@@ -4,30 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AddSongToMeeting } from "./AddSongToMeeting";
 import { RecentUsageIcon } from "@/components/RecentUsageIcon";
-import { getRecentUsageAction, searchSongsAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
+import { searchSongsWithUsageAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
 
-export function SongSearch({ autofocus = false }: { autofocus?: boolean }) {
+export function SongSearch({ autofocus = false, canAdd = true, initialRecent }: { autofocus?: boolean; canAdd?: boolean; initialRecent?: Record<string, RecentUsage> }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SongSearchResult[]>([]);
-  const [recent, setRecent] = useState<Record<string, RecentUsage>>({});
+  const [recent, setRecent] = useState<Record<string, RecentUsage>>(initialRecent || {});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadRecentUsage() {
-      try {
-        const map = await getRecentUsageAction(30);
-        if (!cancelled) setRecent(map);
-      } catch (error) {
-        if (!cancelled) console.warn("Nu am putut încărca istoricul recent:", error);
-      }
-    }
-
-    void loadRecentUsage();
-    return () => { cancelled = true; };
-  }, []);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -45,8 +29,8 @@ export function SongSearch({ autofocus = false }: { autofocus?: boolean }) {
 
     const handle = window.setTimeout(async () => {
       try {
-        const data = await searchSongsAction(trimmed, 25);
-        if (!cancelled) setResults(data);
+        const data = await searchSongsWithUsageAction(trimmed, 25, initialRecent === undefined);
+        if (!cancelled) { setResults(data.songs); if (data.recent) setRecent(data.recent); }
       } catch (error) {
         if (!cancelled) {
           setError(error instanceof Error ? error.message : "Căutarea a eșuat.");
@@ -61,7 +45,7 @@ export function SongSearch({ autofocus = false }: { autofocus?: boolean }) {
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [query]);
+  }, [query, initialRecent]);
 
   const helper = useMemo(() => {
     if (query.trim().length < 2) return "Caută după titlu, versuri, cuvinte fără diacritice sau număr.";
@@ -72,13 +56,14 @@ export function SongSearch({ autofocus = false }: { autofocus?: boolean }) {
   return (
     <section className="card grid">
       <input
+        aria-label="Caută în biblioteca de cântări"
         className="input big-search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Caută o cântare... ex: 352, Isus, har, cruce, furtuni"
         autoFocus={autofocus}
       />
-      <div className="muted small">{helper}</div>
+      <div className="muted small" role="status" aria-live="polite">{helper}</div>
 
       {error ? <p className="error">{error}</p> : null}
 
@@ -96,7 +81,7 @@ export function SongSearch({ autofocus = false }: { autofocus?: boolean }) {
                   {usage ? <RecentUsageIcon usage={usage} /> : null}
                 </div>
               </div>
-              <AddSongToMeeting songId={song.song_id} songTitle={song.title} />
+              {canAdd ? <AddSongToMeeting songId={song.song_id} songTitle={song.title} /> : null}
             </div>
           );
         })}

@@ -1,105 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth";
 import { signOutAction } from "@/app/login/actions";
-
-const navGroups = [
-  {
-    label: "Principal",
-    items: [
-      { href: "/dashboard", icon: "⌘", title: "Dashboard", hint: "Căutare și sumar" },
-      { href: "/songs", icon: "♫", title: "Cântări", hint: "Biblioteca completă" },
-      { href: "/meetings", icon: "▦", title: "Programe", hint: "Întâlniri și playlisturi" }
-    ]
-  },
-  {
-    label: "Bibliotecă",
-    items: [
-      { href: "/collections", icon: "▣", title: "Colecții", hint: "Surse și cărți" },
-      { href: "/categories", icon: "#", title: "Categorii", hint: "Tematici" },
-      { href: "/import", icon: "⇧", title: "Import", hint: "PPTX, TXT, PDF" },
-      { href: "/review", icon: "✓", title: "Verificare", hint: "Importuri noi" },
-      { href: "/duplicates", icon: "≋", title: "Duplicate", hint: "Unificare" }
-    ]
-  },
-  {
-    label: "Setări",
-    items: [
-      { href: "/external-sources", icon: "↻", title: "Surse externe", hint: "Sincronizări" },
-      { href: "/admin", icon: "⚙", title: "Administrare", hint: "Date aplicație" }
-    ]
-  }
-];
-
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name,email,role,is_active")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.is_active) {
-    await supabase.auth.signOut();
-    redirect("/login");
-  }
-
-  const displayName = profile?.full_name || profile?.email || user.email || "Utilizator";
-  const initials = displayName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.slice(0, 1).toUpperCase())
-    .join("") || "U";
-
-  return (
-    <div className="page-shell app-shell-v39">
-      <aside className="sidebar sidebar-v39">
-        <Link href="/dashboard" className="brand brand-v39" aria-label="Dashboard biblioteca de cântări">
-          <span className="brand-mark brand-mark-v39">♪</span>
-          <span className="brand-text brand-text-v39">
-            <strong>Cântări</strong>
-            <span>Library & Planning</span>
-          </span>
-        </Link>
-
-        <nav className="nav nav-v39" aria-label="Meniu principal">
-          {navGroups.map((group) => (
-            <div className="nav-group-v39" key={group.label}>
-              <span className="nav-label nav-label-v39">{group.label}</span>
-              <div className="nav-group-items-v39">
-                {group.items.map((item) => (
-                  <Link className="nav-link-v39" href={item.href} key={item.href}>
-                    <span className="nav-icon-v39" aria-hidden="true">{item.icon}</span>
-                    <span className="nav-link-copy-v39">
-                      <span>{item.title}</span>
-                      <small>{item.hint}</small>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        <div className="sidebar-footer sidebar-footer-v39">
-          <div className="user-pill user-pill-v39">
-            <span className="avatar avatar-v39">{initials}</span>
-            <span className="user-copy-v39">
-              <strong>{displayName}</strong>
-              <span>{profile?.role || "viewer"}</span>
-            </span>
-          </div>
-          <form action={signOutAction}>
-            <button className="btn secondary full-width btn-sidebar-v39" type="submit">Ieșire</button>
-          </form>
-        </div>
-      </aside>
-      <main className="main main-v39">{children}</main>
-    </div>
-  );
+import { AppNavigation } from "@/components/AppNavigation";
+import { WorkspaceShell } from "@/components/WorkspaceShell";
+import { Icon } from "@/components/Icon";
+export default async function AppLayout({children}:{children:React.ReactNode}) {
+ let context;try{context=await requireProfile();}catch{redirect("/login");}
+ const {profile,user}=context;
+ const name=profile.full_name||profile.email||user.email||"Utilizator";
+ const initials=String(name).split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0].toUpperCase()).join("");
+ const roles:Record<string,string>={admin:"Administrator",editor:"Editor",worship_leader:"Coordonator",viewer:"Vizualizare"};
+ return <WorkspaceShell sidebar={<>
+  <Link href="/dashboard" className="workspace-brand" aria-label="SongApp BCBgiroc · Acasă"><span className="workspace-brand-mark"><Icon name="music" size={25}/></span><span><strong>SongApp<span className="brand-period">.</span></strong><small>BCBgiroc</small></span></Link>
+  <AppNavigation role={profile.role} showExternalSync={process.env.ENABLE_EXTERNAL_SYNC==="true"}/>
+  <div className="workspace-sidebar-note"><Icon name="music" size={28}/><p>Mai puțin timp de pregătire.<br/><strong>Mai mult loc pentru muzică.</strong></p></div>
+  <div className="workspace-user"><span className="workspace-avatar">{initials}</span><span className="workspace-user-copy"><strong><Link href="/account">{name}</Link></strong><small>{roles[profile.role]||profile.role}</small></span><form action={signOutAction}><button type="submit" aria-label="Ieșire din cont" title="Ieșire din cont" className="workspace-logout"><Icon name="logout" size={18}/></button></form></div>
+ </>}>{children}</WorkspaceShell>;
 }

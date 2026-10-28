@@ -1,116 +1,29 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { SongSearch } from "@/components/SongSearch";
+import { requireProfile,canEdit } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
-
-function DashboardStat({ href, value, label, meta }: { href?: string; value: number | string; label: string; meta: string }) {
-  const content = (
-    <>
-      <span className="dashboard-stat-value">{value}</span>
-      <span className="dashboard-stat-label">{label}</span>
-      <small>{meta}</small>
-    </>
-  );
-
-  if (href) return <Link className="dashboard-stat-card" href={href}>{content}</Link>;
-  return <div className="dashboard-stat-card">{content}</div>;
-}
-
+import { Icon } from "@/components/Icon";
+import { CreateMeetingModal } from "@/components/CreateMeetingModal";
 export default async function DashboardPage() {
-  const supabase = await createClient();
-
-  const [{ count: songsCount }, { count: meetingsCount }, { count: categoriesCount }, { count: collectionsCount }, { count: reviewCount }, { data: recentUsage }, { data: recentMeetings }] = await Promise.all([
-    supabase.from("songs").select("id", { count: "exact", head: true }),
-    supabase.from("meetings").select("id", { count: "exact", head: true }),
-    supabase.from("categories").select("id", { count: "exact", head: true }),
-    supabase.from("song_collections").select("id", { count: "exact", head: true }),
-    supabase.from("song_files").select("id", { count: "exact", head: true }).eq("import_status", "needs_review"),
-    supabase.rpc("get_song_recent_usage", { days_back: 30 }),
-    supabase.from("meetings").select("id,title,meeting_date,status").order("meeting_date", { ascending: false }).limit(5)
-  ]);
-
-  const reviewTotal = reviewCount ?? 0;
-  const recentWarnings = (recentUsage || []).slice(0, 5);
-  const meetings = recentMeetings || [];
-
-  return (
-    <div className="dashboard-v39">
-      <section className="dashboard-hero-v39">
-        <div className="dashboard-hero-copy-v39">
-          <div className="eyebrow">Dashboard</div>
-          <h1>Planificare cântări pentru întâlniri</h1>
-          <p className="muted">Caută rapid în bibliotecă, verifică importurile și pregătește playlisturi pentru fiecare program.</p>
-          <div className="dashboard-actions-v39">
-            <Link className="btn" href="/meetings">Creează / vezi programe</Link>
-            <Link className="btn secondary" href="/import">Import cântări</Link>
-            {reviewTotal > 0 ? <Link className="btn ghost-v39" href="/review">{reviewTotal} de verificat</Link> : null}
-          </div>
-        </div>
-        <div className="dashboard-search-panel-v39">
-          <span className="panel-kicker-v39">Căutare rapidă</span>
-          <SongSearch autofocus />
-        </div>
-      </section>
-
-      <section className="dashboard-stat-grid-v39" aria-label="Statistici aplicație">
-        <DashboardStat value={songsCount ?? 0} label="Cântări" meta="în biblioteca activă" href="/songs" />
-        <DashboardStat value={meetingsCount ?? 0} label="Programe" meta="create până acum" href="/meetings" />
-        <DashboardStat value={collectionsCount ?? 0} label="Colecții" meta="surse organizate" href="/collections" />
-        <DashboardStat value={categoriesCount ?? 0} label="Categorii" meta="tematici definite" href="/categories" />
-        <DashboardStat value={reviewTotal} label="De verificat" meta="importuri recente" href="/review" />
-      </section>
-
-      <section className="dashboard-content-grid-v39">
-        <div className="dashboard-card-v39">
-          <div className="dashboard-card-head-v39">
-            <div>
-              <span className="panel-kicker-v39">Activitate</span>
-              <h2>Programe recente</h2>
-            </div>
-            <Link className="text-action-v39" href="/meetings">Vezi toate</Link>
-          </div>
-          <div className="list compact-list">
-            {meetings.map((meeting: any) => (
-              <Link className="dashboard-row-v39" href={`/meetings/${meeting.id}`} key={meeting.id}>
-                <span className="row-main">
-                  <span className="row-title">{meeting.title}</span>
-                  <span className="muted small">{formatDateTime(meeting.meeting_date)}</span>
-                </span>
-                <span className="row-arrow-v39">→</span>
-              </Link>
-            ))}
-            {meetings.length === 0 ? <p className="muted">Nu există programe încă.</p> : null}
-          </div>
-        </div>
-
-        <div className="dashboard-card-v39">
-          <div className="dashboard-card-head-v39">
-            <div>
-              <span className="panel-kicker-v39">Atenție</span>
-              <h2>Folosite în ultimele 30 zile</h2>
-            </div>
-            <Link className="text-action-v39" href="/songs">Caută alternative</Link>
-          </div>
-          <div className="list compact-list">
-            {recentWarnings.map((item: any) => (
-              <Link className="dashboard-row-v39" href={`/songs/${item.song_id}`} key={item.song_id}>
-                <span className="row-main">
-                  <span className="row-title">{item.title}</span>
-                  <span className="muted small">Ultima folosire: {formatDateTime(item.last_used_at)} · {item.last_meeting_title}</span>
-                </span>
-                <span className="badge danger-soft-v39">{item.times_used}x</span>
-              </Link>
-            ))}
-            {recentWarnings.length === 0 ? <p className="muted">Nu există încă folosiri în ultimele 30 de zile.</p> : null}
-          </div>
-        </div>
-      </section>
-
-      <section className="dashboard-quick-grid-v39">
-        <Link href="/external-sources" className="quick-tile-v39"><strong>Surse externe</strong><span>Sincronizare și importuri Resurse Creștine</span></Link>
-        <Link href="/duplicates" className="quick-tile-v39"><strong>Duplicate</strong><span>Curăță cântări similare</span></Link>
-        <Link href="/admin" className="quick-tile-v39"><strong>Administrare</strong><span>Resetări și instrumente DB</span></Link>
-      </section>
-    </div>
-  );
+ const {supabase,profile}=await requireProfile(),editable=canEdit(profile.role);
+ const [{count:songsCount},{count:meetingsCount},{count:collectionsCount},{count:reviewCount},{data:recentUsage},{data:recentMeetings},{data:next}]=await Promise.all([
+  supabase.from("songs").select("id",{count:"exact",head:true}).eq("is_active",true),
+  supabase.from("meetings").select("id",{count:"exact",head:true}).eq("is_template",false),
+  supabase.from("song_collections").select("id",{count:"exact",head:true}).eq("is_active",true),
+  supabase.from("song_files").select("id",{count:"exact",head:true}).eq("import_status","needs_review"),
+  supabase.rpc("get_song_recent_usage",{days_back:30}).limit(5),
+  supabase.from("meetings").select("id,title,meeting_date,status").eq("is_template",false).order("meeting_date",{ascending:false}).limit(4),
+  supabase.from("meetings").select("id,title,meeting_date").eq("is_template",false).gte("meeting_date",new Date().toISOString()).neq("status","archived").order("meeting_date").limit(1).maybeSingle()
+ ]);
+ const firstName=String(profile.full_name||"").split(/\s+/)[0];
+ const stats=[{label:"Cântări în bibliotecă",value:songsCount||0,href:"/songs",icon:"music"},{label:"Programe pregătite",value:meetingsCount||0,href:"/meetings",icon:"calendar"},{label:"Colecții active",value:collectionsCount||0,href:"/collections",icon:"folder"},...(editable?[{label:"Importuri de verificat",value:reviewCount||0,href:"/review",icon:"check"}]:[])];
+ return <div className="dashboard-v44"><div className="page-heading-v44"><div><div className="eyebrow">Bine ai revenit{firstName?`, ${firstName}`:""}</div><h1>Pregătim următorul program?</h1><p>Cântările, colecțiile și întâlnirile echipei, într-un singur loc.</p></div>{editable?<CreateMeetingModal/>:null}</div>
+  <div className="dashboard-feature-grid"><section className="next-program-feature"><div className="feature-kicker"><Icon name="calendar" size={17}/>{next?"Următorul program":"Programele echipei"}</div><h2>{next?.title||"Un program bun începe cu o cântare."}</h2><p>{next?formatDateTime(next.meeting_date):"Alege cântările și organizează momentele întâlnirii."}</p><div className="inline-form"><Link href={next?`/meetings/${next.id}`:"/meetings"} className="feature-primary">{next?"Deschide programul":"Vezi programele"}<Icon name="arrow" size={18}/></Link>{next?<Link className="feature-secondary" href={`/meetings/${next.id}/present`}><Icon name="play" size={16}/>Prezintă</Link>:null}</div><Icon name="music" size={150} className="feature-watermark"/></section>
+   <Link href="/songs" className="library-feature-card"><span className="feature-icon"><Icon name="search" size={25}/></span><h2>Găsește cântarea potrivită.</h2><p>Caută după titlu, versuri sau număr și filtrează după colecție și tematică.</p><span className="text-link-v44">Explorează biblioteca<Icon name="arrow" size={17}/></span></Link>
+  </div>
+  <section className="dashboard-stats-v44" aria-label="Statistici aplicație">{stats.map(s=><Link href={s.href} className="dashboard-stat-v44" key={s.label}><Icon name={s.icon} size={20}/><strong>{s.value.toLocaleString("ro-RO")}</strong><span>{s.label}</span></Link>)}</section>
+  <div className="dashboard-lists-v44"><section className="surface-v44"><div className="surface-heading"><div><span className="eyebrow">Organizare</span><h2>Programe recente</h2></div><Link href="/meetings" className="text-link-v44">Vezi toate<Icon name="arrow" size={16}/></Link></div>{recentMeetings?.length?recentMeetings.map(m=><Link key={m.id} href={`/meetings/${m.id}`} className="dashboard-list-row"><span className="small-calendar"><Icon name="calendar"/></span><span><strong>{m.title}</strong><small>{formatDateTime(m.meeting_date)}</small></span><Icon name="chevron" size={18}/></Link>):<p className="surface-empty">Programele create vor apărea aici.</p>}</section>
+   <section className="surface-v44"><div className="surface-heading"><div><span className="eyebrow">Repertoriu</span><h2>Cântate recent</h2></div><span className="muted small">Ultimele 30 de zile</span></div>{recentUsage?.length?recentUsage.map((s:any)=><Link key={s.song_id} href={`/songs/${s.song_id}`} className="dashboard-list-row"><span className="small-music"><Icon name="music"/></span><span><strong>{s.title}</strong><small>{s.last_meeting_title||formatDateTime(s.last_used_at)}</small></span><span className="usage-pill">{s.times_used}×</span></Link>):<p className="surface-empty">Cântările folosite în programe vor apărea aici.</p>}</section>
+  </div>
+  {editable?<Link className="dashboard-import-banner" href="/import"><span className="feature-icon"><Icon name="upload"/></span><span><strong>Ai descoperit o cântare nouă?</strong><small>Importă dintr-un link, fișier sau text. Verifică versurile, apoi alege colecția.</small></span><span className="text-link-v44">Importă o cântare<Icon name="arrow" size={18}/></span></Link>:null}
+ </div>;
 }

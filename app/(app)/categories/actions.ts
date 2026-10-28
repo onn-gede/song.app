@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth";
+
+import { revalidatePath, refresh } from "next/cache";
 
 function readString(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
@@ -33,12 +34,13 @@ function slugifyRo(value: string) {
 }
 
 export async function createCategoryAction(formData: FormData) {
+  await requireProfile("editor");
   const name = readString(formData, "name");
   const parentId = readString(formData, "parent_id");
 
   if (!name) throw new Error("Numele categoriei este obligatoriu.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const baseSlug = slugifyRo(name);
 
   const { data: existing } = await supabase
@@ -65,17 +67,19 @@ export async function createCategoryAction(formData: FormData) {
 
   revalidatePath("/categories");
   revalidatePath("/songs");
+  refresh();
 }
 
 
 export async function deleteCategoryAction(formData: FormData) {
+  await requireProfile("editor");
   const categoryId = readString(formData, "category_id");
   const confirm = readString(formData, "confirm");
 
   if (!categoryId) throw new Error("Lipsește categoria.");
   if (confirm !== "STERGE") throw new Error("Pentru ștergere trebuie să scrii exact: STERGE");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase
     .from("categories")
     .delete()
@@ -86,4 +90,5 @@ export async function deleteCategoryAction(formData: FormData) {
   revalidatePath("/categories");
   revalidatePath("/songs");
   revalidatePath("/dashboard");
+  refresh();
 }

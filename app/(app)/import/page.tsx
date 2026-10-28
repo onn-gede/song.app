@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth";
+import { ImportLinkWizard } from "@/components/ImportLinkWizard";
+import { ImportWorkspace } from "@/components/ImportWorkspace";
 import { ImportFilesWizard } from "@/components/ImportFilesWizard";
 import { importTextSongAction } from "./actions";
 
@@ -48,20 +50,22 @@ function SongMetadataFields() {
 }
 
 export default async function ImportPage() {
-  const supabase = await createClient();
-  const { data: collections } = await supabase
+  const { supabase } = await requireProfile("editor");
+  const { data: collections, error } = await supabase
     .from("song_collections")
     .select("id,name,short_code,source_type")
     .eq("is_active", true)
     .order("name");
 
+  if (error) throw new Error("Colecțiile nu pot fi încărcate momentan.");
+
   return (
     <>
-      <div className="top-row">
+      <div className="top-row page-heading-v44">
         <div>
-          <div className="eyebrow">Import</div>
+          <div className="eyebrow">Extinde repertoriul echipei</div>
           <h1>Importă cântări</h1>
-          <p className="muted">Adaugă cântări din TXT, PPTX, PDF sau ZIP. Pentru importul unic local, .ppt vechi merge doar dacă ENABLE_LEGACY_PPT_IMPORT este activ și LibreOffice este instalat.</p>
+          <p className="muted">Alege sursa cântării, verifică versurile și adaug-o în colecțiile tale.</p>
         </div>
         <div className="inline-form">
           <Link className="btn secondary" href="/collections">Colecții</Link>
@@ -69,43 +73,24 @@ export default async function ImportPage() {
         </div>
       </div>
 
-      <div className="grid import-layout">
-        <section className="card import-primary-card">
-          <div className="section-editor-header">
-            <div>
-              <h2>Import din fișiere</h2>
-              <p className="muted small">Poți încărca un fișier sau mai multe. Pentru multe PPT/PPTX odată, poți încărca și o arhivă ZIP.</p>
-            </div>
-            <span className="badge">TXT · PPTX · PDF · ZIP · PPT local</span>
-          </div>
-
-          <ImportFilesWizard collections={collections || []} />
-        </section>
-
-        <aside className="card-soft import-help-card">
-          <h2>Recomandare pentru PPT</h2>
-          <div className="tip-list">
-            <p><strong>1.</strong> Pentru cântările din PowerPoint folosește <strong>.pptx</strong>. Pentru importul tău unic local, fișierele vechi <strong>.ppt</strong> se convertesc automat doar dacă ai <strong>ENABLE_LEGACY_PPT_IMPORT=true</strong> și LibreOffice instalat.</p>
-            <p><strong>2.</strong> Numele fișierului poate fi de tipul <strong>352 - Titlu cântare.ppt / .pptx</strong>; aplicația preia automat numărul și titlul.</p>
-            <p><strong>3.</strong> Pentru import masiv, pune mai multe PPTX/TXT/PDF într-un ZIP. PPT vechi în ZIP merge doar în modul local temporar cu LibreOffice activ.</p>
-            <p><strong>4.</strong> PDF-urile trebuie să aibă text selectabil. Pentru scanări va fi nevoie de OCR separat.</p>
-          </div>
-        </aside>
-      </div>
-
-      <div className="grid import-layout" style={{ marginTop: 16 }}>
-        <section className="card">
-          <h2>Import manual din text</h2>
-          <form action={importTextSongAction} className="form-grid">
+      <ImportWorkspace
+        link={<ImportLinkWizard collections={collections || []}/>}
+        files={<><h2>Importă din fișiere</h2>{process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB ? <p className="muted small">Maximum {process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB} MB în total per lot în varianta online.</p> : null}<p className="muted">Încarcă unul sau mai multe fișiere, verifică preview-ul și confirmă importul.</p><ImportFilesWizard collections={collections || []}/><details className="import-format-help"><summary>Formate acceptate și recomandări</summary><p>PPTX, TXT și PDF cu text selectabil. Poți grupa mai multe fișiere într-un ZIP. Pentru fișierele vechi PPT, salvează mai întâi ca PPTX din PowerPoint.</p></details></>}
+        text={<><h2>Adaugă din text</h2><p className="muted">Lipește versurile, cu o linie goală între strofe. După salvare poți verifica secțiunile în editor.</p>          <form action={importTextSongAction} className="form-grid">
             <label className="label">Titlu cântare
               <input className="input" name="title" placeholder="ex: Când furtuni în viață-mi vin" required />
             </label>
 
+            <label className="label">Versuri
+              <textarea className="textarea import-lyrics" name="lyrics_text" required placeholder={"Strofa 1\n...\n\nRefren\n...\n\nStrofa 2\n..."} />
+            </label>
+
+            <details className="import-optional-fields"><summary>Detalii opționale și colecție</summary><div className="form-grid">
             <CollectionFields collections={collections || []} idPrefix="manual-" />
 
             <div className="form-two">
               <label className="label">Număr în colecție
-                <input className="input" name="song_number" placeholder="ex: 352 sau 001b" />
+                <input className="input" name="song_number" placeholder="Automat: următorul număr disponibil" />
               </label>
               <label className="label">Tip sursă
                 <select className="select" name="source_type" defaultValue="txt">
@@ -116,28 +101,14 @@ export default async function ImportPage() {
 
             <SongMetadataFields />
 
-            <label className="label">Versuri
-              <textarea className="textarea import-lyrics" name="lyrics_text" required placeholder={"Strofa 1\n...\n\nRefren\n...\n\nStrofa 2\n..."} />
-            </label>
-
             <label className="label">Note interne
               <textarea className="textarea" name="notes" placeholder="Observații despre cântare, sursă, adaptări, variante etc." />
             </label>
 
+            </div></details>
             <button className="btn secondary" type="submit">Importă textul și verifică versurile</button>
-          </form>
-        </section>
-
-        <aside className="card-soft">
-          <h2>Cum pregătești textul</h2>
-          <div className="tip-list">
-            <p><strong>1.</strong> Pune o linie goală între strofe/refren. Aplicația va crea automat secțiuni separate.</p>
-            <p><strong>2.</strong> Dacă scrii „Refren” la începutul unui bloc, secțiunea va fi marcată ca refren.</p>
-            <p><strong>3.</strong> După import ajungi direct în editorul de versuri, unde poți corecta ordinea și etichetele.</p>
-            <p><strong>4.</strong> Importul intră cu status „de verificat”, ca să nu amestecăm cântările curate cu cele neverificate.</p>
-          </div>
-        </aside>
-      </div>
+          </form></>}
+      />
     </>
   );
 }

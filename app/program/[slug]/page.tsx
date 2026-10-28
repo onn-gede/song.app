@@ -1,3 +1,7 @@
+import { PublicProgramLive } from "@/components/PublicProgramLive";
+import { publicProgramVersion } from "@/lib/public-program-version";
+import { meetingStatus } from "@/lib/meeting-state";
+import { MeetingPrintDocument } from "@/components/MeetingPrintDocument";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
 import { PrintButton } from "@/components/PrintButton";
@@ -10,6 +14,7 @@ type PageProps = { params: Promise<{ slug: string }> };
 
 type PublicMeetingItem = {
   position: number;
+  responsible_name?: string | null;
   item_type: string;
   is_backup: boolean;
   custom_title: string | null;
@@ -76,12 +81,13 @@ function LyricsDetails({ text }: { text?: string | null }) {
 
 function PublicItem({ item, index }: { item: PublicMeetingItem; index: number }) {
   return (
-    <div className={`public-program-item ${item.is_backup ? "public-backup-item" : ""}`}>
+    <div className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}>
       <div className="program-position">{index + 1}</div>
       <div className="program-main">
         <div className="program-title public-program-title-compact">{item.song?.title || item.custom_title || "Element"}</div>
         <div className="badges compact-badges">
           <span className="badge">{item.song ? "Cântare" : (itemTypeLabels[item.item_type] || "Element")}</span>
+          {item.responsible_name ? <span className="badge">Solist: {item.responsible_name}</span> : null}
           {sourceBadge(item.song)}
           {item.is_backup ? <span className="badge backup">backup</span> : null}
           {item.song && (item.selected_key || item.song.default_key) ? <span className="badge">Tonalitate: {item.selected_key || item.song.default_key}</span> : null}
@@ -148,12 +154,17 @@ export default async function PublicProgramPage({ params }: PageProps) {
   const publicUrl = `${siteUrl}/program/${slug}`;
 
   return (
-    <main className="public-page public-page-v10">
+    <main className="public-page public-page-v10 public-v48">
+      <PublicProgramLive slug={slug} version={publicProgramVersion(data)} />
+      <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={items.map((item, index) => ({ ...item, id: String(index), song_id: item.song ? String(index) : null, songs: item.song ? { ...item.song, id: String(index) } : null }))} />
       <header className="public-header public-header-v10">
         <div>
-          <div className="eyebrow">Program public</div>
+          <div className="eyebrow">SongApp BCBgiroc · Program partajat</div>
           <h1>{meeting.title}</h1>
+          {meetingStatus(meeting.meeting_date,"draft")==="finished" ? <span className="badge">Finalizat</span> : null}
           <p>{formatDateTime(meeting.meeting_date)}</p>
+          {meeting.principal_responsible ? <p>Responsabil principal: {meeting.principal_responsible}</p> : null}
+          {meeting.secondary_responsibles?.length ? <p>Responsabili secundari: {meeting.secondary_responsibles.join(", ")}</p> : null}
         </div>
         <div className="inline-form print-hide">
           <CopyButton text={publicUrl} />
@@ -183,18 +194,18 @@ export default async function PublicProgramPage({ params }: PageProps) {
         ) : null}
 
         {contributions.length > 0 ? (
-          <div className="public-external-block">
+          <details className="public-external-block print-hide"><summary>Propuneri externe ({contributions.length})</summary>
             <div className="eyebrow external-eyebrow">Propuneri externe neaprobate</div>
             <div className="public-program-list">
               {contributions.map((item, index) => <PublicContributionItem key={item.id} item={item} index={index} />)}
             </div>
-          </div>
+          </details>
         ) : null}
       </section>
 
-      <PublicContributionPanel slug={slug} positionOptions={positionOptions} />
+      {meeting.allow_contributions ? <><details className="card public-optional-panel print-hide"><summary>Propune o cântare</summary><PublicContributionPanel slug={slug} positionOptions={positionOptions} /></details>
 
-      <PublicTextContributionForm slug={slug} positionOptions={positionOptions} />
+      <details className="card public-optional-panel print-hide"><summary>Propune o intervenție text</summary><PublicTextContributionForm slug={slug} positionOptions={positionOptions} /></details></> : null}
 
       {contributionHistory.length > 0 ? (
         <details className="card public-program-card print-hide history-toggle-card">

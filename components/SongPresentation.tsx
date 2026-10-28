@@ -47,13 +47,16 @@ export function SongPresentation({
   title,
   slides,
   fallbackLyrics,
+  returnHref,
 }: {
   songId: string;
   title: string;
   slides: PresentationSlide[];
   fallbackLyrics?: string | null;
+  returnHref?: string;
 }) {
   const router = useRouter();
+  const exitHref = returnHref || `/songs/${songId}`;
   const allSlides = useMemo(() => {
     const prepared = slides
       .map((slide) => ({
@@ -87,7 +90,7 @@ export function SongPresentation({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        router.push(`/songs/${songId}`);
+        router.push(exitHref);
         return;
       }
       if (["ArrowRight", "PageDown", " ", "Enter"].includes(event.key)) {
@@ -112,15 +115,15 @@ export function SongPresentation({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [allSlides.length, router, songId]);
+  }, [allSlides.length, router, exitHref]);
 
   if (allSlides.length === 0) {
     return (
       <div className="presentation-shell">
         <div className="presentation-empty">
           <h1>{title}</h1>
-          <p>Nu există versuri structurate pentru prezentare.</p>
-          <Link className="presentation-link" href={`/songs/${songId}/lyrics`}>Editează versurile</Link>
+          <p>Nu există elemente pentru prezentare.</p>
+          <Link className="presentation-link" href={exitHref}>Înapoi</Link>
         </div>
       </div>
     );
@@ -139,7 +142,7 @@ export function SongPresentation({
           <span className="presentation-scale">{fontScale}%</span>
           <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value + 5, 60, 115))}>A+</button>
           <button className="presentation-mini-button" type="button" onClick={() => setFontScale(92)}>Reset</button>
-          <Link className="presentation-link" href={`/songs/${songId}`}>Ieșire</Link>
+          <Link className="presentation-link" href={exitHref}>Ieșire</Link>
         </div>
       </header>
 

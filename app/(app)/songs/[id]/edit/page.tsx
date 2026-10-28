@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { updateSongMetadataAction } from "../../actions";
+import { updateSongMetadataAction, updateSongSourceNumberAction } from "../../actions";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -13,7 +13,7 @@ export default async function SongEditPage({ params }: PageProps) {
     supabase.from("songs").select("id,title,default_key,bpm,structure,notes").eq("id", id).single(),
     supabase.from("categories").select("id,name,slug").order("name"),
     supabase.from("song_categories").select("category_id").eq("song_id", id),
-    supabase.from("song_sources").select("song_number,source_title,song_collections(name,short_code)").eq("song_id", id)
+    supabase.from("song_sources").select("id,song_number,source_title,song_collections(name,short_code)").eq("song_id", id)
   ]);
 
   if (!song) notFound();
@@ -82,6 +82,10 @@ export default async function SongEditPage({ params }: PageProps) {
           </div>
         </section>
       </form>
+      <details className="card"><summary>Numere în colecții</summary><div className="grid">{(sources||[]).map((source:any)=><form className="inline-form" action={updateSongSourceNumberAction} key={source.id}>
+        <input type="hidden" name="song_id" value={id}/><input type="hidden" name="source_id" value={source.id}/>
+        <label className="label">{source.song_collections?.name||"Colecție"}<input className="input" name="song_number" defaultValue={source.song_number||""} maxLength={60}/></label><button className="btn secondary">Salvează numărul</button>
+      </form>)}</div></details>
     </>
   );
 }

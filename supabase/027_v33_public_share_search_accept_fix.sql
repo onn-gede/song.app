@@ -1,5 +1,9 @@
 -- v33: Fix acceptare propuneri publice + cautare publica dupa numar/text cu/fara diacritice.
 
+-- v42 installer compatibility: v32 returned fewer columns; PostgreSQL requires
+-- dropping the old signature before changing a RETURNS TABLE definition.
+drop function if exists public.public_search_songs_for_share(text,text,integer);
+
 create or replace function public.public_search_songs_for_share(
   p_public_slug text,
   search_query text,
@@ -157,3 +161,5 @@ $$;
 grant execute on function public.accept_public_meeting_contribution(uuid) to authenticated;
 
 notify pgrst, 'reload schema';
+
+grant execute on function public.public_search_songs_for_share(text,text,integer) to anon,authenticated;

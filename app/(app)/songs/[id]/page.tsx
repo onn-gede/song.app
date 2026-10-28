@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { SongUsageHistory, type UsageHistory } from "@/components/SongUsageHistory";
+import { libraryPage } from "@/lib/library";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile, canEdit } from "@/lib/auth";
 import { AddSongToMeeting } from "@/components/AddSongToMeeting";
 import { DeleteSongButton } from "@/components/DeleteSongButton";
 import { buildStableBibleSourceUrl } from "@/lib/freeBibleText";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = { params: Promise<{ id: string }>; searchParams: Promise<{usage_page?: string}> };
 
 function stableReferenceUrl(ref: any) {
   const sourceUrl = ref?.source_url as string | null | undefined;
@@ -27,17 +29,20 @@ function sourceLink(ref: any, label: string | null | undefined) {
   );
 }
 
-export default async function SongDetailPage({ params }: PageProps) {
+export default async function SongDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const supabase = await createClient();
+  const usagePage = libraryPage((await searchParams).usage_page);
+  const { supabase, profile } = await requireProfile();
+  const editable = canEdit(profile.role);
 
-  const [{ data: song }, { data: sections }, { data: sources }, { data: refs }, { data: cats }, { data: files }] = await Promise.all([
+  const [{ data: song }, { data: sections }, { data: sources }, { data: refs }, { data: cats }, { data: files }, { data: history, error: historyError }] = await Promise.all([
     supabase.from("songs").select("*").eq("id", id).single(),
     supabase.from("song_sections").select("*").eq("song_id", id).order("position"),
     supabase.from("song_sources").select("song_number,source_title,song_collections(id,name,short_code)").eq("song_id", id),
     supabase.from("song_bible_references").select("id,theme,reason,confidence,bible_references(version,book,chapter,verse_start,verse_end,reference_label,text_cache,source_url)").eq("song_id", id),
     supabase.from("song_categories").select("categories(id,name,slug)").eq("song_id", id),
-    supabase.from("song_files").select("id,file_name,import_status,parser_notes,created_at").eq("song_id", id).order("created_at", { ascending: false })
+    supabase.from("song_files").select("id,file_name,import_status,parser_notes,created_at").eq("song_id", id).order("created_at", { ascending: false }),
+    supabase.rpc("get_song_history_v46", {p_song_id: id, p_page: usagePage, p_page_size: 30})
   ]);
 
   if (!song) notFound();
@@ -64,16 +69,16 @@ export default async function SongDetailPage({ params }: PageProps) {
             {song.default_key ? <span className="badge">Tonalitate: {song.default_key}</span> : <span className="badge muted-badge">Tonalitate nesetată</span>}
             {song.bpm ? <span className="badge">{song.bpm} BPM</span> : null}
             {song.structure ? <span className="badge">Structură: {song.structure}</span> : null}
-            {importStatusLabel ? <Link className={importStatus === "approved" ? "badge" : "badge warning"} href={`/songs/${song.id}/lyrics`}>{importStatusLabel}</Link> : null}
+            {importStatusLabel && editable ? <Link className={importStatus === "approved" ? "badge" : "badge warning"} href={`/songs/${song.id}/lyrics`}>{importStatusLabel}</Link> : null}
           </div>
         </div>
         <div className="song-actions-compact">
           <Link className="btn secondary btn-compact" href="/songs">Înapoi</Link>
-          <Link className="btn secondary btn-compact" href={`/songs/${song.id}/edit`}>Editează</Link>
-          <Link className="btn secondary btn-compact" href={`/songs/${song.id}/lyrics`}>Versuri</Link>
-          <Link className="btn secondary btn-compact" href={`/songs/${song.id}/verses`}>Versete</Link>
+          {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/edit`}>Editează</Link> : null}
+          {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/lyrics`}>Versuri</Link> : null}
+          {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/verses`}>Versete</Link> : null}
           <Link className="btn secondary btn-compact" href={`/songs/${song.id}/present`}>Prezentare</Link>
-          <AddSongToMeeting songId={song.id} songTitle={song.title} />
+          {editable ? <AddSongToMeeting songId={song.id} songTitle={song.title} /> : null}
         </div>
       </div>
 
@@ -96,10 +101,11 @@ export default async function SongDetailPage({ params }: PageProps) {
         </section>
 
         <aside className="grid song-side-panel">
+          <SongUsageHistory songId={id} history={history as UsageHistory | null} page={usagePage} error={!!historyError} />
           <section className="card">
             <div className="inline-form" style={{ justifyContent: "space-between", alignItems: "center" }}>
               <h2 style={{ marginBottom: 0 }}>Versete potrivite</h2>
-              <Link className="btn secondary btn-compact" href={`/songs/${song.id}/verses`}>Gestionează</Link>
+              {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/verses`}>Gestionează</Link> : null}
             </div>
             <div className="list" style={{ marginTop: 12 }}>
               {(refs || []).map((item: any, index: number) => {
@@ -149,19 +155,19 @@ export default async function SongDetailPage({ params }: PageProps) {
                 </div>
                 <p className="muted small">{sourceFile.file_name}</p>
                 {sourceFile.parser_notes ? <p className="small">{sourceFile.parser_notes}</p> : null}
-                <Link className="btn secondary btn-compact" href={`/songs/${song.id}/lyrics`}>Deschide verificarea versurilor</Link>
+                {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/lyrics`}>Deschide verificarea versurilor</Link> : null}
               </div>
             ) : (
               <div className="grid">
                 <p className="muted">Nu există fișier importat asociat.</p>
-                <Link className="btn secondary btn-compact" href={`/songs/${song.id}/lyrics`}>Editează versurile manual</Link>
+                {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/lyrics`}>Editează versurile manual</Link> : null}
               </div>
             )}
           </section>
         </aside>
       </div>
 
-      <DeleteSongButton songId={song.id} songTitle={song.title} />
+      {editable ? <DeleteSongButton songId={song.id} songTitle={song.title} /> : null}
     </>
   );
 }

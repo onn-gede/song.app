@@ -1,6 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { requireProfile } from "@/lib/auth";
+
+import { revalidatePath, refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import JSZip from "jszip";
 import { execFile } from "node:child_process";
@@ -8,7 +10,6 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { createClient } from "@/lib/supabase/server";
 
 const allowedSourceTypes = new Set(["manual", "pptx", "ppt", "pdf", "txt", "docx", "other"]);
 const supportedFileExtensions = new Set(["txt", "md", "pptx", "ppt", "pdf", "zip"]);
@@ -344,7 +345,7 @@ function parseSections(lyricsText: string, title?: string, songNumber?: string |
 }
 
 async function maybeCreateCollection(name: string, sourceType: string) {
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const shortCodeBase = normalizeCode(name) || "IMPORT";
   const { data: existing } = await supabase
     .from("song_collections")
@@ -925,7 +926,7 @@ async function parseSingleFile(file: File, storagePath?: string | null, storageW
 }
 
 async function createSongFromParsedImport(parsed: ParsedImport, collectionId: string, formData: FormData, overrides?: { title?: string | null; songNumber?: string | null }) {
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const title = overrides?.title || parsed.title;
   const songNumber = overrides?.songNumber ?? parsed.songNumber;
   const bpm = readNullableInteger(formData, "bpm");
@@ -959,6 +960,7 @@ async function createSongFromParsedImport(parsed: ParsedImport, collectionId: st
 }
 
 export async function importTextSongAction(formData: FormData) {
+  await requireProfile("editor");
   const title = readString(formData, "title");
   const lyricsText = readString(formData, "lyrics_text");
   const sourceType = readString(formData, "source_type") || "txt";
@@ -968,7 +970,9 @@ export async function importTextSongAction(formData: FormData) {
   if (!lyricsText) throw new Error("Textul cântării este obligatoriu.");
   if (!allowedSourceTypes.has(sourceType)) throw new Error("Tipul sursei nu este valid.");
 
-  const collectionId = await resolveCollectionId(formData, sourceType);
+  const collectionId = readString(formData,"collection_id") || readString(formData,"new_collection_name")
+    ? await resolveCollectionId(formData, sourceType)
+    : await (async () => { const {supabase}=await requireProfile("editor"); const {data,error}=await supabase.rpc("ensure_manual_collection_v47"); if(error||!data)throw new Error(error?.message||"Colecția nu poate fi creată."); return String(data); })();
   const parsed: ParsedImport = {
     fileName: `${songNumber ? `${songNumber} - ` : ""}${title}.txt`,
     fileType: sourceType === "manual" ? "txt" : (sourceType as any),
@@ -984,12 +988,13 @@ export async function importTextSongAction(formData: FormData) {
   revalidatePath("/songs");
   revalidatePath("/review");
   revalidatePath("/collections");
+  refresh();
   redirect(`/songs/${createdSongId}/lyrics`);
 }
 
 
 async function getCollectionName(collectionId: string) {
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { data } = await supabase
     .from("song_collections")
     .select("name")
@@ -999,7 +1004,7 @@ async function getCollectionName(collectionId: string) {
 }
 
 async function findDuplicateCandidates(parsedImports: ParsedImport[], collectionId: string) {
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const duplicateMap: Record<number, ImportDuplicateCandidate[]> = {};
   const numbers = Array.from(new Set(parsedImports.map((item) => item.songNumber).filter(Boolean))) as string[];
 
@@ -1099,6 +1104,7 @@ function metadataToFormData(metadata: ImportPreviewResult["metadata"]) {
 }
 
 export async function previewSongFilesImportAction(formData: FormData): Promise<ImportPreviewResult> {
+  await requireProfile("editor");
   const files = formData.getAll("files").filter((item): item is File => item instanceof File && item.size > 0);
   if (files.length === 0) throw new Error("Alege cel puțin un fișier TXT, PPT, PPTX, PDF sau ZIP.");
   if (files.length > 50) throw new Error("Importă maximum 50 de fișiere/arhive odată. Pentru 500 de cântări, pune-le într-un ZIP.");
@@ -1157,7 +1163,7 @@ export async function previewSongFilesImportAction(formData: FormData): Promise<
 }
 
 async function overwriteSongFromParsedImport(parsed: ParsedImport, collectionId: string, metadata: ImportPreviewResult["metadata"], targetSongId: string) {
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const title = parsed.title;
   const cleanLyrics = removeRepeatedTitleLines(parsed.lyricsText, title, parsed.songNumber);
   const sections = parseSections(parsed.lyricsText, title, parsed.songNumber);
@@ -1193,6 +1199,7 @@ export async function confirmSongFilesImportBatchAction(input: {
   decisions: Record<string, string>;
   targets: Record<string, string>;
 }): Promise<ConfirmImportBatchResult> {
+  await requireProfile("editor");
   if (!input.collectionId || !Array.isArray(input.items)) {
     throw new Error("Datele lotului de import nu sunt valide.");
   }
@@ -1260,6 +1267,7 @@ export async function confirmSongFilesImportBatchAction(input: {
   revalidatePath("/songs");
   revalidatePath("/review");
   revalidatePath("/collections");
+  refresh();
 
   return {
     processed: input.items.length,
@@ -1270,6 +1278,7 @@ export async function confirmSongFilesImportBatchAction(input: {
 }
 
 export async function confirmSongFilesImportAction(formData: FormData) {
+  await requireProfile("editor");
   const rawPayload = readString(formData, "preview_payload");
   if (!rawPayload) throw new Error("Lipsește analiza importului. Reîncarcă pagina și încearcă din nou.");
 
@@ -1313,12 +1322,14 @@ export async function confirmSongFilesImportAction(formData: FormData) {
   revalidatePath("/songs");
   revalidatePath("/review");
   revalidatePath("/collections");
+  refresh();
 
   if (createdOrUpdatedIds.length === 1 && skipped === 0) redirect(`/songs/${createdOrUpdatedIds[0]}/lyrics`);
   redirect(`/review?status=needs_review&imported=${createdOrUpdatedIds.length}&skipped=${skipped}`);
 }
 
 export async function importSongFilesAction(formData: FormData) {
+  await requireProfile("editor");
   const files = formData.getAll("files").filter((item): item is File => item instanceof File && item.size > 0);
   if (files.length === 0) throw new Error("Alege cel puțin un fișier TXT, PPT, PPTX, PDF sau ZIP.");
   if (files.length > 50) throw new Error("Importă maximum 50 de fișiere odată.");
@@ -1372,6 +1383,7 @@ export async function importSongFilesAction(formData: FormData) {
   revalidatePath("/songs");
   revalidatePath("/review");
   revalidatePath("/collections");
+  refresh();
 
   if (createdSongIds.length === 1 && skipped === 0) redirect(`/songs/${createdSongIds[0]}/lyrics`);
   redirect(`/review?status=needs_review&imported=${createdSongIds.length}&skipped=${skipped}`);

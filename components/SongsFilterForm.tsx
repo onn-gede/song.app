@@ -37,10 +37,15 @@ export function SongsFilterForm({
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
+    if (searchParams.has("reset")) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      router.replace("/songs?page=1");
+      return;
+    }
     if (hasActiveQuery) return;
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (saved) router.replace(`/songs?${saved}`);
-  }, [hasActiveQuery, router]);
+  }, [hasActiveQuery, router, searchParams]);
 
   function saveFilters(formData: FormData) {
     const params = new URLSearchParams();
@@ -58,6 +63,7 @@ export function SongsFilterForm({
 
   return (
     <form
+      key={searchParams.toString()}
       className="filter-bar filter-bar-expanded compact-filter-bar"
       action="/songs"
       onSubmit={(event) => saveFilters(new FormData(event.currentTarget))}
@@ -105,7 +111,7 @@ export function SongsFilterForm({
         </select>
       </label>
       <button className="btn btn-compact" type="submit">Aplică</button>
-      <button className="btn secondary btn-compact" type="button" onClick={() => { clearSavedFilters(); router.push("/songs"); }}>Resetează</button>
+      <button className="btn secondary btn-compact" type="button" onClick={() => { clearSavedFilters(); router.push("/songs?page=1"); }}>Resetează</button>
     </form>
   );
 }

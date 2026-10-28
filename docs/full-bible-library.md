@@ -14,7 +14,7 @@ Acest patch adaugă o bibliotecă biblică locală completă pentru limba român
 1. Rulează în Supabase:
 
 ```sql
-supabase/035_v41_full_bible_library.sql
+supabase/035_v41_1_full_bible_library_fixed.sql
 ```
 
 2. Adaugă în `.env.local` cheia service role, doar local, fără să o urci în GitHub:

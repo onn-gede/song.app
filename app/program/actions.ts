@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type PublicSongSearchResult = {
@@ -61,6 +61,7 @@ export async function addPublicSongContributionAction(input: {
 
   if (error) throw new Error(error.message);
   revalidatePath(`/program/${input.slug}`);
+  refresh();
 }
 
 export async function addPublicTextContributionAction(formData: FormData) {
@@ -92,4 +93,5 @@ export async function addPublicTextContributionAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
   revalidatePath(`/program/${slug}`);
+  refresh();
 }

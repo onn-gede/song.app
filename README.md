@@ -1,104 +1,49 @@
-# SongApp Next MVP
+# SongApp BCBgiroc · v48 / 0.6.0
 
-Primul MVP pentru aplicația de cântări:
+Interfață compactă, conturi aprobate de admin, jurnal de activitate și configurare Netlify.
 
-- login cu Supabase Auth
-- dashboard cu search mare
-- listă completă de cântări
-- detaliu cântare
-- creare programe / întâlniri
-- adăugare cântări în program
-- adăugare cântări backup
-- adăugare elemente text: rugăciune, îndemn, mesaj, pauză
-- evidențiere cântări folosite în ultimele 30 zile
-- link public view-only pentru program
+## Actualizare locală
 
-## 1. Supabase
+1. Oprește aplicația și păstrează o copie a surselor și bazei.
+2. Extrage arhiva peste folderul existent, păstrând `.env.local`.
+3. Rulează UPDATE-V48.sql în ACELAȘI proiect Supabase, după v47/v47.1.
+4. Adaugă în `.env.local` cheia privată `SUPABASE_SERVICE_ROLE_KEY` pentru crearea conturilor. Nu o pune în variabile NEXT_PUBLIC.
+5. Rulează comenzile pe rând, continuând numai după succes:
 
-În Supabase SQL Editor rulează în ordine:
-
-```sql
-supabase/001_init_schema.sql
-supabase/002_seed_core_data.sql
-supabase/003_make_first_admin.sql
-samples/004_seed_tineret_from_pptx.sql
-supabase/005_app_helper_functions.sql
+```powershell
+Set-Location "D:\Apps\song.app"
+npm ci
+npm run build
+npm run local
 ```
 
-Dacă ai rulat deja primele 3, rulează acum doar:
+La prima încărcare după actualizare: Ctrl+F5. Conturile existente rămân active
+conform stării lor; cele noi necesită aprobare. Dacă ai o versiune mai veche,
+aplică întâi migrările intermediare. INSTALL-NEW.sql este numai pentru baze goale.
 
-```sql
-samples/004_seed_tineret_from_pptx.sql
-supabase/005_app_helper_functions.sql
+## Netlify
+
+Urmează **NETLIFY-SETUP.md** pentru repository, variabile, Supabase Auth,
+publicare și verificările de după deploy. Configurația este pregătită în pachet;
+publicarea efectivă nu a fost executată din sesiunea de lucru fără acces de scriere.
+
+## Utilizare
+
+- Meniu desktop compact, fără scroll propriu la înălțimile uzuale; un singur scroll al documentului pentru liste lungi. Pe ecrane foarte joase/mobil meniul este un drawer separat.
+- Pregătirea programului: rânduri compacte, principal și backup alăturate pe ecrane mari; căutarea și administrarea se deschid la cerere.
+- Pagina publică are un format mai simplu, versuri expandabile, print și actualizare Live.
+- Utilizatori: creare cont în așteptare, aprobare, roluri și mai mulți administratori. Ultimul admin activ este protejat.
+- Contul meu: click pe numele utilizatorului pentru schimbarea parolei.
+- Activitate: jurnal cu filtre și paginare, disponibil doar administratorilor.
+- Linkurile de share se pot citi fără cont; biblioteca și administrarea sunt private. Propunerile externe se activează separat pe link.
+- Workflow-ul zilnic verifică baza și actualizează heartbeat-ul la două zile, fără deploy-uri inutile. Trebuie activat în GitHub; nu este deja activ prin simpla descărcare a arhivei.
+
+## Verificări
+
+```powershell
+npm test
+npm run typecheck
+npm run build
 ```
 
-Userul tău trebuie să existe în `Authentication > Users`, iar în `public.profiles` trebuie să ai `role = admin` și `is_active = true`.
-
-Verificare:
-
-```sql
-select email, role, is_active from public.profiles;
-select count(*) from public.songs;
-select * from public.search_songs('Isus', 10);
-```
-
-## 2. Variabile de mediu
-
-Copiază fișierul `.env.example` în `.env.local`:
-
-```bash
-copy .env.example .env.local
-```
-
-Completează:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://PROJECT_ID.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=anon_key_din_Supabase
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-```
-
-Le găsești în Supabase:
-
-```txt
-Project Settings > API
-```
-
-## 3. Pornire locală
-
-```bash
-npm install
-npm run dev
-```
-
-Apoi deschide:
-
-```txt
-http://localhost:3000
-```
-
-## 4. Test rapid
-
-1. Intră cu email/parolă.
-2. Caută `Isus` în dashboard.
-3. Deschide o cântare.
-4. Apasă `Adaugă în program`.
-5. Creează un program nou.
-6. Intră la `Programe / întâlniri`.
-7. Deschide programul.
-8. Adaugă o cântare normală și una backup.
-9. Adaugă un element text de tip rugăciune/îndemn.
-10. Generează link public.
-
-## 5. Observații
-
-Acesta este MVP-ul de lucru. Nu include încă:
-
-- editare completă cântări
-- drag & drop pentru reordonarea programului
-- import din interfață
-- categorii editabile în UI
-- generare automată de versete
-- management useri din UI
-
-Acestea intră în sprinturile următoare.
+Detaliile sunt în VERIFICARI-V48.md. Workerul de sincronizare în calupuri rămâne oprit implicit.

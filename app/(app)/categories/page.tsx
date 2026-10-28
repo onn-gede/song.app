@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile, canEdit } from "@/lib/auth";
 import { createCategoryAction, deleteCategoryAction } from "./actions";
 
 export default async function CategoriesPage() {
-  const supabase = await createClient();
+  const { supabase, profile } = await requireProfile();
+  const editable = canEdit(profile.role);
 
   const [{ data: categories, error }, { data: songCategoryRows }] = await Promise.all([
     supabase.from("categories").select("id,name,slug,parent_id").order("name"),
@@ -30,7 +31,7 @@ export default async function CategoriesPage() {
       </div>
 
       <div className="grid grid-2">
-        <section className="card">
+        {editable ? <section className="card">
           <h2>Adaugă categorie</h2>
           <form action={createCategoryAction} className="form-grid">
             <label className="label">Nume categorie
@@ -46,7 +47,7 @@ export default async function CategoriesPage() {
             </label>
             <button className="btn" type="submit">Creează categorie</button>
           </form>
-        </section>
+        </section> : null}
 
         <section className="card">
           <h2>Categorii existente</h2>
@@ -63,11 +64,11 @@ export default async function CategoriesPage() {
                 </summary>
                 <div className="management-actions">
                   <Link className="btn secondary btn-compact" href={`/songs?category=${category.id}`}>Vezi cântările</Link>
-                  <form action={deleteCategoryAction} className="inline-form delete-inline-form">
+                  {editable ? <form action={deleteCategoryAction} className="inline-form delete-inline-form">
                     <input type="hidden" name="category_id" value={category.id} />
                     <input className="input compact-confirm" name="confirm" placeholder="STERGE" />
                     <button className="btn danger btn-compact" type="submit">Șterge</button>
-                  </form>
+                  </form> : null}
                 </div>
               </details>
             ))}

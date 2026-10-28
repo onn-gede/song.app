@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Icon } from "./Icon";
 import { formatDateInputValue, formatDateTime } from "@/lib/format";
 import {
   addSongToMeetingAction,
@@ -11,8 +11,7 @@ import {
   type MeetingOption
 } from "@/app/(app)/meetings/actions";
 
-export function AddSongToMeeting({ songId, songTitle }: { songId: string; songTitle: string }) {
-  const router = useRouter();
+export function AddSongToMeeting({ songId, songTitle, compact = false }: { songId: string; songTitle: string; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [meetings, setMeetings] = useState<MeetingOption[]>([]);
   const [createdMeetingId, setCreatedMeetingId] = useState<string | null>(null);
@@ -41,7 +40,6 @@ export function AddSongToMeeting({ songId, songTitle }: { songId: string; songTi
       try {
         await addSongToMeetingAction({ meetingId, songId, isBackup });
         setMessage(isBackup ? "Cântarea a fost adăugată ca backup." : "Cântarea a fost adăugată în program.");
-        router.refresh();
         await loadMeetings();
       } catch (error) {
         setError(error instanceof Error ? error.message : "Nu am putut adăuga cântarea.");
@@ -70,7 +68,6 @@ export function AddSongToMeeting({ songId, songTitle }: { songId: string; songTi
 
         setCreatedMeetingId(meetingId);
         setMessage("Programul a fost creat și cântarea a fost adăugată.");
-        router.refresh();
         await loadMeetings();
       } catch (error) {
         setError(error instanceof Error ? error.message : "Nu am putut crea programul.");
@@ -80,8 +77,8 @@ export function AddSongToMeeting({ songId, songTitle }: { songId: string; songTi
 
   return (
     <>
-      <button className="btn secondary btn-compact" type="button" onClick={() => setOpen(true)}>
-        Adaugă în program
+      <button className={compact ? "song-add-button" : "btn secondary btn-compact"} type="button" aria-label={`Adaugă ${songTitle} în program`} onClick={() => setOpen(true)}>
+        {compact ? <Icon name="plus" size={18}/> : "Adaugă în program"}
       </button>
 
       {open ? (

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useMeetingState } from "./MeetingState";
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { addSongToMeetingAction, searchSongsAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
 import { RecentUsageIcon } from "@/components/RecentUsageIcon";
 
 export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: string; recentUsage?: Record<string, RecentUsage> }) {
-  const router = useRouter();
+  const state = useMeetingState();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SongSearchResult[]>([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
 
     const handle = window.setTimeout(async () => {
       try {
-        const data = await searchSongsAction(trimmed, 15);
+        const data = await searchSongsAction(trimmed, 6);
         if (!cancelled) setResults(data);
       } catch (error) {
         if (!cancelled) setError(error instanceof Error ? error.message : "Căutarea a eșuat.");
@@ -44,15 +44,15 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
     setError(null);
     startTransition(async () => {
       try {
-        await addSongToMeetingAction({
+        const saved = await addSongToMeetingAction({
           meetingId,
           songId: song.song_id,
           isBackup,
           selectedKey: song.default_key,
           notes: null
         });
+        state?.apply(saved);
         setMessage(isBackup ? "Cântarea a fost adăugată ca backup." : "Cântarea a fost adăugată în program.");
-        router.refresh();
       } catch (error) {
         setError(error instanceof Error ? error.message : "Nu am putut adăuga cântarea.");
       }
@@ -62,9 +62,9 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
   return (
     <section className="card grid">
       <div>
-        <div className="eyebrow">Adaugă cântări</div>
-        <h2>Caută și adaugă</h2>
-        <p className="muted small">Caută după titlu, versuri sau număr. Pictograma mică indică folosire recentă în alt program.</p>
+
+        <h2>Adaugă cântări</h2>
+
       </div>
       {message ? <p className="success">{message}</p> : null}
       {error ? <p className="error">{error}</p> : null}

@@ -1,39 +1,10 @@
-# Pașii următori recomandați
+# Dezvoltare după v43
 
-## Sprint 1.1 - Stabilizare MVP
+Importul curent se face din link, cu preview, sau din fișiere/text.
+Sincronizarea pe loturi este suspendată implicit, cu codul păstrat.
 
-1. Rulează aplicația local.
-2. Verifică loginul.
-3. Verifică searchul pe cântările importate.
-4. Creează 2-3 programe de test.
-5. Adaugă cântări normale, backup și elemente text.
-6. Verifică linkul public.
-
-## Sprint 1.2 - Administrare cântări
-
-- editare titlu
-- editare tonalitate / BPM / structură
-- editare versuri
-- editare strofe/refren
-- marcarea importurilor ca `approved`
-
-## Sprint 1.3 - Categorii și colecții
-
-- pagină colecții
-- pagină categorii
-- filtrare după Paște, Nașterea Domnului, botez, Cina Domnului etc.
-- asociere cântare-categorie
-
-## Sprint 1.4 - Importuri noi
-
-- upload PPTX/PDF/TXT
-- parsare text
-- preview înainte de salvare
-- marcare erori import
-
-## Sprint 1.5 - Versete biblice
-
-- asociere manuală versete
-- sugestii tematice asistate
-- salvare referință + link sursă
-- text exact doar dacă avem drept/licență clară
+Pași următori:
+1. Validare în instalarea reală: link → preview → colecții → salvare.
+2. Adaptoare pentru alte site-uri, dacă vor fi cerute; fiecare sursă cu reguli proprii de extragere.
+3. Consolidarea importurilor mari PPT/PDF și salvării metadatelor în tranzacții complete.
+4. Separarea în continuare a modulelor mari și reducerea stilurilor istorice suprapuse.

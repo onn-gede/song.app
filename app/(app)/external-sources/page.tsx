@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth";
 import { ExternalSourcesSyncPanel } from "@/components/ExternalSourcesSyncPanel";
 import { deleteResurseExternalSongsAction } from "./actions";
 
 export default async function ExternalSourcesPage() {
-  const supabase = await createClient();
+  const { supabase, profile } = await requireProfile("editor");
   const [{ data: sources }, { data: runs }, { data: recentRefs }, { count: totalImported }] = await Promise.all([
     supabase.from("external_sources").select("id,name,slug,base_url,license_label,permission_notes,last_synced_at,collection_id,song_collections(name,short_code)").eq("slug", "resursecrestine").order("name"),
-    supabase.from("external_sync_runs").select("id,status,pages_scanned,found_count,imported_count,updated_count,skipped_count,error_message,started_at,finished_at,external_sources!inner(name,slug)").eq("external_sources.slug", "resursecrestine").order("started_at", { ascending: false }).limit(2),
+    supabase.from("external_sync_runs").select("id,status,pages_scanned,found_count,imported_count,updated_count,skipped_count,error_count,heartbeat_at,error_message,started_at,finished_at,external_sources!inner(name,slug)").eq("external_sources.slug", "resursecrestine").order("started_at", { ascending: false }).limit(10),
     supabase
       .from("external_song_refs")
       .select("id,external_title,external_url,last_imported_at,last_seen_at,songs(id,title),external_sources!inner(slug,name)")
@@ -75,14 +75,14 @@ export default async function ExternalSourcesPage() {
         </div>
       </section>
 
-      <section className="card danger-card compact-card" style={{ marginTop: 16 }}>
+      {profile.role === "admin" ? <section className="card danger-card compact-card" style={{ marginTop: 16 }}>
         <h2>Curățare import Resurse Creștine</h2>
         <p className="muted small">Folosește această acțiune dacă un import extern a fost greșit și vrei să refaci sincronizarea. Șterge cântările legate de Resurse Creștine și referințele externe asociate. Nu șterge userii sau celelalte colecții.</p>
         <form action={deleteResurseExternalSongsAction} className="inline-form" style={{ marginTop: 10 }}>
           <input className="input" name="confirmation" placeholder="Scrie STERGE RESURSE" />
           <button className="btn danger btn-compact" type="submit">Șterge importul Resurse</button>
         </form>
-      </section>
+      </section> : null}
     </>
   );
 }

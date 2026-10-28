@@ -1,10 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { requireProfile } from "@/lib/auth";
 import { deleteAllAppDataAction, deleteProgramsOnlyAction } from "./actions";
 
 export default async function AdminPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user?.id).single();
+  const {supabase,profile}=await requireProfile("admin");
 
   const [songs, meetings, collections, categories, imports] = await Promise.all([
     supabase.from("songs").select("id", { count: "exact", head: true }),
@@ -21,8 +20,8 @@ export default async function AdminPage() {
       <div className="top-row">
         <div>
           <div className="eyebrow">Administrare</div>
-          <h1>Control date</h1>
-          <p className="muted">Ștergere individuală sau resetare completă a conținutului. Userii și loginurile rămân în Supabase Auth.</p>
+          <h1>Administrare</h1>
+          <div className="inline-form"><Link className="btn" href="/admin/users">Conturi și aprobări</Link><Link className="btn secondary" href="/admin/activity">Jurnal de activitate</Link></div>
         </div>
       </div>
 
@@ -33,7 +32,7 @@ export default async function AdminPage() {
         <div className="stat"><strong>{categories.count || 0}</strong><span>Categorii</span></div>
       </div>
 
-      <div className="grid grid-2 admin-layout" style={{ marginTop: 16 }}>
+      <details className="card" style={{marginTop:16}}><summary>Operațiuni avansate asupra datelor</summary><div className="grid grid-2 admin-layout" style={{ marginTop: 16 }}>
         <section className="card danger-card">
           <div className="badge danger-badge">Admin only</div>
           <h2>Șterge toate programele</h2>
@@ -60,7 +59,7 @@ export default async function AdminPage() {
             <button className="btn danger" type="submit" disabled={!isAdmin}>Șterge tot conținutul</button>
           </form>
         </section>
-      </div>
+      </div></details>
     </>
   );
 }

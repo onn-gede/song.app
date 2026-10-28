@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, refresh } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 function readString(formData: FormData, key: string) {
@@ -61,6 +61,7 @@ export async function deleteAllAppDataAction(formData: FormData) {
   revalidatePath("/categories");
   revalidatePath("/review");
   revalidatePath("/admin");
+  refresh();
 }
 
 export async function deleteProgramsOnlyAction(formData: FormData) {
@@ -81,4 +82,5 @@ export async function deleteProgramsOnlyAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/meetings");
   revalidatePath("/admin");
+  refresh();
 }

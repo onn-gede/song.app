@@ -201,6 +201,10 @@ export function ImportFilesWizard({ collections }: Props) {
     const form = formRef.current;
     if (!form) return;
     const formData = new FormData(form);
+    const limitMB=Number(process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB||0);
+    const files=formData.getAll('files').filter((file):file is File=>file instanceof File);
+    if(limitMB>0 && files.reduce((sum,file)=>sum+file.size,0)>limitMB*1024*1024){setError(`În varianta online, alege fișiere de maximum ${limitMB} MB în total per lot. Împarte importul în loturi mai mici.`);return;}
+
 
     startTransition(async () => {
       try {

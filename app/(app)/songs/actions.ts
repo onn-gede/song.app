@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { requireProfile } from "@/lib/auth";
+
+import { revalidatePath, refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { buildStableBibleSourceUrl, getLocalFreeBibleText } from "@/lib/freeBibleText";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
@@ -24,6 +25,7 @@ function readNullableInteger(formData: FormData, key: string) {
 }
 
 export async function updateSongMetadataAction(formData: FormData) {
+  await requireProfile("editor");
   const songId = readString(formData, "song_id");
   const title = readString(formData, "title");
   const categoryIds = formData
@@ -39,7 +41,7 @@ export async function updateSongMetadataAction(formData: FormData) {
     throw new Error("BPM trebuie să fie între 30 și 260.");
   }
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
 
   // Folosim update direct, nu RPC, ca să evităm problemele de PostgREST schema cache
   // când adăugăm/înlocuim funcții SQL în timpul dezvoltării.
@@ -79,6 +81,7 @@ export async function updateSongMetadataAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/songs");
   revalidatePath(`/songs/${songId}`);
+  refresh();
   redirect(`/songs/${songId}`);
 }
 
@@ -99,6 +102,7 @@ function normalizeSectionType(value: string) {
 }
 
 export async function updateSongLyricsAction(formData: FormData) {
+  await requireProfile("editor");
   const songId = readString(formData, "song_id");
   const title = readString(formData, "title");
   const structure = readNullableString(formData, "structure");
@@ -140,7 +144,7 @@ export async function updateSongLyricsAction(formData: FormData) {
     throw new Error("Trebuie să existe cel puțin o secțiune cu text.");
 
   const lyricsText = sections.map((section) => section.content).join("\n\n");
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
 
   const { error: songError } = await supabase
     .from("songs")
@@ -184,6 +188,7 @@ export async function updateSongLyricsAction(formData: FormData) {
 
   if (readBoolean(formData, "go_back_to_review")) {
     revalidatePath("/review");
+    refresh();
     redirect("/review");
   }
 
@@ -192,6 +197,7 @@ export async function updateSongLyricsAction(formData: FormData) {
   revalidatePath("/songs");
   revalidatePath(`/songs/${songId}`);
   revalidatePath(`/songs/${songId}/lyrics`);
+  refresh();
   redirect(`/songs/${songId}`);
 }
 
@@ -414,6 +420,7 @@ export async function getBibleTextPreviewForSuggestionAction(input: {
   verseStart: number;
   verseEnd?: number | null;
 }) {
+  await requireProfile("editor");
   try {
     const chapter = Math.trunc(Number(input.chapter));
     const verseStart = Math.trunc(Number(input.verseStart));
@@ -520,6 +527,7 @@ async function fetchBibleTextFromResurseCrestine(book: string, chapter: number, 
 }
 
 export async function addSongBibleReferenceAction(formData: FormData) {
+  await requireProfile("editor");
   const songId = readString(formData, "song_id");
   const book = readString(formData, "book");
   const chapter = readNullableInteger(formData, "chapter");
@@ -543,7 +551,7 @@ export async function addSongBibleReferenceAction(formData: FormData) {
       "Versetul final nu poate fi mai mic decât versetul de început.",
     );
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -646,6 +654,7 @@ export async function addSongBibleReferenceAction(formData: FormData) {
 
   revalidatePath(`/songs/${songId}`);
   revalidatePath(`/songs/${songId}/verses`);
+  refresh();
   redirect(`/songs/${songId}/verses?saved=1`);
 }
 
@@ -673,7 +682,7 @@ function isSuggestedBibleReferenceInput(
 }
 
 async function saveBibleReferenceForSong(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: Awaited<ReturnType<typeof requireProfile>>["supabase"],
   input: {
     songId: string;
     book: string;
@@ -777,6 +786,7 @@ async function saveBibleReferenceForSong(
 }
 
 export async function addSuggestedBibleReferencesAction(formData: FormData) {
+  await requireProfile("editor");
   const songId = readString(formData, "song_id");
   const selectedRaw = formData
     .getAll("selected_suggestions")
@@ -786,7 +796,7 @@ export async function addSuggestedBibleReferencesAction(formData: FormData) {
   if (selectedRaw.length === 0)
     throw new Error("Selectează cel puțin o sugestie de salvat.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -854,17 +864,19 @@ export async function addSuggestedBibleReferencesAction(formData: FormData) {
 
   revalidatePath(`/songs/${songId}`);
   revalidatePath(`/songs/${songId}/verses`);
+  refresh();
   redirect(`/songs/${songId}/verses?suggestions_saved=${savedCount}`);
 }
 
 export async function fetchBibleTextForReferenceAction(formData: FormData) {
+  await requireProfile("editor");
   const songId = readString(formData, "song_id");
   const referenceId = readString(formData, "reference_id");
 
   if (!songId) throw new Error("Lipsește ID-ul cântării.");
   if (!referenceId) throw new Error("Lipsește ID-ul referinței biblice.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { data: reference, error: referenceError } = await supabase
     .from("bible_references")
     .select("id,book,chapter,verse_start,verse_end")
@@ -894,6 +906,7 @@ export async function fetchBibleTextForReferenceAction(formData: FormData) {
 
     revalidatePath(`/songs/${songId}`);
     revalidatePath(`/songs/${songId}/verses`);
+    refresh();
     redirect(`/songs/${songId}/verses?text_fetched=1`);
   } catch (error) {
     const message = encodeURIComponent(error instanceof Error ? error.message : "Nu am putut prelua automat textul.");
@@ -903,10 +916,11 @@ export async function fetchBibleTextForReferenceAction(formData: FormData) {
 
 
 export async function fetchAllBibleTextsForSongAction(formData: FormData) {
+  await requireProfile("editor");
   const songId = readString(formData, "song_id");
   if (!songId) throw new Error("Lipsește ID-ul cântării.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { data: refs, error: refsError } = await supabase
     .from("song_bible_references")
     .select("bible_references(id,book,chapter,verse_start,verse_end,text_cache)")
@@ -945,10 +959,12 @@ export async function fetchAllBibleTextsForSongAction(formData: FormData) {
 
   revalidatePath(`/songs/${songId}`);
   revalidatePath(`/songs/${songId}/verses`);
+  refresh();
   redirect(`/songs/${songId}/verses?texts_fetched=${fetchedCount}`);
 }
 
 export async function deleteSongBibleReferenceAction(formData: FormData) {
+  await requireProfile("editor");
   const songId = readString(formData, "song_id");
   const relationId = readString(formData, "relation_id");
   const confirm = readString(formData, "confirm");
@@ -958,7 +974,7 @@ export async function deleteSongBibleReferenceAction(formData: FormData) {
   if (confirm !== "STERGE")
     throw new Error("Pentru ștergere trebuie să scrii exact: STERGE");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase
     .from("song_bible_references")
     .delete()
@@ -969,10 +985,12 @@ export async function deleteSongBibleReferenceAction(formData: FormData) {
 
   revalidatePath(`/songs/${songId}`);
   revalidatePath(`/songs/${songId}/verses`);
+  refresh();
   redirect(`/songs/${songId}/verses?deleted=1`);
 }
 
 export async function deleteSongAction(formData: FormData) {
+  await requireProfile("editor");
   const songId = readString(formData, "song_id");
   const confirm = readString(formData, "confirm");
 
@@ -980,7 +998,7 @@ export async function deleteSongAction(formData: FormData) {
   if (confirm !== "STERGE")
     throw new Error("Pentru ștergere trebuie să scrii exact: STERGE");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
 
   // Eliminăm mai întâi aparițiile din programe; altfel FK-ul ar păstra elemente goale cu song_id null.
   const { error: meetingItemsError } = await supabase
@@ -997,11 +1015,13 @@ export async function deleteSongAction(formData: FormData) {
   revalidatePath("/songs");
   revalidatePath("/review");
   revalidatePath("/meetings");
+  refresh();
   redirect("/songs");
 }
 
 
 export async function bulkDeleteSongsAction(formData: FormData) {
+  await requireProfile("editor");
   const songIds = formData
     .getAll("song_ids")
     .map((value) => String(value).trim())
@@ -1013,7 +1033,7 @@ export async function bulkDeleteSongsAction(formData: FormData) {
   if (confirm !== "STERGE") throw new Error("Pentru ștergere trebuie să scrii exact: STERGE");
 
   const uniqueSongIds = [...new Set(songIds)];
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
 
   const { error: meetingItemsError } = await supabase
     .from("meeting_items")
@@ -1037,8 +1057,19 @@ export async function bulkDeleteSongsAction(formData: FormData) {
   revalidatePath("/songs");
   revalidatePath("/review");
   revalidatePath("/meetings");
+  refresh();
 
   const params = new URLSearchParams(currentQuery || "");
   params.set("deleted", String(uniqueSongIds.length));
   redirect(`/songs?${params.toString()}`);
+}
+
+export async function updateSongSourceNumberAction(formData: FormData) {
+  const {supabase}=await requireProfile("editor");
+  const songId=readString(formData,"song_id"),sourceId=readString(formData,"source_id"),number=readString(formData,"song_number");
+  if(!songId||!sourceId||number.length>60)throw new Error("Număr invalid.");
+  const {error}=await supabase.from("song_sources").update({song_number:number||null}).eq("id",sourceId).eq("song_id",songId);
+  if(error)throw new Error(error.message);
+  revalidatePath("/songs");revalidatePath(`/songs/${songId}`);revalidatePath(`/songs/${songId}/edit`);refresh();
+  redirect(`/songs/${songId}/edit?saved=1`);
 }

@@ -12,8 +12,8 @@ export function LoginForm() {
     <form action={formAction} className="card login-card form-grid">
       <div>
         <div className="eyebrow">Acces intern</div>
-        <h1>Biblioteca de cântări</h1>
-        <p className="muted">Intră cu userul creat în Supabase Authentication.</p>
+        <h1>SongApp BCBgiroc</h1>
+        <p className="muted">Autentifică-te cu contul aprobat de administrator.</p>
       </div>
 
       {state.error ? <div className="error">{state.error}</div> : null}

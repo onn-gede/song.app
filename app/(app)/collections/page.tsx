@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile, canEdit } from "@/lib/auth";
 import { createCollectionAction, updateCollectionAction, deleteCollectionAction } from "./actions";
 
 const sourceTypes = [
@@ -13,7 +13,8 @@ const sourceTypes = [
 ];
 
 export default async function CollectionsPage() {
-  const supabase = await createClient();
+  const { supabase, profile } = await requireProfile();
+  const editable = canEdit(profile.role);
 
   const [{ data: collections, error }, { data: sources }] = await Promise.all([
     supabase
@@ -41,13 +42,13 @@ export default async function CollectionsPage() {
           <p className="muted">Ține separat Tineri, Cântările Evangheliei, colinde sau orice altă bază importată.</p>
         </div>
         <div className="inline-form">
-          <Link className="btn secondary" href="/import">Import text</Link>
+          {editable ? <><a className="btn secondary" href="/collections/youth-keys">Game cântări tineri ↗</a><Link className="btn secondary" href="/import">Import cântări</Link></> : null}
           <Link className="btn" href="/songs">Toate cântările</Link>
         </div>
       </div>
 
       <div className="grid collection-layout">
-        <section className="card">
+        {editable ? <section className="card">
           <h2>Adaugă colecție</h2>
           <form action={createCollectionAction} className="form-grid">
             <label className="label">Nume colecție
@@ -68,7 +69,7 @@ export default async function CollectionsPage() {
             </label>
             <button className="btn" type="submit">Creează colecția</button>
           </form>
-        </section>
+        </section> : null}
 
         <section className="card collection-main-card">
           <div className="top-row" style={{ marginBottom: 14 }}>
@@ -91,8 +92,9 @@ export default async function CollectionsPage() {
                       {!collection.is_active ? <span className="badge warning">inactivă</span> : null}
                     </span>
                   </span>
-                  <span className="muted small">Editează</span>
+                  <span className="muted small">{editable ? "Editează" : "Detalii"}</span>
                 </summary>
+                {editable ? <>
                 <form action={updateCollectionAction} className="form-grid collection-edit-form">
                   <input type="hidden" name="collection_id" value={collection.id} />
                   <label className="label">Nume
@@ -129,6 +131,7 @@ export default async function CollectionsPage() {
                     <button className="btn danger btn-compact" type="submit">Șterge colecția</button>
                   </form>
                 </div>
+                </> : <Link className="btn secondary" href={`/songs?collection=${collection.id}`}>Vezi cântările</Link>}
               </details>
             ))}
             {(!collections || collections.length === 0) ? <p className="muted">Nu există colecții încă.</p> : null}

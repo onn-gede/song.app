@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth";
+
+import { revalidatePath, refresh } from "next/cache";
 
 const allowedSourceTypes = new Set(["manual", "pptx", "ppt", "pdf", "txt", "docx", "other"]);
 
@@ -24,7 +25,7 @@ function normalizeCode(value: string) {
 }
 
 async function uniqueShortCode(baseCode: string) {
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const base = normalizeCode(baseCode) || "COLECTIE";
   const { data } = await supabase
     .from("song_collections")
@@ -42,6 +43,7 @@ async function uniqueShortCode(baseCode: string) {
 }
 
 export async function createCollectionAction(formData: FormData) {
+  await requireProfile("editor");
   const name = readString(formData, "name");
   const requestedShortCode = readString(formData, "short_code");
   const description = readString(formData, "description");
@@ -50,7 +52,7 @@ export async function createCollectionAction(formData: FormData) {
   if (!name) throw new Error("Numele colecției este obligatoriu.");
   if (!allowedSourceTypes.has(sourceType)) throw new Error("Tipul colecției nu este valid.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const shortCode = await uniqueShortCode(requestedShortCode || name);
 
   const { error } = await supabase.from("song_collections").insert({
@@ -66,9 +68,11 @@ export async function createCollectionAction(formData: FormData) {
   revalidatePath("/collections");
   revalidatePath("/songs");
   revalidatePath("/dashboard");
+  refresh();
 }
 
 export async function updateCollectionAction(formData: FormData) {
+  await requireProfile("editor");
   const collectionId = readString(formData, "collection_id");
   const name = readString(formData, "name");
   const shortCode = readString(formData, "short_code");
@@ -81,7 +85,7 @@ export async function updateCollectionAction(formData: FormData) {
   if (!shortCode) throw new Error("Codul scurt este obligatoriu.");
   if (!allowedSourceTypes.has(sourceType)) throw new Error("Tipul colecției nu este valid.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase
     .from("song_collections")
     .update({
@@ -98,17 +102,19 @@ export async function updateCollectionAction(formData: FormData) {
   revalidatePath("/collections");
   revalidatePath("/songs");
   revalidatePath("/dashboard");
+  refresh();
 }
 
 
 export async function deleteCollectionAction(formData: FormData) {
+  await requireProfile("editor");
   const collectionId = readString(formData, "collection_id");
   const confirm = readString(formData, "confirm");
 
   if (!collectionId) throw new Error("Lipsește colecția.");
   if (confirm !== "STERGE") throw new Error("Pentru ștergere trebuie să scrii exact: STERGE");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase
     .from("song_collections")
     .delete()
@@ -119,4 +125,5 @@ export async function deleteCollectionAction(formData: FormData) {
   revalidatePath("/collections");
   revalidatePath("/songs");
   revalidatePath("/dashboard");
+  refresh();
 }

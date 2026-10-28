@@ -1,0 +1,17 @@
+[build]
+  command = "npm run build:netlify"
+  publish = ".next"
+  ignore = "node ./scripts/netlify-ignore-build.mjs"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_PUBLIC_IMPORT_LIMIT_MB = "4"
+  NETLIFY_NEXT_SKEW_PROTECTION = "true"
+
+# Next.js runtime is detected and installed by Netlify; no SPA catch-all redirect.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

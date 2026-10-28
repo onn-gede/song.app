@@ -1,0 +1,33 @@
+name: Database health and heartbeat
+on:
+  schedule:
+    - cron: '15 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: songapp-maintenance
+  cancel-in-progress: false
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Check database and update file every two days
+        run: node scripts/maintenance.mjs
+      - name: Commit heartbeat without deployment
+        run: |
+          if git diff --quiet -- ops/heartbeat.json; then exit 0; fi
+          git config user.name 'songapp-maintenance[bot]'
+          git config user.email 'songapp-maintenance[bot]@users.noreply.github.com'
+          git add ops/heartbeat.json
+          git commit -m 'chore: database health heartbeat [skip ci] [skip netlify]'
+          git push

@@ -11,6 +11,8 @@ type Run = {
   imported_count: number;
   updated_count: number;
   skipped_count: number;
+  error_count?: number;
+  heartbeat_at?: string | null;
   error_message?: string | null;
   started_at: string;
   finished_at?: string | null;
@@ -18,30 +20,32 @@ type Run = {
 };
 
 function RunRow({ run, onCancel }: { run: Run; onCancel: (id: string) => void }) {
-  const processed = (run.imported_count || 0) + (run.updated_count || 0) + (run.skipped_count || 0);
+  const processed = (run.imported_count || 0) + (run.updated_count || 0) + (run.skipped_count || 0) + (run.error_count || 0);
   const total = run.found_count || 0;
   const percent = total ? Math.min(100, Math.round((processed / total) * 100)) : run.status === "running" ? 15 : 0;
-  const isRunning = run.status === "running";
-  const statusLabel = run.status === "cancelled" ? "anulată" : run.status === "finished" ? "finalizată" : run.status === "failed" ? "eroare" : "în rulare";
+  const isRunning = ["queued", "running"].includes(run.status);
+  const waiting = isRunning && (!run.heartbeat_at || Date.now() - new Date(run.heartbeat_at).getTime() > 120000);
+  const statusLabel = run.status === "cancelled" ? "anulată" : run.status === "finished" ? (run.error_count ? "finalizată cu erori" : "finalizată") : run.status === "failed" ? "eroare" : run.status === "queued" ? "în așteptare" : "în rulare";
 
   return (
     <div className="row compact-row external-run-row">
       <span className="row-main">
         <span className="row-title">{run.external_sources?.name || "Resurse Creștine"} · {statusLabel}</span>
         <span className="muted small">
-          Pagini: {run.pages_scanned || 0} · găsite: {total} · procesate: {processed}/{total || "?"} · importate: {run.imported_count || 0} · actualizate: {run.updated_count || 0} · sărite: {run.skipped_count || 0}
+          Pagini: {run.pages_scanned || 0} · găsite: {total} · procesate: {processed}/{total || "?"} · importate: {run.imported_count || 0} · actualizate: {run.updated_count || 0} · nemodificate: {run.skipped_count || 0} · erori: {run.error_count || 0}
         </span>
+        {waiting ? <span className="muted small">Așteaptă preluarea sau reluarea de către procesul de sincronizare.</span> : null}
         {isRunning ? (
           <span className="progress-line" aria-label={`Progres ${percent}%`}><span style={{ width: `${percent}%` }} /></span>
         ) : null}
         {run.error_message ? <span className="error small">{run.error_message}</span> : null}
       </span>
-      {isRunning ? <button className="btn secondary btn-compact" type="button" onClick={() => onCancel(run.id)}>Cancel</button> : null}
+      {isRunning ? <button className="btn secondary btn-compact" type="button" onClick={() => onCancel(run.id)}>Anulează</button> : null}
     </div>
   );
 }
 
-function SyncCard() {
+function SyncCard({ onStarted }: { onStarted: () => Promise<void> }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -51,10 +55,12 @@ function SyncCard() {
     const form = formRef.current;
     if (!form) return;
     const formData = new FormData(form);
-    setMessage("Sincronizarea a pornit. Poți pleca de pe pagină; progresul rămâne în istoricul de mai jos cât timp serverul local rulează.");
+    setMessage("Se trimite cererea de sincronizare...");
     startTransition(async () => {
       try {
         await startExternalSyncAction(formData);
+        await onStarted();
+        setMessage("Sincronizarea este în coadă. Poți închide pagina; procesul de sincronizare o va prelua automat.");
       } catch (error: any) {
         setMessage(error?.message || "Nu am putut porni sincronizarea.");
       }
@@ -80,9 +86,10 @@ function SyncCard() {
 }
 
 export function ExternalSourcesSyncPanel({ initialRuns }: { initialRuns: Run[] }) {
+  const [refreshError, setRefreshError] = useState("");
   const [runs, setRuns] = useState<Run[]>(initialRuns || []);
   const [isCancelling, startCancelTransition] = useTransition();
-  const hasRunning = useMemo(() => runs.some((run) => run.status === "running"), [runs]);
+  const hasRunning = useMemo(() => runs.some((run) => ["queued", "running"].includes(run.status)), [runs]);
 
   async function refreshRuns() {
     try {
@@ -95,38 +102,43 @@ export function ExternalSourcesSyncPanel({ initialRuns }: { initialRuns: Run[] }
 
   function cancelRun(runId: string) {
     startCancelTransition(async () => {
-      await cancelExternalSyncRunAction(runId);
-      await refreshRuns();
+      try { await cancelExternalSyncRunAction(runId); await refreshRuns(); setRefreshError(""); }
+      catch (error) { setRefreshError(error instanceof Error ? error.message : "Anularea a eșuat."); }
     });
   }
 
   useEffect(() => {
+    if (!hasRunning) return;
     let mounted = true;
+    let inFlight = false;
     async function refresh() {
+      if (inFlight || document.hidden) return;
+      inFlight = true;
       try {
         const nextRuns = await getExternalSyncRunsAction() as Run[];
-        if (mounted) setRuns(nextRuns);
+        if (mounted) { setRuns(nextRuns); setRefreshError(""); }
       } catch {
-        // păstrăm ultima stare afișată
-      }
+        if (mounted) setRefreshError("Progresul nu se poate actualiza momentan. Se reîncearcă automat.");
+      } finally { inFlight = false; }
     }
-    const interval = setInterval(refresh, hasRunning ? 2500 : 8000);
+    const interval = setInterval(refresh, 5000);
     return () => { mounted = false; clearInterval(interval); };
   }, [hasRunning]);
 
   return (
     <>
       <div className="grid external-source-grid">
-        <SyncCard />
+        <SyncCard onStarted={refreshRuns} />
       </div>
 
       <section className="card compact-card" style={{ marginTop: 16 }}>
         <div className="section-header-row">
           <h2>Ultimele sincronizări</h2>
-          <span className="muted small">Afișăm ultimele 2 rulări. {isCancelling ? "Se anulează..." : ""}</span>
+          <span className="muted small">Afișăm ultimele 10 rulări. {isCancelling ? "Se anulează..." : ""}</span>
         </div>
+        {refreshError ? <p className="error" role="status">{refreshError}</p> : null}
         <div className="list compact-list">
-          {runs.slice(0, 2).map((run) => <RunRow key={run.id} run={run} onCancel={cancelRun} />)}
+          {runs.slice(0, 10).map((run) => <RunRow key={run.id} run={run} onCancel={cancelRun} />)}
           {runs.length === 0 ? <p className="muted">Nu există sincronizări încă.</p> : null}
         </div>
       </section>

@@ -1,28 +1,38 @@
 {
   "name": "songapp-next-mvp",
-  "version": "0.1.11",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "worker:build": "tsc -p tsconfig.worker.json",
+    "worker": "node --env-file-if-exists=.env.worker dist-worker/scripts/external-sync-worker.js",
+    "test": "npm run worker:build && node --test dist-worker/tests/*.test.js",
+    "sql:package": "node scripts/build-install-sql.mjs",
+    "local": "node scripts/start-local.mjs",
+    "build:netlify": "node scripts/netlify-preflight.mjs && next build"
   },
   "dependencies": {
-    "@supabase/ssr": "latest",
-    "@supabase/supabase-js": "latest",
-    "next": "^16.0.7",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "jszip": "latest",
-    "pdf-parse": "latest",
-    "cfb": "latest"
+    "@supabase/ssr": "0.10.3",
+    "@supabase/supabase-js": "2.105.4",
+    "cfb": "1.2.2",
+    "cheerio": "1.2.0",
+    "jszip": "3.10.1",
+    "next": "16.2.6",
+    "pdf-parse": "2.4.5",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "typescript": "latest"
+    "@electric-sql/pglite": "0.5.12",
+    "@types/node": "25.6.2",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "6.0.3"
+  },
+  "engines": {
+    "node": ">=22.14.0"
   }
 }

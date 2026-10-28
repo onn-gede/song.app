@@ -1,8 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import type { MeetingSnapshot } from "@/lib/meeting-state";
+import { requireProfile } from "@/lib/auth";
+
+import { revalidatePath, refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 
 export type MeetingOption = {
   id: string;
@@ -33,6 +35,7 @@ function readString(formData: FormData, key: string) {
 }
 
 export async function createMeetingAction(formData: FormData) {
+  await requireProfile("editor");
   const title = readString(formData, "title");
   const meetingType = readString(formData, "meeting_type");
   const meetingDate = String(formData.get("meeting_date") || "");
@@ -40,7 +43,7 @@ export async function createMeetingAction(formData: FormData) {
 
   if (!title || !meetingDate) throw new Error("Titlul și data sunt obligatorii.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { data, error } = await supabase.rpc("create_meeting", {
     p_title: title,
     p_meeting_type: meetingType || null,
@@ -51,11 +54,13 @@ export async function createMeetingAction(formData: FormData) {
   if (error || !data) throw new Error(error?.message || "Nu am putut crea programul.");
 
   revalidatePath("/meetings");
+  refresh();
   redirect(`/meetings/${data}`);
 }
 
 export async function listMeetingsAction(): Promise<MeetingOption[]> {
-  const supabase = await createClient();
+  await requireProfile("read");
+  const supabase = (await requireProfile("read")).supabase;
   const { data, error } = await supabase
     .from("meetings")
     .select("id,title,meeting_date,status")
@@ -77,10 +82,11 @@ function sourceLabel(source: any) {
 }
 
 export async function searchSongsAction(query: string, limit = 25): Promise<SongSearchResult[]> {
+  await requireProfile("read");
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("read")).supabase;
   const results = new Map<string, SongSearchResult>();
 
   const { data, error } = await supabase.rpc("search_songs", {
@@ -122,7 +128,8 @@ export async function searchSongsAction(query: string, limit = 25): Promise<Song
 }
 
 export async function getRecentUsageAction(daysBack = 30): Promise<Record<string, RecentUsage>> {
-  const supabase = await createClient();
+  await requireProfile("read");
+  const supabase = (await requireProfile("read")).supabase;
   const { data, error } = await supabase.rpc("get_song_recent_usage", { days_back: daysBack });
 
   if (error) throw new Error(error.message);
@@ -141,7 +148,8 @@ export async function addSongToMeetingAction(input: {
   selectedKey?: string | null;
   notes?: string | null;
 }) {
-  const supabase = await createClient();
+  await requireProfile("editor");
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase.rpc("add_song_to_meeting", {
     p_meeting_id: input.meetingId,
     p_song_id: input.songId,
@@ -152,6 +160,8 @@ export async function addSongToMeetingAction(input: {
 
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${input.meetingId}`);
+  refresh();
+  return committedMeetingSnapshot(input.meetingId);
 }
 
 export async function createMeetingAndAddSongAction(input: {
@@ -161,12 +171,13 @@ export async function createMeetingAndAddSongAction(input: {
   songId: string;
   isBackup?: boolean;
 }) {
+  await requireProfile("editor");
   const title = input.title.trim();
   const meetingDate = input.meetingDate;
 
   if (!title || !meetingDate) throw new Error("Completează titlul și data întâlnirii.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { data: meetingId, error: meetingError } = await supabase.rpc("create_meeting", {
     p_title: title,
     p_meeting_type: input.meetingType || null,
@@ -190,16 +201,18 @@ export async function createMeetingAndAddSongAction(input: {
 
   revalidatePath("/meetings");
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
   return meetingId as string;
 }
 
 export async function addTextItemAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const itemType = readString(formData, "item_type") || "text";
   const title = readString(formData, "custom_title");
   const text = readString(formData, "custom_text");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase.rpc("add_text_to_meeting", {
     p_meeting_id: meetingId,
     p_item_type: itemType,
@@ -209,11 +222,14 @@ export async function addTextItemAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
+  return committedMeetingSnapshot(meetingId);
 }
 
 
 
 export async function updateMeetingTextItemAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const itemId = readString(formData, "item_id");
   const itemType = readString(formData, "item_type") || "text";
@@ -222,7 +238,7 @@ export async function updateMeetingTextItemAction(formData: FormData) {
 
   if (!meetingId || !itemId) throw new Error("Lipsește elementul de actualizat.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase
     .from("meeting_items")
     .update({
@@ -236,13 +252,16 @@ export async function updateMeetingTextItemAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
+  return committedMeetingSnapshot(meetingId);
 }
 
 export async function createShareLinkAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const preferredSlug = readString(formData, "preferred_slug");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase.rpc("create_meeting_share_link", {
     p_meeting_id: meetingId,
     p_preferred_slug: preferredSlug || null
@@ -250,13 +269,15 @@ export async function createShareLinkAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
 }
 
 export async function removeMeetingItemAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const itemId = readString(formData, "item_id");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase.rpc("remove_meeting_item", {
     p_meeting_id: meetingId,
     p_item_id: itemId
@@ -264,14 +285,17 @@ export async function removeMeetingItemAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
+  return committedMeetingSnapshot(meetingId);
 }
 
 export async function moveMeetingItemAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const itemId = readString(formData, "item_id");
   const direction = readString(formData, "direction") as "up" | "down";
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase.rpc("move_meeting_item", {
     p_meeting_id: meetingId,
     p_item_id: itemId,
@@ -280,6 +304,7 @@ export async function moveMeetingItemAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
 }
 
 
@@ -289,10 +314,11 @@ export async function reorderMeetingItemsAction(input: {
   itemIds: string[];
   isBackup: boolean;
 }) {
+  await requireProfile("editor");
   if (!input.meetingId) throw new Error("Lipsește programul.");
   if (!Array.isArray(input.itemIds) || input.itemIds.length === 0) return;
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase.rpc("reorder_meeting_items", {
     p_meeting_id: input.meetingId,
     p_item_ids: input.itemIds,
@@ -328,16 +354,18 @@ export async function reorderMeetingItemsAction(input: {
   }
 
   revalidatePath(`/meetings/${input.meetingId}`);
+  refresh();
 }
 
 export async function deleteMeetingAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const confirm = readString(formData, "confirm");
 
   if (!meetingId) throw new Error("Lipsește programul.");
   if (confirm !== "STERGE") throw new Error("Pentru ștergere trebuie să scrii exact: STERGE");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase
     .from("meetings")
     .delete()
@@ -347,16 +375,18 @@ export async function deleteMeetingAction(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/meetings");
+  refresh();
   redirect("/meetings");
 }
 
 export async function deleteShareLinkAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const linkId = readString(formData, "link_id");
 
   if (!meetingId || !linkId) throw new Error("Lipsește linkul public.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase
     .from("meeting_share_links")
     .delete()
@@ -366,34 +396,131 @@ export async function deleteShareLinkAction(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
 }
 
 export async function acceptPublicContributionAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const contributionId = readString(formData, "contribution_id");
 
   if (!meetingId || !contributionId) throw new Error("Lipsește propunerea.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase.rpc("accept_public_meeting_contribution", {
     p_contribution_id: contributionId
   });
 
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
+  return committedMeetingSnapshot(meetingId);
 }
 
 export async function rejectPublicContributionAction(formData: FormData) {
+  await requireProfile("editor");
   const meetingId = readString(formData, "meeting_id");
   const contributionId = readString(formData, "contribution_id");
 
   if (!meetingId || !contributionId) throw new Error("Lipsește propunerea.");
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
   const { error } = await supabase.rpc("reject_public_meeting_contribution", {
     p_contribution_id: contributionId
   });
 
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`);
+  refresh();
+}
+
+export async function duplicateMeetingAction(input: { meetingId: string; title: string; meetingDate: string }) {
+  const { supabase } = await requireProfile("editor");
+  const date = new Date(input.meetingDate);
+  if (!input.title.trim() || input.title.length > 200 || !Number.isFinite(date.getTime())) throw new Error("Completează un titlu și o dată validă.");
+  const { data, error } = await supabase.rpc("duplicate_meeting", {
+    p_meeting_id: input.meetingId, p_title: input.title.trim(), p_meeting_date: date.toISOString()
+  });
+  if (error || !data) throw new Error(error?.message || "Programul nu a putut fi copiat.");
+  revalidatePath("/meetings"); revalidatePath("/dashboard");
+  refresh();
+  return String(data);
+}
+
+export async function setMeetingTemplateAction(formData: FormData) {
+  const { supabase } = await requireProfile("editor");
+  const id = readString(formData, "meeting_id");
+  const { error } = await supabase.from("meetings").update({ is_template: formData.get("is_template") === "true" }).eq("id",id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/meetings/${id}`); revalidatePath("/meetings"); revalidatePath("/dashboard");
+  refresh();
+}
+
+export async function updateItemResponsibleAction(formData: FormData) {
+  const { supabase } = await requireProfile("editor");
+  const meetingId = readString(formData,"meeting_id");
+  const itemId = readString(formData,"item_id");
+  const name = readString(formData,"responsible_name");
+  const notes = readString(formData,"notes");
+  if (notes.length > 5000) throw new Error("Observațiile pot avea maximum 5000 de caractere.");
+  if (!meetingId || !itemId || name.length > 120) throw new Error("Responsabilul poate avea maximum 120 de caractere.");
+  const { error } = await supabase.from("meeting_items").update({ responsible_name: name || null, notes: notes || null }).eq("id",itemId).eq("meeting_id",meetingId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/meetings/${meetingId}`); revalidatePath("/program", "layout");
+  refresh();
+  return committedMeetingSnapshot(meetingId);
+}
+
+// One browser action per search. Usage is loaded only when there are results,
+// and only for those songs; opening an idle search box makes no POST request.
+export async function searchSongsWithUsageAction(query: string, limit = 25, includeUsage = true) {
+  const { supabase } = await requireProfile("read");
+  const songs = await searchSongsAction(query, Math.min(50, Math.max(1, Math.trunc(limit) || 25)));
+  if (!includeUsage || !songs.length) return { songs, recent: null };
+  const { data, error } = await supabase.rpc("get_song_recent_usage", { days_back: 30 }).in("song_id", songs.map(song => song.song_id));
+  if (error) throw new Error(error.message);
+  const recent: Record<string, RecentUsage> = Object.fromEntries(((data || []) as RecentUsage[]).map(row => [row.song_id, row]));
+  return { songs, recent };
+}
+
+export async function placeMeetingItemAction(input: { meetingId: string; itemId: string; isBackup: boolean; beforeId?: string | null }) {
+  const { supabase } = await requireProfile("editor");
+  const { error } = await supabase.rpc("place_meeting_item_v45", {
+    p_meeting_id: input.meetingId, p_item_id: input.itemId,
+    p_is_backup: input.isBackup, p_before_id: input.beforeId || null
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/meetings/${input.meetingId}`);
+  revalidatePath("/program", "layout");
+  refresh();
+  return committedMeetingSnapshot(input.meetingId);
+}
+
+export async function saveMeetingResponsiblesAction(formData: FormData) {
+  const { supabase } = await requireProfile("editor");
+  const id = readString(formData, "meeting_id");
+  const principal = readString(formData, "principal_responsible");
+  const secondary = formData.getAll("secondary_responsible").map(value => String(value).trim()).filter(Boolean);
+  if (!id || principal.length > 120 || secondary.length > 20 || secondary.some(name => name.length > 120)) {
+    throw new Error("Maximum 20 de responsabili secundari și 120 de caractere pentru fiecare nume.");
+  }
+  const { error } = await supabase.from("meetings").update({ principal_responsible: principal || null, secondary_responsibles: secondary }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/meetings/${id}`);
+  revalidatePath("/program", "layout");
+  refresh();
+  return committedMeetingSnapshot(id);
+}
+
+async function committedMeetingSnapshot(meetingId: string): Promise<MeetingSnapshot> {
+  const { supabase } = await requireProfile("editor");
+  const { data, error } = await supabase.rpc("get_meeting_snapshot_v46", { p_meeting_id: meetingId });
+  if (error || !data) throw new Error(error?.message || "Datele programului nu au putut fi confirmate.");
+  return data as MeetingSnapshot;
+}
+
+export async function setShareContributionsAction(data:FormData){
+ const {supabase}=await requireProfile('editor');const meetingId=readString(data,'meeting_id'),linkId=readString(data,'link_id');
+ const {error}=await supabase.from('meeting_share_links').update({allow_contributions:data.get('allow_contributions')==='on'}).eq('id',linkId).eq('meeting_id',meetingId);
+ if(error)throw new Error(error.message);revalidatePath(`/meetings/${meetingId}`);revalidatePath('/program','layout');refresh();
 }

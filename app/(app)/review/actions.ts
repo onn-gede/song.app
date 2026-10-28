@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth";
+
+import { revalidatePath, refresh } from "next/cache";
 
 const allowedStatuses = new Set(["pending", "parsed", "needs_review", "approved", "failed"]);
 
@@ -25,6 +26,7 @@ export async function bulkUpdateImportStatusAction(
   _prevState: BulkImportStatusState,
   formData: FormData
 ): Promise<BulkImportStatusState> {
+  await requireProfile("editor");
   const status = readString(formData, "status");
   const ids = Array.from(new Set(formData.getAll("file_ids").map(String).filter(Boolean)));
 
@@ -36,7 +38,7 @@ export async function bulkUpdateImportStatusAction(
     return { ok: false, error: "Alege cel puțin un import." };
   }
 
-  const supabase = await createClient();
+  const supabase = (await requireProfile("editor")).supabase;
 
   // Preferăm RPC-ul security definer din v11, pentru că respectă permisiunile editor/admin
   // și evită problemele de RLS. Dacă schema cache nu l-a încărcat încă, cădem pe update direct.
@@ -61,6 +63,7 @@ export async function bulkUpdateImportStatusAction(
 
     revalidatePath("/review");
     revalidatePath("/songs");
+    refresh();
 
     return {
       ok: true,
@@ -73,6 +76,7 @@ export async function bulkUpdateImportStatusAction(
 
   revalidatePath("/review");
   revalidatePath("/songs");
+  refresh();
 
   return {
     ok: true,

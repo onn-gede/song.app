@@ -1,6 +1,12 @@
 import Link from "next/link";
+import { MeetingState, MeetingActionForm } from "@/components/MeetingState";
+import { meetingStatus } from "@/lib/meeting-state";
+import type { MeetingSnapshot } from "@/lib/meeting-state";
+import { MeetingResponsibles } from "@/components/MeetingResponsibles";
+import { MeetingPrintDocument } from "@/components/MeetingPrintDocument";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireProfile, canEdit } from "@/lib/auth";
+import { DuplicateMeetingForm } from "@/components/DuplicateMeetingForm";
 import { formatDateTime } from "@/lib/format";
 import { AddSongsPanel } from "@/components/AddSongsPanel";
 import { CopyButton } from "@/components/CopyButton";
@@ -9,7 +15,9 @@ import { PrintButton } from "@/components/PrintButton";
 import {
   acceptPublicContributionAction,
   addTextItemAction,
+  setMeetingTemplateAction,
   createShareLinkAction,
+  setShareContributionsAction,
   deleteMeetingAction,
   deleteShareLinkAction,
   rejectPublicContributionAction,
@@ -59,11 +67,11 @@ function ExternalContributionCard({ meetingId, item }: { meetingId: string; item
         <p className="muted small compact-note-clean">Trimisă: {formatDateTime(item.created_at)}</p>
       </div>
       <div className="inline-form nowrap external-actions-v38">
-        <form action={acceptPublicContributionAction}>
+        <MeetingActionForm action={acceptPublicContributionAction}>
           <input type="hidden" name="meeting_id" value={meetingId} />
           <input type="hidden" name="contribution_id" value={item.id} />
           <button className="btn btn-compact" type="submit">Acceptă</button>
-        </form>
+        </MeetingActionForm>
         <form action={rejectPublicContributionAction}>
           <input type="hidden" name="meeting_id" value={meetingId} />
           <input type="hidden" name="contribution_id" value={item.id} />
@@ -104,24 +112,21 @@ function buildRecentUsageMap(data: unknown): Record<string, RecentUsage> {
 
 export default async function MeetingDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = await createClient();
+  const { supabase, profile } = await requireProfile();
+  const editable = canEdit(profile.role);
 
   const [
     { data: meeting },
-    { data: items },
+    { data: snapshot, error: snapshotError },
     { data: shareLinks },
     { data: publicContributions },
     { data: publicContributionHistory }
   ] = await Promise.all([
     supabase.from("meetings").select("*").eq("id", id).single(),
-    supabase
-      .from("meeting_items")
-      .select("*,songs(id,title,lyrics_text,default_key,bpm,structure)")
-      .eq("meeting_id", id)
-      .order("position"),
+    supabase.rpc("get_meeting_snapshot_v46", { p_meeting_id: id }),
     supabase
       .from("meeting_share_links")
-      .select("id,public_slug,is_active,expires_at,created_at")
+      .select("id,public_slug,is_active,expires_at,created_at,allow_contributions")
       .eq("meeting_id", id)
       .order("created_at", { ascending: false }),
     supabase
@@ -154,59 +159,65 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     recentUsageRows = scopedRecentUsageRows || [];
   }
 
-  const typedItems = ((items || []) as MeetingProgramItem[]);
+  if (snapshotError || !snapshot) return <p className="error">Rulează UPDATE-V46.sql în proiectul Supabase existent pentru actualizarea programului.</p>;
+  const initial = snapshot as MeetingSnapshot;
+  const typedItems = initial.items;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const activeLink = (shareLinks || []).find((link: any) => link.is_active);
+  const activeLink = (shareLinks || []).find((link: any) => link.is_active && (!link.expires_at || new Date(link.expires_at).getTime() > Date.now()));
   const publicUrl = activeLink ? `${siteUrl}/program/${activeLink.public_slug}` : null;
   const recentUsage = buildRecentUsageMap(recentUsageRows);
   const pendingContributions = ((publicContributions || []) as unknown as PublicMeetingContribution[]);
   const processedContributions = ((publicContributionHistory || []) as unknown as PublicMeetingContribution[]);
 
   return (
-    <>
-      <div className="top-row print-hide">
+    <MeetingState key={id} initial={initial}>
+      <div className="top-row page-heading-v44 print-hide">
         <div>
-          <div className="eyebrow">Program</div>
+          <div className="eyebrow">Pregătirea întâlnirii</div>
           <h1>{meeting.title}</h1>
+          {meetingStatus(meeting.meeting_date,meeting.status,meeting.is_template)==="finished" ? <span className="badge">Finalizat</span> : null}
+          {meeting.is_template ? <span className="badge">Șablon</span> : null}
           <p className="muted">{formatDateTime(meeting.meeting_date)}</p>
         </div>
         <div className="inline-form">
-          <PrintButton />
-          <Link className="btn secondary" href="/meetings">Înapoi</Link>
+          {activeLink ? <a className="btn public-highlight" href={`/program/${activeLink.public_slug}`} target="_blank" rel="noreferrer">Vezi public ↗</a> : null}
+          <details className="program-page-tools"><summary title="Acțiuni program" aria-label="Acțiuni program">•••</summary><div className="program-tools-menu">
+            <Link className="btn secondary" href={`/meetings/${id}/present`}>Prezintă programul</Link><PrintButton /><Link className="btn secondary" href="/meetings">Înapoi la programe</Link>
+          </div></details>
         </div>
       </div>
 
-      <div className="grid grid-2 meeting-layout">
-        <section className="card grid print-card">
+      <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={typedItems} />
+      <div className="meeting-layout meeting-screen-layout meeting-v48">
+        <section className="card print-card">
+          <MeetingResponsibles meetingId={id} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} editable={editable} />
           <div className="top-row program-toolbar" style={{ marginBottom: 0 }}>
             <div>
-              <h2>Lista programului</h2>
-              <p className="muted small">Listă compactă, ordonabilă prin drag & drop sau săgeți.</p>
+              <h2>Ordinea programului</h2>
             </div>
-            <div className="inline-form print-hide">
-              {activeLink ? <a className="btn secondary btn-compact" href={`/program/${activeLink.public_slug}`} target="_blank">Vezi public</a> : null}
-              <PrintButton label="Print" />
-            </div>
+
           </div>
 
           <div className="print-only print-program-title">
             <h1>{meeting.title}</h1>
+          {meetingStatus(meeting.meeting_date,meeting.status,meeting.is_template)==="finished" ? <span className="badge">Finalizat</span> : null}
             <p>{formatDateTime(meeting.meeting_date)}</p>
           </div>
 
-          <MeetingProgramBoard meetingId={meeting.id} items={typedItems} recentUsage={recentUsage} />
+          {editable ? <details className="program-add-tray print-hide"><summary>+ Adaugă cântări</summary><AddSongsPanel meetingId={meeting.id} recentUsage={recentUsage} /></details> : null}
+          <MeetingProgramBoard meetingId={meeting.id} items={typedItems} recentUsage={recentUsage} canManage={editable} />
         </section>
 
-        <aside className="grid print-hide">
+        {editable ? <details className="program-secondary card print-hide"><summary>Momente, partajare și administrare{pendingContributions.length ? ` · ${pendingContributions.length} propuneri` : ""}</summary><aside className="grid">
           {pendingContributions.length > 0 ? (
-            <section className="card external-proposals-section">
+            <details className="card external-proposals-section"><summary>Propuneri externe ({pendingContributions.length})</summary>
               <div className="eyebrow external-eyebrow">Propuneri externe</div>
               <h2>Adăugate din link public</h2>
               <p className="muted small">Aceste elemente sunt evidențiate discret cu roșu și intră în program doar după ce le accepți. Poziția propusă este respectată automat când este posibil.</p>
               <div className="grid compact-list">
                 {pendingContributions.map((item) => <ExternalContributionCard key={item.id} meetingId={meeting.id} item={item} />)}
               </div>
-            </section>
+            </details>
           ) : null}
 
 
@@ -227,12 +238,10 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             </details>
           ) : null}
 
-          <AddSongsPanel meetingId={meeting.id} recentUsage={recentUsage} />
 
-          <section className="card">
+          <details className="card program-option-panel"><summary>Adaugă un moment în program</summary><div className="program-option-content">
             <h2>Adaugă element între cântări</h2>
-            <p className="muted small">După adăugare îl poți muta exact unde dorești cu drag & drop sau cu săgețile din listă.</p>
-            <form action={addTextItemAction} className="form-grid">
+            <MeetingActionForm action={addTextItemAction} className="form-grid">
               <input type="hidden" name="meeting_id" value={meeting.id} />
               <label className="label">Tip
                 <select className="select" name="item_type" defaultValue="text">
@@ -250,10 +259,10 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                 <textarea className="textarea" name="custom_text" placeholder="Detalii afișate în program" />
               </label>
               <button className="btn" type="submit">Adaugă element</button>
-            </form>
-          </section>
+            </MeetingActionForm>
+          </div></details>
 
-          <section className="card">
+          <details className="card program-option-panel"><summary>Partajare și link public</summary><div className="program-option-content">
             <h2>Share public</h2>
             {activeLink && publicUrl ? (
               <div className="grid">
@@ -264,6 +273,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                   <CopyButton text={publicUrl} />
                   <a className="btn secondary btn-compact" href={`/program/${activeLink.public_slug}`} target="_blank">Deschide</a>
                 </div>
+                <form action={setShareContributionsAction} className="inline-form"><input type="hidden" name="meeting_id" value={meeting.id}/><input type="hidden" name="link_id" value={activeLink.id}/><label><input type="checkbox" name="allow_contributions" defaultChecked={activeLink.allow_contributions}/> Permite propuneri externe</label><button className="btn secondary">Salvează accesul</button></form>
                 <form action={deleteShareLinkAction}>
                   <input type="hidden" name="meeting_id" value={meeting.id} />
                   <input type="hidden" name="link_id" value={activeLink.id} />
@@ -280,9 +290,16 @@ export default async function MeetingDetailPage({ params }: PageProps) {
               </label>
               <button className="btn secondary" type="submit">Generează link public</button>
             </form>
-          </section>
+          </div></details>
 
-          <section className="card danger-card">
+          <details className="card program-administration"><summary>Administrare program</summary><div className="program-option-content">
+          <DuplicateMeetingForm meetingId={id} title={meeting.title} />
+          <form className="card" action={setMeetingTemplateAction}>
+            <input type="hidden" name="meeting_id" value={id} /><input type="hidden" name="is_template" value={String(!meeting.is_template)} />
+            <p className="muted small">Șabloanele păstrează structura pentru întâlnirile viitoare și apar separat de programele curente.</p>
+            <button className="btn secondary">{meeting.is_template ? "Scoate din șabloane" : "Păstrează ca șablon"}</button>
+          </form>
+          <details className="card program-option-panel danger-card"><summary>Ștergere program</summary><div className="program-option-content">
             <div className="badge danger-badge">Zonă de ștergere</div>
             <h2>Șterge programul</h2>
             <p className="muted small">Șterge programul, toate elementele din listă și linkurile publice asociate.</p>
@@ -293,9 +310,10 @@ export default async function MeetingDetailPage({ params }: PageProps) {
               </label>
               <button className="btn danger" type="submit">Șterge programul</button>
             </form>
-          </section>
-        </aside>
+          </div></details>
+          </div></details>
+        </aside></details> : null}
       </div>
-    </>
+    </MeetingState>
   );
 }
