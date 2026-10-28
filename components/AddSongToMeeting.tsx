@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { MeetingDatePicker } from "./MeetingDatePicker";
 import { Icon } from "./Icon";
-import { formatDateInputValue, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import {
   addSongToMeetingAction,
   createMeetingAndAddSongAction,
@@ -12,6 +13,8 @@ import {
 } from "@/app/(app)/meetings/actions";
 
 export function AddSongToMeeting({ songId, songTitle, compact = false }: { songId: string; songTitle: string; compact?: boolean }) {
+  const requestId=useRef("");
+  const creationLock=useRef(false);
   const [open, setOpen] = useState(false);
   const [meetings, setMeetings] = useState<MeetingOption[]>([]);
   const [createdMeetingId, setCreatedMeetingId] = useState<string | null>(null);
@@ -48,6 +51,7 @@ export function AddSongToMeeting({ songId, songTitle, compact = false }: { songI
   }
 
   function createMeetingAndAdd(formData: FormData) {
+    if(creationLock.current)return;creationLock.current=true;
     setError(null);
     setMessage(null);
     setCreatedMeetingId(null);
@@ -63,13 +67,14 @@ export function AddSongToMeeting({ songId, songTitle, compact = false }: { songI
           meetingType: meetingType || null,
           meetingDate,
           songId,
-          isBackup
+          isBackup,requestId:requestId.current
         });
 
         setCreatedMeetingId(meetingId);
         setMessage("Programul a fost creat și cântarea a fost adăugată.");
         await loadMeetings();
       } catch (error) {
+        creationLock.current=false;
         setError(error instanceof Error ? error.message : "Nu am putut crea programul.");
       }
     });
@@ -77,7 +82,7 @@ export function AddSongToMeeting({ songId, songTitle, compact = false }: { songI
 
   return (
     <>
-      <button className={compact ? "song-add-button" : "btn secondary btn-compact"} type="button" aria-label={`Adaugă ${songTitle} în program`} onClick={() => setOpen(true)}>
+      <button className={compact ? "song-add-button" : "btn secondary btn-compact"} type="button" aria-label={`Adaugă ${songTitle} în program`} onClick={() => {requestId.current=crypto.randomUUID();creationLock.current=false;setOpen(true);}}>
         {compact ? <Icon name="plus" size={18}/> : "Adaugă în program"}
       </button>
 
@@ -124,9 +129,7 @@ export function AddSongToMeeting({ songId, songTitle, compact = false }: { songI
                   <label className="label">Tip întâlnire
                     <input className="input" name="meeting_type" placeholder="duminica_dimineata" />
                   </label>
-                  <label className="label">Data și ora
-                    <input className="input" name="meeting_date" type="datetime-local" defaultValue={formatDateInputValue()} required />
-                  </label>
+                  <MeetingDatePicker disabled={isPending}/>
                   <label className="inline-form small">
                     <input name="is_backup" type="checkbox" /> Adaugă direct ca backup
                   </label>

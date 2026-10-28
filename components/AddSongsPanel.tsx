@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useMeetingState } from "./MeetingState";
-import { useEffect, useState, useTransition } from "react";
-import { addSongToMeetingAction, searchSongsAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { addSongToMeetingAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
 import { RecentUsageIcon } from "@/components/RecentUsageIcon";
 
 export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: string; recentUsage?: Record<string, RecentUsage> }) {
   const state = useMeetingState();
+  const cache=useRef(new Map<string,SongSearchResult[]>());
+  const [searching,setSearching]=useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SongSearchResult[]>([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -15,29 +17,21 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    const trimmed = query.trim();
-    let cancelled = false;
-
-    if (trimmed.length < 2) {
-      setResults([]);
-      setError(null);
-      return;
-    }
-
-    const handle = window.setTimeout(async () => {
-      try {
-        const data = await searchSongsAction(trimmed, 6);
-        if (!cancelled) setResults(data);
-      } catch (error) {
-        if (!cancelled) setError(error instanceof Error ? error.message : "Căutarea a eșuat.");
-      }
-    }, 250);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(handle);
-    };
-  }, [query]);
+    const trimmed=query.trim();const controller=new AbortController();let active=true;
+    if(trimmed.length<2&&!/^\d$/.test(trimmed)){setResults([]);setSearching(false);setError(null);return;}
+    const cached=cache.current.get(trimmed.toLocaleLowerCase());
+    if(cached){setResults(cached);setSearching(false);setError(null);return;}
+    setSearching(true);setResults([]);setError(null);
+    const handle=window.setTimeout(async()=>{
+      try{
+        const response=await fetch(`/api/songs/search?q=${encodeURIComponent(trimmed)}`,{signal:controller.signal,cache:'no-store'});
+        const data=await response.json();if(!response.ok)throw new Error(data.error||'Căutarea a eșuat.');
+        if(active){if(cache.current.size>40)cache.current.clear();cache.current.set(trimmed.toLocaleLowerCase(),data);setResults(data);}
+      }catch(error){if(active&&!controller.signal.aborted)setError(error instanceof Error?error.message:'Căutarea a eșuat.');}
+      finally{if(active)setSearching(false);}
+    },180);
+    return()=>{active=false;controller.abort();window.clearTimeout(handle);};
+  },[query]);
 
   function add(song: SongSearchResult, isBackup: boolean) {
     setMessage(null);
@@ -68,8 +62,9 @@ export function AddSongsPanel({ meetingId, recentUsage = {} }: { meetingId: stri
       </div>
       {message ? <p className="success">{message}</p> : null}
       {error ? <p className="error">{error}</p> : null}
-      <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Caută după titlu, versuri sau număr (ex: 352)" />
-      <div className="list compact-list">
+      <input aria-label="Caută cântări pentru program" autoComplete="off" className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Caută după titlu, versuri sau număr (ex: 352)" />
+      <p className="song-search-status" role="status" aria-live="polite">{searching?"Se caută…":results.length?`${results.length} rezultate`:query.trim().length>=2?"Nicio cântare găsită.":"Caută după titlu, versuri sau număr."}</p>
+      <div className="list compact-list" aria-busy={searching}>
         {results.map((song) => {
           const recent = recentUsage[song.song_id];
           return (

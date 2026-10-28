@@ -1,0 +1,16 @@
+"use client";
+import {useEffect,useId,useState} from 'react';
+import {bucharestInput} from '@/lib/meeting-date';
+export function MeetingDatePicker({name='meeting_date',disabled=false}:{name?:string;disabled?:boolean}){
+ const id=useId();const [day,setDay]=useState(''),[time,setTime]=useState('10:00'),[month,setMonth]=useState(''),[open,setOpen]=useState(false);
+ useEffect(()=>{const current=bucharestInput();setDay(current.slice(0,10));setMonth(current.slice(0,7));setTime(current.slice(11,14)+String(Math.floor(Number(current.slice(14))/15)*15).padStart(2,'0'));},[]);
+ const date=new Date((month||'2026-01')+'-01T12:00:00Z');const offset=(date.getUTCDay()+6)%7;const count=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,0)).getUTCDate();
+ function shift(delta:number){date.setUTCMonth(date.getUTCMonth()+delta);setMonth(date.toISOString().slice(0,7));}
+ function select(value:string){setDay(value);setMonth(value.slice(0,7));setOpen(false);}
+ return <div className="meeting-date-picker">
+  <input type="hidden" name={name} value={day?`${day}T${time}`:''}/>
+  <div className="meeting-date-fields"><div><label className="label" htmlFor={id+'-date'}>Data</label><div className="date-input-row"><input id={id+'-date'} aria-label="Data programului" className="input" type="date" value={day} disabled={disabled} required onChange={e=>{setDay(e.target.value);if(e.target.value)setMonth(e.target.value.slice(0,7));}}/><button className="btn secondary" type="button" disabled={disabled} aria-label="Deschide calendarul" aria-expanded={open} onClick={()=>setOpen(v=>!v)}>▦</button></div></div>
+  <label className="label" htmlFor={id+'-time'}>Ora<select id={id+'-time'} aria-label="Ora programului" className="select" value={time} onChange={e=>setTime(e.target.value)} disabled={disabled} required>{Array.from({length:96},(_,i)=>{const value=`${String(Math.floor(i/4)).padStart(2,'0')}:${String(i%4*15).padStart(2,'0')}`;return <option key={value} value={value}>{value}</option>;})}</select></label></div>
+  {open?<div className="meeting-calendar" role="group" aria-label="Calendar program"><div className="calendar-heading"><button type="button" className="icon-btn" aria-label="Luna anterioară" onClick={()=>shift(-1)}>‹</button><strong>{date.toLocaleDateString('ro-RO',{month:'long',year:'numeric',timeZone:'UTC'})}</strong><button type="button" className="icon-btn" aria-label="Luna următoare" onClick={()=>shift(1)}>›</button></div><div className="calendar-days">{['Lu','Ma','Mi','Jo','Vi','Sâ','Du'].map(d=><small key={d}>{d}</small>)}{Array.from({length:offset},(_,i)=><span key={'blank'+i}/>)}{Array.from({length:count},(_,i)=>{const value=`${month}-${String(i+1).padStart(2,'0')}`;return <button type="button" key={value} aria-label={value} aria-pressed={day===value} onClick={()=>select(value)}>{i+1}</button>;})}</div><div className="calendar-shortcuts"><button type="button" className="btn secondary btn-compact" onClick={()=>select(bucharestInput().slice(0,10))}>Astăzi</button><button type="button" className="btn secondary btn-compact" onClick={()=>{const d=new Date(bucharestInput().slice(0,10)+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);select(d.toISOString().slice(0,10));}}>Mâine</button></div></div>:null}
+ </div>;
+}

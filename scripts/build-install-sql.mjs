@@ -25,3 +25,5 @@ fs.writeFileSync('UPDATE-V46.sql','-- ACTUALIZARE v45 → v46 pe ACELAȘI proiec
 fs.writeFileSync('UPDATE-V47.sql','-- ACTUALIZARE v45/v46 → v47 pe ACELAȘI proiect Supabase. Include dependențele și raportul gamelor din v46.\n'+read('040_v46_usage_and_live_program.sql')+'\n'+read('041_v46_youth_keys.sql')+'\n'+read('042_v47_workflows.sql'));
 
 fs.writeFileSync('UPDATE-V48.sql','-- ACTUALIZARE v47/v47.1 → v48 pe ACELAȘI proiect Supabase.\n'+read('043_v48_access_audit.sql'));
+
+fs.writeFileSync('UPDATE-V49.sql','-- ACTUALIZARE v48 → v49 pe ACELAȘI proiect Supabase.\n'+read('044_v49_program_creation_search.sql'));

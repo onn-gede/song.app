@@ -1,12 +1,12 @@
-# SongApp BCBgiroc · v48 / 0.6.0
+# SongApp BCBgiroc · v49 / 0.6.1
 
-Interfață compactă, conturi aprobate de admin, jurnal de activitate și configurare Netlify.
+Creare program fără duplicate la retrimiterea cererii, calendar cu ore din 15 în 15 minute, căutare dedicată și backup sub program. Include toate funcțiile v48.
 
 ## Actualizare locală
 
 1. Oprește aplicația și păstrează o copie a surselor și bazei.
 2. Extrage arhiva peste folderul existent, păstrând `.env.local`.
-3. Rulează UPDATE-V48.sql în ACELAȘI proiect Supabase, după v47/v47.1.
+3. Rulează UPDATE-V49.sql în ACELAȘI proiect Supabase, după v48.
 4. Adaugă în `.env.local` cheia privată `SUPABASE_SERVICE_ROLE_KEY` pentru crearea conturilor. Nu o pune în variabile NEXT_PUBLIC.
 5. Rulează comenzile pe rând, continuând numai după succes:
 
@@ -30,7 +30,7 @@ publicarea efectivă nu a fost executată din sesiunea de lucru fără acces de 
 ## Utilizare
 
 - Meniu desktop compact, fără scroll propriu la înălțimile uzuale; un singur scroll al documentului pentru liste lungi. Pe ecrane foarte joase/mobil meniul este un drawer separat.
-- Pregătirea programului: rânduri compacte, principal și backup alăturate pe ecrane mari; căutarea și administrarea se deschid la cerere.
+- Pregătirea programului: rânduri compacte, backup sub lista principală pe orice ecran; căutarea și administrarea se deschid la cerere.
 - Pagina publică are un format mai simplu, versuri expandabile, print și actualizare Live.
 - Utilizatori: creare cont în așteptare, aprobare, roluri și mai mulți administratori. Ultimul admin activ este protejat.
 - Contul meu: click pe numele utilizatorului pentru schimbarea parolei.
@@ -46,4 +46,4 @@ npm run typecheck
 npm run build
 ```
 
-Detaliile sunt în VERIFICARI-V48.md. Workerul de sincronizare în calupuri rămâne oprit implicit.
+Detaliile sunt în VERIFICARI-V49.md. Workerul de sincronizare în calupuri rămâne oprit implicit.

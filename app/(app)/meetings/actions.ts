@@ -5,6 +5,7 @@ import { requireProfile } from "@/lib/auth";
 
 import { revalidatePath, refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { meetingDateISO } from "@/lib/meeting-date";
 
 export type MeetingOption = {
   id: string;
@@ -34,28 +35,16 @@ function readString(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
 }
 
-export async function createMeetingAction(formData: FormData) {
-  await requireProfile("editor");
-  const title = readString(formData, "title");
-  const meetingType = readString(formData, "meeting_type");
-  const meetingDate = String(formData.get("meeting_date") || "");
-  const notes = readString(formData, "notes");
-
-  if (!title || !meetingDate) throw new Error("Titlul și data sunt obligatorii.");
-
-  const supabase = (await requireProfile("editor")).supabase;
-  const { data, error } = await supabase.rpc("create_meeting", {
-    p_title: title,
-    p_meeting_type: meetingType || null,
-    p_meeting_date: new Date(meetingDate).toISOString(),
-    p_notes: notes || null
+export async function createMeetingAction(formData: FormData):Promise<string> {
+  const {supabase}=await requireProfile("editor");
+  const title=readString(formData,"title"),requestId=readString(formData,"request_id");
+  if(!title||title.length>200||!/^[0-9a-f-]{36}$/i.test(requestId))throw new Error("Completează titlul și reîncearcă salvarea.");
+  const {data,error}=await supabase.rpc("create_meeting_once_v49",{
+    p_request_id:requestId,p_title:title,p_meeting_type:readString(formData,"meeting_type")||null,
+    p_meeting_date:meetingDateISO(readString(formData,"meeting_date")),p_notes:readString(formData,"notes")||null
   });
-
-  if (error || !data) throw new Error(error?.message || "Nu am putut crea programul.");
-
-  revalidatePath("/meetings");
-  refresh();
-  redirect(`/meetings/${data}`);
+  if(error||!data)throw new Error(error?.message||"Nu am putut crea programul.");
+  revalidatePath("/meetings");return data as string;
 }
 
 export async function listMeetingsAction(): Promise<MeetingOption[]> {
@@ -71,60 +60,10 @@ export async function listMeetingsAction(): Promise<MeetingOption[]> {
   return (data || []) as MeetingOption[];
 }
 
-function normalizeSearchNumber(value: string) {
-  return value.trim().replace(/^nr\.?\s*/i, "");
-}
-
-function sourceLabel(source: any) {
-  const collection = Array.isArray(source.song_collections) ? source.song_collections[0] : source.song_collections;
-  const code = collection?.short_code || collection?.name || "Sursă";
-  return `${code}${source.song_number ? ` nr. ${source.song_number}` : ""}`;
-}
-
-export async function searchSongsAction(query: string, limit = 25): Promise<SongSearchResult[]> {
-  await requireProfile("read");
-  const trimmed = query.trim();
-  if (trimmed.length < 2) return [];
-
-  const supabase = (await requireProfile("read")).supabase;
-  const results = new Map<string, SongSearchResult>();
-
-  const { data, error } = await supabase.rpc("search_songs", {
-    search_query: trimmed,
-    result_limit: limit
-  });
-
-  if (error) throw new Error(error.message);
-
-  ((data || []) as SongSearchResult[]).forEach((item) => {
-    results.set(item.song_id, item);
-  });
-
-  const numberQuery = normalizeSearchNumber(trimmed);
-  if (numberQuery.length > 0) {
-    const { data: sourceMatches, error: sourceError } = await supabase
-      .from("song_sources")
-      .select("song_id,song_number,source_title,song_collections(short_code,name),songs(id,title,default_key,bpm)")
-      .or(`song_number.ilike.%${numberQuery}%,source_title.ilike.%${trimmed}%`)
-      .limit(limit);
-
-    if (sourceError) throw new Error(sourceError.message);
-
-    (sourceMatches || []).forEach((source: any) => {
-      const song = Array.isArray(source.songs) ? source.songs[0] : source.songs;
-      if (!song?.id || results.has(song.id)) return;
-      results.set(song.id, {
-        song_id: song.id,
-        title: song.title,
-        default_key: song.default_key || null,
-        bpm: song.bpm || null,
-        rank: 0,
-        matched_source: sourceLabel(source)
-      });
-    });
-  }
-
-  return Array.from(results.values()).slice(0, limit);
+export async function searchSongsAction(query:string,limit=25):Promise<SongSearchResult[]> {
+ const {supabase}=await requireProfile();
+ const {data,error}=await supabase.rpc('search_program_songs_v49',{p_query:query.trim().slice(0,160),p_limit:Math.min(30,Math.max(1,limit))});
+ if(error)throw new Error(error.message);return (data||[]) as SongSearchResult[];
 }
 
 export async function getRecentUsageAction(daysBack = 30): Promise<Record<string, RecentUsage>> {
@@ -164,45 +103,11 @@ export async function addSongToMeetingAction(input: {
   return committedMeetingSnapshot(input.meetingId);
 }
 
-export async function createMeetingAndAddSongAction(input: {
-  title: string;
-  meetingType?: string | null;
-  meetingDate: string;
-  songId: string;
-  isBackup?: boolean;
-}) {
-  await requireProfile("editor");
-  const title = input.title.trim();
-  const meetingDate = input.meetingDate;
-
-  if (!title || !meetingDate) throw new Error("Completează titlul și data întâlnirii.");
-
-  const supabase = (await requireProfile("editor")).supabase;
-  const { data: meetingId, error: meetingError } = await supabase.rpc("create_meeting", {
-    p_title: title,
-    p_meeting_type: input.meetingType || null,
-    p_meeting_date: new Date(meetingDate).toISOString(),
-    p_notes: null
-  });
-
-  if (meetingError || !meetingId) {
-    throw new Error(meetingError?.message || "Nu am putut crea programul.");
-  }
-
-  const { error: addError } = await supabase.rpc("add_song_to_meeting", {
-    p_meeting_id: meetingId,
-    p_song_id: input.songId,
-    p_is_backup: Boolean(input.isBackup),
-    p_selected_key: null,
-    p_notes: null
-  });
-
-  if (addError) throw new Error(addError.message);
-
-  revalidatePath("/meetings");
-  revalidatePath(`/meetings/${meetingId}`);
-  refresh();
-  return meetingId as string;
+export async function createMeetingAndAddSongAction(input:{title:string;meetingType?:string|null;meetingDate:string;songId:string;isBackup?:boolean;requestId:string}) {
+ const {supabase}=await requireProfile("editor");
+ const {data,error}=await supabase.rpc('create_meeting_once_v49',{p_request_id:input.requestId,p_title:input.title.trim(),p_meeting_type:input.meetingType||null,p_meeting_date:meetingDateISO(input.meetingDate),p_notes:null,p_song_id:input.songId,p_is_backup:!!input.isBackup});
+ if(error||!data)throw new Error(error?.message||'Nu am putut crea programul.');
+ revalidatePath('/meetings');revalidatePath(`/meetings/${data}`);return data as string;
 }
 
 export async function addTextItemAction(formData: FormData) {
@@ -436,7 +341,7 @@ export async function rejectPublicContributionAction(formData: FormData) {
 
 export async function duplicateMeetingAction(input: { meetingId: string; title: string; meetingDate: string }) {
   const { supabase } = await requireProfile("editor");
-  const date = new Date(input.meetingDate);
+  const date = new Date(meetingDateISO(input.meetingDate));
   if (!input.title.trim() || input.title.length > 200 || !Number.isFinite(date.getTime())) throw new Error("Completează un titlu și o dată validă.");
   const { data, error } = await supabase.rpc("duplicate_meeting", {
     p_meeting_id: input.meetingId, p_title: input.title.trim(), p_meeting_date: date.toISOString()

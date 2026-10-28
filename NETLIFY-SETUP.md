@@ -12,8 +12,8 @@ setările private ale proiectului Netlify.
 
 ## 1. Actualizează aceeași bază Supabase
 
-Oprește versiunea veche. Rulează **UPDATE-V48.sql** în SQL Editor, pe proiectul
-existent care are deja v47/v47.1. Datele, conturile existente și programele rămân.
+Oprește versiunea veche. Rulează **UPDATE-V49.sql** în SQL Editor, pe proiectul
+existent care are deja v48. Datele, conturile existente și programele rămân.
 Conturile noi devin inactive până la aprobare; conturile existente nu sunt dezactivate.
 
 Dacă nu ai niciun administrator activ, creează contul inițial în Supabase Auth și
@@ -26,7 +26,7 @@ prin API-ul administrativ al aplicației.
 
 ## 2. Pune sursele actualizate în repository
 
-Încarcă sursele v48 în `onn-gede/song.app` sau repository-ul ales pentru Netlify.
+Încarcă sursele v49 în `onn-gede/song.app` sau repository-ul ales pentru Netlify.
 Include `netlify.toml`, `.nvmrc`, `.github/workflows`, `scripts` și `ops`.
 Fișierele reale `.env.local` / `.env.worker` și directoarele node_modules / .next
 nu se încarcă. Exemplele `.env.example` pot rămâne.
@@ -73,7 +73,19 @@ un deploy nou.
 În Supabase Auth → URL configuration pune URL-ul HTTPS Netlify ca Site URL.
 Aplicația folosește email + parolă, fără înregistrare publică în interfață.
 
-## 5. Deploy și verificare
+## 5. Acces public la infrastructură, autentificare în aplicație
+
+În Project configuration → General → Visitor access → Project visibility setează
+producția **Public**, sau folosește Make public. Previews pot rămâne Private.
+Această setare permite cererilor să ajungă la SongApp. Biblioteca și administrarea
+rămân protejate prin autentificarea SongApp; numai linkurile de program active se
+citesc fără cont. Dacă Netlify cere login la app.netlify.com/edge-access sau răspunde
+401 înaintea paginii aplicației, verifică această setare. Ea nu poate fi corectată
+printr-un fișier din repository.
+
+Documentație: https://docs.netlify.com/manage/security/secure-access-to-sites/project-visibility/
+
+## 6. Deploy și verificare
 
 Declanșează deploy-ul din Netlify. Verifică:
 
@@ -90,7 +102,7 @@ La upload online există limita platformei pentru corpul cererii. Interfața
 limitează fișierele la **4 MB în total per lot** pe Netlify. Pentru arhive mari,
 împarte importul în loturi mai mici sau folosește aplicația locală.
 
-## 6. Mentenanță și fișier actualizat la două zile
+## 7. Mentenanță și fișier actualizat la două zile
 
 În GitHub → repository → Settings → Secrets and variables → Actions:
 

@@ -44,6 +44,34 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       ('${ADMIN}','admin@example.org','admin',true),('${VIEWER}','viewer@example.org','viewer',true),('${INACTIVE}','inactive@example.org','editor',false) on conflict(id) do update set email=excluded.email,role=excluded.role,is_active=excluded.is_active;
       insert into public.songs(title,lyrics_text) select 'Song '||lpad(i::text,5,'0'),'Prima linie de versuri' from generate_series(1,5205) i;
     `);
+    await t.test('v49 repeated creation returns one program, preserves quarter-hour and author, and rolls back failed song adds',async()=>{
+      await asUser(ADMIN);const token='10000000-0000-0000-0000-000000000049';
+      const before=await scalar('select count(*) from public.meetings');
+      const args=[token,'Program unic','2026-11-01T08:15:00Z'];
+      const sql="select public.create_meeting_once_v49($1,$2,null,$3,null)";
+      const id=await scalar(sql,args);assert.equal(await scalar(sql,args),id);
+      assert.equal(Number(await scalar('select count(*) from public.meetings')),Number(before)+1);
+      assert.equal(await scalar("select to_char(meeting_date at time zone 'Europe/Bucharest','HH24:MI') from public.meetings where id=$1",[id]),'10:15');
+      await asUser(VIEWER);await assert.rejects(()=>scalar(sql,args));
+      await asUser(INACTIVE);await assert.rejects(()=>scalar(sql,args));
+      await asUser('','anon');await assert.rejects(()=>scalar(sql,args));await asUser(ADMIN);
+      await assert.rejects(()=>scalar("select public.create_meeting_once_v49('20000000-0000-0000-0000-000000000049','Invalid',null,now(),null,'ffffffff-ffff-ffff-ffff-ffffffffffff',false)"));
+      assert.equal(Number(await scalar('select count(*) from public.meetings')),Number(before)+1);
+      await db.query('delete from public.meetings where id=$1',[id]);
+    });
+    await t.test('v49 program search prioritizes title and number, supports lyrics/diacritics and denies inactive/anonymous access',async()=>{
+      await asUser(ADMIN);const target=await scalar("insert into public.songs(title,lyrics_text) values('Mii de comori','Bucurie neasemănată') returning id");
+      const collection=await scalar('select id from public.song_collections limit 1');
+      await db.query("insert into public.song_sources(song_id,collection_id,song_number,source_title) values($1,$2,'98765','Titlu alternativ')",[target,collection]);
+      for(const term of ['Mii de','98765','neasemanata','Titlu alternativ']){const rows=(await db.query<any>('select * from public.search_program_songs_v49($1,8)',[term])).rows;assert.ok(rows.some(r=>r.song_id===target),term);}
+      assert.equal((await db.query('select * from public.search_program_songs_v49($1,2)',['Song'])).rows.length,2);
+      assert.equal((await db.query('select * from public.search_program_songs_v49($1,8)',['%'])).rows.length,0);
+      assert.ok(Number(await scalar("select count(*) from public.activity_log_v48 where event_type='search'"))>0);
+      await asUser(VIEWER);assert.ok((await db.query('select * from public.search_program_songs_v49($1,8)',['comori'])).rows.length);
+      await asUser(INACTIVE);await assert.rejects(()=>db.query("select * from public.search_program_songs_v49('comori',8)"));
+      await asUser('','anon');await assert.rejects(()=>db.query("select * from public.search_program_songs_v49('comori',8)"));
+      await asUser(ADMIN);await db.query('delete from public.songs where id=$1',[target]);
+    });
     await t.test('stable pages beyond 50 and DB filters',async()=>{
       await asUser(ADMIN);
       const page1=await scalar('select public.list_song_library(p_page=>1)');
@@ -431,6 +459,8 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V47.sql'),'utf8'));
       await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V48.sql'),'utf8'));
       await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V48.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V49.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V49.sql'),'utf8'));
       const fresh = new PGlite({ extensions: { pg_trgm, unaccent, pgcrypto } });
       try {
         await fresh.exec(setup);

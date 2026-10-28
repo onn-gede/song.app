@@ -1,3 +1,4 @@
+import { bucharestInput } from "./meeting-date";
 export function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
   const date = new Date(value);
@@ -9,9 +10,7 @@ export function formatDateTime(value: string | null | undefined) {
 }
 
 export function formatDateInputValue(date = new Date()) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}T${pad(local.getHours())}:${pad(local.getMinutes())}`;
+  return bucharestInput(date);
 }
 
 export function slugify(input: string) {
