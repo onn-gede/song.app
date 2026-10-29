@@ -1,6 +1,6 @@
 {
   "name": "songapp-next-mvp",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -16,7 +16,8 @@
     "import:red-book": "node --env-file=.env.local scripts/import-books.mjs --book=cr",
     "import:black-book": "node --env-file-if-exists=.env.local scripts/import-black-ppt.mjs",
     "import:books": "node --env-file=.env.local scripts/import-books.mjs",
-    "import:black-ppt": "node --env-file-if-exists=.env.local scripts/import-black-ppt.mjs"
+    "import:black-ppt": "node --env-file-if-exists=.env.local scripts/import-black-ppt.mjs",
+    "test:ppt-assets": "node --test tests/black-ppt-assets.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.10.3",
