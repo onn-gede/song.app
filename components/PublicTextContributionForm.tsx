@@ -1,4 +1,5 @@
 "use client";
+import { PROGRAM_MOMENT_TYPES } from "@/lib/program-moment-types";
 
 import { useState, useTransition } from "react";
 import { addPublicTextContributionAction, type PublicPositionOption } from "@/app/program/actions";
@@ -26,8 +27,8 @@ export function PublicTextContributionForm({ slug, positionOptions }: { slug: st
 
   return (
     <section className="card public-edit-card print-hide">
-      <div className="eyebrow">Intervenție text</div>
-      <h2>Propune poezie / rugăciune / îndemn / mesaj</h2>
+      <div className="eyebrow">Intervenție</div>
+      <h2>Propune o intervenție</h2>
       <form action={submit} className="form-grid public-text-form">
         <input type="hidden" name="slug" value={slug} />
         <label className="label">Numele tău, opțional
@@ -40,18 +41,12 @@ export function PublicTextContributionForm({ slug, positionOptions }: { slug: st
           </select>
         </label>
         <label className="label">Tip
-          <select className="select" name="contribution_type" defaultValue="text">
-            <option value="text">Poezie</option>
-            <option value="prayer">Rugăciune</option>
-            <option value="encouragement">Îndemn</option>
-            <option value="message">Mesaj</option>
-            <option value="break">Pauză</option>
-          </select>
+          <select className="select" name="contribution_type" defaultValue="text">{PROGRAM_MOMENT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}</select>
         </label>
         <label className="label">Titlu
-          <input className="input" name="custom_title" placeholder="Poezie / Rugăciune / Îndemn / Mesaj" />
+          <input className="input" name="custom_title" placeholder="Titlul intervenției" />
         </label>
-        <label className="label">Text
+        <label className="label">Observații
           <textarea className="textarea" name="custom_text" placeholder="Scrie intervenția propusă" />
         </label>
         <label className="check-row public-checkbox">

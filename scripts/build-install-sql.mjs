@@ -45,3 +45,5 @@ fs.writeFileSync('supabase/updates/UPDATE-V56.sql','-- ACTUALIZARE v55 → v56 p
 fs.writeFileSync('supabase/updates/UPDATE-V57.sql','-- ACTUALIZARE după v56, pe aceeași bază.\n'+read('050_v57_search_add_ui.sql')+'\n'+read('051_v57_books_repair.sql'));
 fs.writeFileSync('supabase/updates/UPDATE-V57-1-SAFE-IMPORT.sql',read('052_v57_1_safe_import.sql'));
 fs.writeFileSync('supabase/updates/UPDATE-V58.sql','-- Actualizare după v57 sau v57.1, în aceeași bază. Nu importă și nu arhivează cântări.\n'+read('052_v57_1_safe_import.sql')+'\n'+read('053_v58_presentation_import.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V59.sql','-- După v58, în aceeași bază.\n'+read('054_v59_public_moment_types.sql'));

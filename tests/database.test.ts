@@ -181,6 +181,23 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       await asUser('','service_role');assert.equal((await scalar(sql,params)).status,'existing');
       await asUser(ADMIN);await db.query('delete from public.songs where id=any($1::uuid[])',[[sid,existing,empty,variant.songId]]);await db.query('delete from public.song_collections where id=$1',[destination.id]);
     });
+    await t.test('v59 anonymous proposals support all admin moment types and approval preserves type and backup',async()=>{
+      await asUser(ADMIN);
+      const m=await scalar("select public.create_meeting('Tipuri publice v59',null,now(),null)");
+      const slug=await scalar("select public.create_meeting_share_link($1,'types-v59')",[m]);
+      await db.query('update public.meeting_share_links set allow_contributions=true where meeting_id=$1',[m]);
+      for(const kind of ['song','other','prayer','text','encouragement','message','break']){
+        await asUser('','anon');
+        const id=await scalar("select public.add_public_meeting_contribution($1,$2,null,'Moment propus','Observații',true,1,'Vizitator',null)",[slug,kind]);
+        await assert.rejects(()=>scalar('select public.accept_public_meeting_contribution($1)',[id]));
+        await asUser(ADMIN);
+        const item=await scalar('select public.accept_public_meeting_contribution($1)',[id]);
+        const row=(await db.query<any>('select * from public.meeting_items where id=$1',[item])).rows[0];
+        assert.equal(row.moment_kind,kind);assert.equal(row.is_backup,true);assert.equal(row.custom_text,'Observații');assert.equal(row.song_id,null);
+      }
+      await asUser('','anon');await assert.rejects(()=>scalar("select public.add_public_meeting_contribution($1,'invalid',null,'Titlu')",[slug]));
+      await asUser(ADMIN);await db.query('delete from public.meetings where id=$1',[m]);
+    });
     await t.test('v54 approval uses global positions with backup, returns updated notifications and is idempotent',async()=>{
       await asUser(ADMIN);
       const song=await scalar("select id from public.songs where title like 'Song %' order by title limit 1");

@@ -43,7 +43,7 @@ type PublicMeetingContribution = {
 };
 
 function externalTypeLabel(type: string) {
-  return ({ text: "Poezie", prayer: "Rugăciune", encouragement: "Îndemn", message: "Mesaj", break: "Pauză", song: "Cântare" } as Record<string, string>)[type] || "Element";
+  return ({ text: "Poezie", prayer: "Rugăciune", encouragement: "Îndemn", message: "Mesaj", break: "Pauză", other: "Diverse", song: "Cântare" } as Record<string, string>)[type] || "Element";
 }
 
 function ExternalContributionHistoryCard({ item }: { item: PublicMeetingContribution }) {

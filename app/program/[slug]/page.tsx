@@ -212,7 +212,7 @@ export default async function PublicProgramPage({ params }: PageProps) {
 
       {meeting.allow_contributions ? <><details className="card public-optional-panel print-hide"><summary>Propune o cântare</summary><PublicContributionPanel slug={slug} positionOptions={positionOptions} /></details>
 
-      <details className="card public-optional-panel print-hide"><summary>Propune o intervenție text</summary><PublicTextContributionForm slug={slug} positionOptions={positionOptions} /></details></> : null}
+      <details className="card public-optional-panel print-hide"><summary>Propune o intervenție</summary><PublicTextContributionForm slug={slug} positionOptions={positionOptions} /></details></> : null}
 
       {contributionHistory.length > 0 ? (
         <details className="card public-program-card print-hide history-toggle-card">

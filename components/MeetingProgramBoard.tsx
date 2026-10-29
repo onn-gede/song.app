@@ -1,4 +1,5 @@
 "use client";
+import { PROGRAM_MOMENT_TYPES } from "@/lib/program-moment-types";
 
 import Link from "next/link";
 import { collectionStyle,primarySource } from "@/lib/collection-colors";
@@ -133,13 +134,7 @@ function ProgramCard({
             <input type="hidden" name="item_id" value={item.id} />
             <div className="form-two-tight">
               <label className="label">Tip
-                <select className="select select-tight" name="item_type" defaultValue={item.moment_kind||item.item_type || "text"}>
-                  <option value="text">Poezie</option>
-                  <option value="prayer">Rugăciune</option>
-                  <option value="encouragement">Îndemn</option>
-                  <option value="message">Mesaj</option>
-                  <option value="song">Cântare</option><option value="other">Diverse</option><option value="break">Pauză</option>
-                </select>
+                <select className="select select-tight" name="item_type" defaultValue={item.moment_kind||item.item_type || "text"}>{PROGRAM_MOMENT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}</select>
               </label>
               <label className="label">Titlu
                 <input className="input input-tight" name="custom_title" defaultValue={item.custom_title || ""} placeholder="Titlul afișat în program" />
