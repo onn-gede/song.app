@@ -1,3 +1,4 @@
+import { SaveForm } from "@/components/SaveForm";
 import Link from "next/link";
 import { requireProfile, canEdit } from "@/lib/auth";
 import { createCategoryAction, deleteCategoryAction } from "./actions";
@@ -33,7 +34,7 @@ export default async function CategoriesPage() {
       <div className="grid grid-2">
         {editable ? <section className="card">
           <h2>Adaugă categorie</h2>
-          <form action={createCategoryAction} className="form-grid">
+          <SaveForm action={createCategoryAction} className="form-grid">
             <label className="label">Nume categorie
               <input className="input" name="name" placeholder="ex: Cina Domnului" required />
             </label>
@@ -46,7 +47,7 @@ export default async function CategoriesPage() {
               </select>
             </label>
             <button className="btn" type="submit">Creează categorie</button>
-          </form>
+          </SaveForm>
         </section> : null}
 
         <section className="card">
@@ -64,11 +65,11 @@ export default async function CategoriesPage() {
                 </summary>
                 <div className="management-actions">
                   <Link className="btn secondary btn-compact" href={`/songs?category=${category.id}`}>Vezi cântările</Link>
-                  {editable ? <form action={deleteCategoryAction} className="inline-form delete-inline-form">
+                  {editable ? <SaveForm action={deleteCategoryAction} className="inline-form delete-inline-form">
                     <input type="hidden" name="category_id" value={category.id} />
                     <input className="input compact-confirm" name="confirm" placeholder="STERGE" />
                     <button className="btn danger btn-compact" type="submit">Șterge</button>
-                  </form> : null}
+                  </SaveForm> : null}
                 </div>
               </details>
             ))}

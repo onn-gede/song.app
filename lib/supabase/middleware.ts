@@ -2,8 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse,type NextRequest } from "next/server";
 export async function updateSession(request:NextRequest){
  const path=request.nextUrl.pathname;
+ // Exact private API: each RPC validates the active JWT and editor role.
+ if(/^\/api\/meetings\/[0-9a-f-]{36}\/live$/i.test(path)&&['GET','PATCH'].includes(request.method))return NextResponse.next();
+ if(path==='/pdf.worker-5.4.296.min.mjs')return NextResponse.next();
+ if(path==='/notifications-sw.js')return NextResponse.next();
  // This exact endpoint validates the active JWT and logs search inside its database RPC.
- if(path==='/api/songs/search'&&request.method==='GET')return NextResponse.next();
+ if((path==='/api/songs/search'||/^\/api\/songs\/[0-9a-f-]{36}\/schedule$/i.test(path))&&request.method==='GET')return NextResponse.next();
  if(path.startsWith('/_next/')||path==='/favicon.ico'||path.startsWith('/api/public-program/'))return NextResponse.next();
  let response=NextResponse.next({request});
  const supabase=createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,{cookies:{getAll(){return request.cookies.getAll();},setAll(cookies){cookies.forEach(c=>request.cookies.set(c.name,c.value));response=NextResponse.next({request});cookies.forEach(c=>response.cookies.set(c.name,c.value,c.options));}}});

@@ -1,5 +1,7 @@
+import { ProgramNotifications,ProgramNotificationsButton,ProgramNotificationsPanel } from "@/components/ProgramNotifications";
 import Link from "next/link";
-import { MeetingState, MeetingActionForm } from "@/components/MeetingState";
+import { MeetingStatusBadge } from "@/components/MeetingStatus";
+import { MeetingState } from "@/components/MeetingState";
 import { meetingStatus } from "@/lib/meeting-state";
 import type { MeetingSnapshot } from "@/lib/meeting-state";
 import { MeetingResponsibles } from "@/components/MeetingResponsibles";
@@ -13,14 +15,11 @@ import { CopyButton } from "@/components/CopyButton";
 import { MeetingProgramBoard, type MeetingProgramItem } from "@/components/MeetingProgramBoard";
 import { PrintButton } from "@/components/PrintButton";
 import {
-  acceptPublicContributionAction,
-  addTextItemAction,
   setMeetingTemplateAction,
   createShareLinkAction,
   setShareContributionsAction,
   deleteMeetingAction,
   deleteShareLinkAction,
-  rejectPublicContributionAction,
   type RecentUsage
 } from "../actions";
 
@@ -45,41 +44,6 @@ type PublicMeetingContribution = {
 
 function externalTypeLabel(type: string) {
   return ({ text: "Poezie", prayer: "Rugăciune", encouragement: "Îndemn", message: "Mesaj", break: "Pauză", song: "Cântare" } as Record<string, string>)[type] || "Element";
-}
-
-function ExternalContributionCard({ meetingId, item }: { meetingId: string; item: PublicMeetingContribution }) {
-  const song = Array.isArray(item.songs) ? item.songs[0] : item.songs;
-  const title = song?.title || item.custom_title || "Propunere externă";
-  return (
-    <div className="external-proposal-card external-proposal-card-v38">
-      <div className="row-main">
-        <div className="program-title">{title}</div>
-        <div className="badges compact-badges">
-          <span className="badge external-badge subtle-red-badge">propus extern</span>
-          <span className="badge">{song ? "Cântare" : externalTypeLabel(item.contribution_type)}</span>
-          {item.proposed_position ? <span className="badge">poziție propusă: {item.proposed_position}</span> : null}
-          {item.is_backup ? <span className="badge backup">backup</span> : null}
-          {item.contributor_name ? <span className="badge">{item.contributor_name}</span> : null}
-          {song?.default_key ? <span className="badge">{song.default_key}</span> : null}
-        </div>
-        {item.custom_text ? <p className="lyrics compact-text-v10 external-proposal-text">{item.custom_text}</p> : null}
-        {item.notes ? <p className="muted small compact-note-clean">{item.notes}</p> : null}
-        <p className="muted small compact-note-clean">Trimisă: {formatDateTime(item.created_at)}</p>
-      </div>
-      <div className="inline-form nowrap external-actions-v38">
-        <MeetingActionForm action={acceptPublicContributionAction}>
-          <input type="hidden" name="meeting_id" value={meetingId} />
-          <input type="hidden" name="contribution_id" value={item.id} />
-          <button className="btn btn-compact" type="submit">Acceptă</button>
-        </MeetingActionForm>
-        <form action={rejectPublicContributionAction}>
-          <input type="hidden" name="meeting_id" value={meetingId} />
-          <input type="hidden" name="contribution_id" value={item.id} />
-          <button className="btn secondary btn-compact" type="submit">Respinge</button>
-        </form>
-      </div>
-    </div>
-  );
 }
 
 function ExternalContributionHistoryCard({ item }: { item: PublicMeetingContribution }) {
@@ -170,16 +134,15 @@ export default async function MeetingDetailPage({ params }: PageProps) {
   const processedContributions = ((publicContributionHistory || []) as unknown as PublicMeetingContribution[]);
 
   return (
-    <MeetingState key={id} initial={initial}>
+    <MeetingState key={id} initial={initial}><ProgramNotifications enabled={editable} meetingId={id} initial={editable?pendingContributions:[]}>
       <div className="top-row page-heading-v44 print-hide">
         <div>
           <div className="eyebrow">Pregătirea întâlnirii</div>
-          <h1>{meeting.title}</h1>
-          {meetingStatus(meeting.meeting_date,meeting.status,meeting.is_template)==="finished" ? <span className="badge">Finalizat</span> : null}
-          {meeting.is_template ? <span className="badge">Șablon</span> : null}
-          <p className="muted">{formatDateTime(meeting.meeting_date)}</p>
+          <div className="meeting-title-date"><h1>{meeting.title}</h1><time className="meeting-date-prominent" dateTime={meeting.meeting_date}>{formatDateTime(meeting.meeting_date)}</time></div>
+          <MeetingStatusBadge date={meeting.meeting_date} status={meeting.status} template={meeting.is_template} initialNow={Date.now()}/>
         </div>
         <div className="inline-form">
+          {editable?<ProgramNotificationsButton/>:null}
           {activeLink ? <a className="btn public-highlight" href={`/program/${activeLink.public_slug}`} target="_blank" rel="noreferrer">Vezi public ↗</a> : null}
           <details className="program-page-tools"><summary title="Acțiuni program" aria-label="Acțiuni program">•••</summary><div className="program-tools-menu">
             <Link className="btn secondary" href={`/meetings/${id}/present`}>Prezintă programul</Link><PrintButton /><Link className="btn secondary" href="/meetings">Înapoi la programe</Link>
@@ -187,6 +150,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      {editable?<ProgramNotificationsPanel/>:null}
       <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={typedItems} />
       <div className="meeting-layout meeting-screen-layout meeting-v48">
         <section className="card print-card">
@@ -204,24 +168,11 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             <p>{formatDateTime(meeting.meeting_date)}</p>
           </div>
 
-          {editable ? <AddSongsPanel key={meeting.id} meetingId={meeting.id} recentUsage={recentUsage} initiallyOpen={typedItems.length === 0} /> : null}
+          {editable ? <AddSongsPanel key={meeting.id} meetingId={meeting.id} recentUsage={recentUsage} initiallyOpen={true} /> : null}
           <MeetingProgramBoard meetingId={meeting.id} items={typedItems} recentUsage={recentUsage} canManage={editable} />
         </section>
 
-        {editable ? <details className="program-secondary card print-hide"><summary>Momente, partajare și administrare{pendingContributions.length ? ` · ${pendingContributions.length} propuneri` : ""}</summary><aside className="grid">
-          {pendingContributions.length > 0 ? (
-            <details className="card external-proposals-section"><summary>Propuneri externe ({pendingContributions.length})</summary>
-              <div className="eyebrow external-eyebrow">Propuneri externe</div>
-              <h2>Adăugate din link public</h2>
-              <p className="muted small">Aceste elemente sunt evidențiate discret cu roșu și intră în program doar după ce le accepți. Poziția propusă este respectată automat când este posibil.</p>
-              <div className="grid compact-list">
-                {pendingContributions.map((item) => <ExternalContributionCard key={item.id} meetingId={meeting.id} item={item} />)}
-              </div>
-            </details>
-          ) : null}
-
-
-
+        {editable ? <details className="program-secondary card print-hide"><summary>Partajare și administrare</summary><aside className="grid">
           {processedContributions.length > 0 ? (
             <details className="card external-proposals-section external-history-section history-toggle-card">
               <summary className="history-toggle-summary">
@@ -238,29 +189,6 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             </details>
           ) : null}
 
-
-          <details className="card program-option-panel"><summary>Adaugă un moment în program</summary><div className="program-option-content">
-            <h2>Adaugă element între cântări</h2>
-            <MeetingActionForm action={addTextItemAction} className="form-grid">
-              <input type="hidden" name="meeting_id" value={meeting.id} />
-              <label className="label">Tip
-                <select className="select" name="item_type" defaultValue="text">
-                  <option value="text">Poezie</option>
-                  <option value="prayer">Rugăciune</option>
-                  <option value="encouragement">Îndemn</option>
-                  <option value="message">Mesaj</option>
-                  <option value="break">Pauză</option>
-                </select>
-              </label>
-              <label className="label">Titlu
-                <input className="input" name="custom_title" placeholder="Poezie / Rugăciune / Îndemn / Mesaj" />
-              </label>
-              <label className="label">Text
-                <textarea className="textarea" name="custom_text" placeholder="Detalii afișate în program" />
-              </label>
-              <button className="btn" type="submit">Adaugă element</button>
-            </MeetingActionForm>
-          </div></details>
 
           <details className="card program-option-panel"><summary>Partajare și link public</summary><div className="program-option-content">
             <h2>Share public</h2>
@@ -314,6 +242,6 @@ export default async function MeetingDetailPage({ params }: PageProps) {
           </div></details>
         </aside></details> : null}
       </div>
-    </MeetingState>
+    </ProgramNotifications></MeetingState>
   );
 }

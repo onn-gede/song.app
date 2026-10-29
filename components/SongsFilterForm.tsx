@@ -107,7 +107,7 @@ export function SongsFilterForm({
           <option value="title_desc">Alfabetic Z-A</option>
           <option value="source_number_asc">Număr crescător</option>
           <option value="source_number_desc">Număr descrescător</option>
-          <option value="created_desc">Cele mai noi</option>
+          <option value="created_desc">Adăugate recent</option><option value="last_sung">Cântate recent în programe</option><option value="most_sung">Cele mai des cântate</option>
         </select>
       </label>
       <button className="btn btn-compact" type="submit">Aplică</button>

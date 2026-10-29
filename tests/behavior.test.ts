@@ -19,7 +19,7 @@ test('program presentation sorts sections and keeps repeated songs distinct',()=
   const makeSong=(id:string,position:number,is_backup=false):PresentationItem=>({id,position,is_backup,item_type:'song',custom_title:null,custom_text:null,songs:{title:'Cântare',lyrics_text:null,song_sections:[{id:'s2',position:2,section_type:'chorus',section_label:'Refren',content:'Refren text'},{id:'s1',position:1,section_type:'verse',section_label:'Strofa 1',content:'Cântare\nStrofa text'}]}});
   const items=[makeSong('repeat',3),makeSong('backup',900,true),makeSong('first',1),{id:'prayer',position:2,is_backup:false,item_type:'prayer',custom_title:'Rugăciune',custom_text:null,songs:null}];
   const slides=buildProgramSlides(items);
-  assert.equal(slides.length,5);assert.equal(slides[0].content,'Strofa text');assert.equal(slides[2].content,'Rugăciune');
+  assert.equal(slides.length,5);assert.equal(slides[0].content,'Cântare\nStrofa text');assert.equal(slides[2].content,'Rugăciune');
   assert.equal(new Set(slides.map(s=>s.id)).size,5);
   assert.equal(buildProgramSlides(items,true).length,7);
 });
@@ -59,14 +59,19 @@ test('v46 committed program state wins over stale route props, while newer versi
   assert.equal(latestMeetingSnapshot({...saved,revision:3,principal:'Emanuel'},saved).principal,'Emanuel');
   assert.equal(latestMeetingSnapshot(saved,null),saved);
 });
-test('v46 program completion uses Bucharest calendar day and handles daylight saving boundaries', async () => {
+test('v52 program phases use exact start/two-hour instants and preserve template/archive states', async () => {
   const { meetingStatus,bucharestDayStart } = await import('../lib/meeting-state.js');
   const now=new Date('2026-10-28T08:00:00Z');
   assert.equal(meetingStatus('2026-10-27T18:00Z','draft',false,now),'finished');
-  assert.equal(meetingStatus('2026-10-28T07:00Z','draft',false,now),'draft');
-  assert.equal(meetingStatus('2026-10-27T23:00Z','ready',false,now),'ready'); // midnight in Bucharest
+  assert.equal(meetingStatus('2026-10-28T07:00Z','draft',false,now),'in_progress');
+  assert.equal(meetingStatus('2026-10-27T23:00Z','ready',false,now),'finished');
   assert.equal(meetingStatus('2026-10-27T10:00Z','draft',true,now),'template');
   assert.equal(meetingStatus('2026-10-27T10:00Z','archived',false,now),'archived');
+  assert.equal(meetingStatus('2026-10-28T10:00Z','draft',false,new Date('2026-10-28T09:59:59.999Z')),'draft');
+  assert.equal(meetingStatus('2026-10-28T10:00Z','draft',false,new Date('2026-10-28T10:00:00Z')),'in_progress');
+  assert.equal(meetingStatus('2026-10-28T10:00Z','draft',false,new Date('2026-10-28T11:59:59.999Z')),'in_progress');
+  assert.equal(meetingStatus('2026-10-28T10:00Z','draft',false,new Date('2026-10-28T12:00:00Z')),'finished');
+  assert.equal(meetingStatus('2026-10-28T21:30Z','draft',false,new Date('2026-10-28T22:10Z')),'in_progress');
   assert.equal(bucharestDayStart(new Date('2026-03-29T12:00Z')),'2026-03-28T22:00:00.000Z');
   assert.equal(bucharestDayStart(new Date('2026-10-25T12:00Z')),'2026-10-24T21:00:00.000Z');
 });
@@ -81,3 +86,19 @@ test('v50 presentation carries each song key, program override wins, and moments
  const sections:PresentationItem={...song,songs:{...song.songs!,song_sections:[{id:'verse',position:1,section_label:null,section_type:'verse',content:'Versuri'}]}};
  assert.equal(buildProgramSlides([sections])[0].musicalKey,'F#');
 });
+
+ test('v52 collection identity is deterministic, explicit source wins and unsafe colors are rejected',async()=>{
+ const {primarySource,collectionStyle,validCollectionColor}=await import('../lib/collection-colors.js');
+ const sources=[{source_id:'a',collection_id:'one',name:'Tineri',color:'#9f1239',number:'380A'},{source_id:'b',collection_id:'two',name:'Carte',color:'#1d4ed8',number:'004'}];
+ assert.equal(primarySource(sources,'b')?.number,'004');assert.equal(primarySource(sources,null,'two')?.source_id,'b');assert.equal(primarySource(sources)?.source_id,'a');assert.equal(primarySource([]),null);
+ assert.equal(validCollectionColor('red;display:none'),false);assert.equal(validCollectionColor('#abcdef'),true);
+ assert.equal((collectionStyle(sources[0]) as any)['--collection-color'],'#9f1239');assert.notEqual((collectionStyle({color:'#ffffff'}) as any)['--collection-ink'],'#ffffff');
+ });
+
+ test('v56 activity uses Romanian labels and excludes internal/sensitive field codes',async()=>{
+ const {eventLabel,changedFields,activityValue}=await import('../lib/activity-labels.js');
+ assert.equal(eventLabel('update'),'Modificare');assert.equal(activityValue(true,'is_congregational'),'Da');assert.equal(activityValue('editor','role'),'Editor');
+ assert.deepEqual(changedFields({fields:['notes','lyrics_text','password','search_vector','updated_at']}),['notes','lyrics_text']);assert.equal(activityValue('00000000-0000-0000-0000-000000000001','selected_source_id'),'Referință actualizată');
+ });
+
+test('v58 presentation filenames identify number/title without extracting lyrics',async()=>{const {presentationFileIdentity}=await import('../lib/presentation-file.js');assert.equal(presentationFileIdentity('folder/063 Titlu cu ș.ppt')?.number,'063');assert.equal(presentationFileIdentity('016. Glorii din cer.pptx')?.title,'Glorii din cer');assert.equal(presentationFileIdentity('Fără număr.ppt'),null);assert.equal(presentationFileIdentity('001 Invalid.exe'),null);});

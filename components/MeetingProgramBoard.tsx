@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { collectionStyle,primarySource } from "@/lib/collection-colors";
+import { SourceTags } from "./SourceTags";
 import { effectiveMusicalKey } from "@/lib/musical-key";
 import { useMeetingState } from "./MeetingState";
 import { useRef, useState, useTransition } from "react";
@@ -28,7 +30,7 @@ const itemTypeLabels: Record<string, string> = {
   encouragement: "Îndemn",
   message: "Mesaj",
   break: "Pauză",
-  song: "Cântare"
+  song: "Cântare",other:"Diverse"
 };
 
 function sortItems(items: MeetingProgramItem[]) {
@@ -37,7 +39,7 @@ function sortItems(items: MeetingProgramItem[]) {
 
 function itemLabel(item: MeetingProgramItem) {
   if (item.songs) return item.songs.title;
-  return item.custom_title || itemTypeLabels[item.item_type] || "Element text";
+  return item.custom_title || itemTypeLabels[item.moment_kind||item.item_type] || "Element text";
 }
 
 function ProgramCard({
@@ -71,11 +73,18 @@ function ProgramCard({
 }) {
   const state = useMeetingState();
   const [editing, setEditing] = useState(false);
-  const editorRef=useRef<HTMLDetailsElement>(null);
+  const infoButton=useRef<HTMLButtonElement>(null);
+  const [infoEditing,setInfoEditing]=useState(false);
   const saving=useRef(false);
   const [savingInfo,startInfo]=useTransition();
   const [infoError,setInfoError]=useState("");
+  const [commonPending,setCommonPending]=useState(false);
+  const [commonOverride,setCommonOverride]=useState<boolean|null>(null);
+  const commonValue=commonOverride??!!item.is_congregational;
+  const commonSaving=useRef(false);
+  const [commonError,setCommonError]=useState("");
   const song = item.songs;
+  const source=primarySource(item.sources,item.selected_source_id);
   const musicalKey=effectiveMusicalKey(item.selected_key,song?.default_key);
   const recentLabel = song ? getRecentUsageTooltip(recentUsage) : null;
   const textItemTitle = itemLabel(item);
@@ -84,6 +93,8 @@ function ProgramCard({
     <div
       className={`program-item-v10 ${!item.song_id ? "program-item-moment" : ""} ${item.is_backup ? "program-item-backup" : ""} ${recentLabel ? "program-item-warning" : ""} ${isDragging ? "is-dragging" : ""} ${isDropTarget ? "is-drop-target" : ""}`}
       data-item-id={item.id}
+      data-source-color={song ? source?.color||"unassigned" : undefined}
+      style={song ? collectionStyle(source) : {'--moment-color':item.moment_color||'#d97706'} as React.CSSProperties}
     >
       {canManage ? <div className="program-handle" onPointerDown={event => { if (draggable && !editing) onPointerStart(event); }} title="Trage pentru reordonare" aria-label="Trage pentru reordonare">
         <span className="drag-grip">⋮⋮</span>
@@ -97,10 +108,16 @@ function ProgramCard({
               {song ? <Link href={`/songs/${song.id}`}>{song.title}</Link> : textItemTitle}
             </div>
             <div className="badges compact-badges">
-              {!song && item.custom_title ? <span className="badge muted-badge">{itemTypeLabels[item.item_type] || "Element"}</span> : null}
-              {item.responsible_name ? <span className="badge">Solist: {item.responsible_name}</span> : null}
+              {!song && item.custom_title ? <span className="badge muted-badge">{itemTypeLabels[item.moment_kind||item.item_type] || "Element"}</span> : null}
               {item.is_backup ? <span className="badge backup">backup</span> : null}
               {song ? <span className={`badge program-musical-key${musicalKey ? "" : " is-missing"}`} title={musicalKey ? "Tonalitatea cântării în acest program" : "Completează tonalitatea din editorul piesei"}>Tonalitate {musicalKey || "—"}</span> : null}
+              {song ? <SourceTags source={source}/> : null}
+              {song && canManage ? <button type="button" className={"badge congregational-toggle"+(commonValue?" is-selected":"")} aria-pressed={commonValue} aria-busy={commonPending} disabled={commonPending} title={commonValue?"Elimină marcajul de cântare în comun":"Marchează drept cântare în comun"} onClick={async()=>{
+                if(commonSaving.current)return;commonSaving.current=true;const enabled=!commonValue;setCommonOverride(enabled);setCommonPending(true);setCommonError("");
+                try{const response=await fetch(`/api/meetings/${meetingId}/live`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'common',itemId:item.id,enabled})});const data=await response.json();if(!response.ok)throw Error(data.error||"Marcajul nu a fost salvat.");state?.apply(data.snapshot);}
+                catch(e){setCommonError(e instanceof Error?e.message:"Salvarea a eșuat.");}
+                finally{setCommonOverride(null);setCommonPending(false);commonSaving.current=false;}
+              }}>{commonValue?"Cântare în comun":"Cântare comun"}</button>:song&&item.is_congregational?<span className="badge congregational-tag">Cântare în comun</span>:null}
               {song && (item.selected_bpm || song.bpm) ? <span className="badge">{item.selected_bpm || song.bpm} BPM</span> : null}
               {song?.structure ? <span className="badge">{song.structure}</span> : null}
               {recentLabel ? <RecentUsageIcon usage={recentUsage} /> : null}
@@ -109,44 +126,46 @@ function ProgramCard({
         </div>
 
         {song ? (
-          item.notes ? <p className="muted small compact-note-clean" title={item.notes}>{item.notes}</p> : null
+          null
         ) : editing ? (
-          <form action={async data => { const saved = await updateMeetingTextItemAction(data); state?.apply(saved); setEditing(false); }} className="text-item-edit-form">
+          <form onSubmit={event=>{event.preventDefault();if(saving.current)return;saving.current=true;setInfoError("");const data=new FormData(event.currentTarget);startInfo(async()=>{try{const saved=await updateMeetingTextItemAction(data);state?.apply(saved);setEditing(false);}catch(e){setInfoError(e instanceof Error?e.message:"Salvarea a eșuat.");}finally{saving.current=false;}});}} className="text-item-edit-form"><fieldset className="save-form-fields" disabled={savingInfo}>
             <input type="hidden" name="meeting_id" value={meetingId} />
             <input type="hidden" name="item_id" value={item.id} />
             <div className="form-two-tight">
               <label className="label">Tip
-                <select className="select select-tight" name="item_type" defaultValue={item.item_type || "text"}>
+                <select className="select select-tight" name="item_type" defaultValue={item.moment_kind||item.item_type || "text"}>
                   <option value="text">Poezie</option>
                   <option value="prayer">Rugăciune</option>
                   <option value="encouragement">Îndemn</option>
                   <option value="message">Mesaj</option>
-                  <option value="break">Pauză</option>
+                  <option value="song">Cântare</option><option value="other">Diverse</option><option value="break">Pauză</option>
                 </select>
               </label>
               <label className="label">Titlu
                 <input className="input input-tight" name="custom_title" defaultValue={item.custom_title || ""} placeholder="Titlul afișat în program" />
               </label>
             </div>
-            <label className="label">Text
-              <textarea className="textarea textarea-tight" name="custom_text" defaultValue={item.custom_text || ""} placeholder="Detalii afișate în program" />
+            <label className="label">Observații
+              <label className="label">Culoare<input type="color" name="moment_color" defaultValue={item.moment_color||"#d97706"}/></label><textarea className="textarea textarea-tight" name="custom_text" defaultValue={[item.custom_text,item.notes].filter(Boolean).join("\n\n")} placeholder="Detalii afișate în program" />
             </label>
             <div className="inline-form compact-actions">
               <button className="btn btn-compact" type="submit">Salvează</button>
               <button className="btn secondary btn-compact" type="button" onClick={() => setEditing(false)}>Renunță</button>
             </div>
-          </form>
+          </fieldset>{infoError?<p className="error" role="alert">{infoError}</p>:null}</form>
         ) : (
-          item.custom_text ? <details className="program-moment-text"><summary>Textul momentului</summary><p className="lyrics compact-text-v10">{item.custom_text}</p></details> : null
+          <div className="program-moment-observations">{[item.custom_text,item.notes].filter(Boolean).map((text,index)=><p key={index}>{text}</p>)}</div>
         )}
-        {!song && item.notes ? <p className="muted small compact-note-clean" title={item.notes}>{item.notes}</p> : null}
-        {canManage ? <details ref={editorRef} className="responsible-editor print-hide"><summary title="Editează solistul, observațiile și tonalitatea" aria-label="Solist și observații">✎</summary>
+        {commonError?<p className="error" role="alert">{commonError}</p>:null}
+        {song ? <div className="program-info-line">{item.responsible_name?<span><strong>Solist:</strong> {item.responsible_name}</span>:null}{item.notes?<span className="program-inline-notes" title={item.notes}><strong>Observații:</strong> {item.notes}</span>:null}{!item.responsible_name&&!item.notes&&canManage?<span className="muted">Solist · observații</span>:null}{canManage?<button ref={infoButton} type="button" className="inline-edit-button" title="Editează solistul și observațiile" aria-label="Solist și observații" aria-expanded={infoEditing} onClick={()=>{setInfoEditing(v=>!v);setInfoError("");}}>✎</button>:null}</div>
+        : null}
+        {song && canManage && infoEditing ? <div className="responsible-editor print-hide">
           <form onSubmit={event=>{
             event.preventDefault();if(saving.current)return;saving.current=true;setInfoError("");
             const data=new FormData(event.currentTarget);
             startInfo(async()=>{try{
               const saved=await updateItemResponsibleAction(data);state?.apply(saved);
-              if(editorRef.current){editorRef.current.open=false;editorRef.current.querySelector('summary')?.focus({preventScroll:true});}
+              setInfoEditing(false);infoButton.current?.focus({preventScroll:true});
             }catch(error){setInfoError(error instanceof Error?error.message:"Salvarea a eșuat.");}
             finally{saving.current=false;}});
           }}>
@@ -154,12 +173,13 @@ function ProgramCard({
             <input type="hidden" name="meeting_id" value={meetingId} /><input type="hidden" name="item_id" value={item.id} />
             <label className="label">Solist<input className="input" name="responsible_name" defaultValue={item.responsible_name || ""} maxLength={120} placeholder="Nume solist / echipă" /></label>
             {song ? <label className="label">Tonalitate<input className="input" name="selected_key" defaultValue={item.selected_key || ""} maxLength={20} placeholder={song.default_key ? `Implicit: ${song.default_key}` : "Ex.: G, Em, F#"} /></label> : null}
+            {song && item.sources?.length ? <label className="label program-source-editor">Colecție de referință<select className="select" aria-label="Colecție de referință" name="selected_source_id" defaultValue={source?.source_id||""}>{item.sources.map(s=><option key={s.source_id} value={s.source_id}>{s.name} · nr. {s.number||"—"}</option>)}</select></label>:null}
             <label className="label">Observații<textarea className="textarea textarea-tight" name="notes" defaultValue={item.notes || ""} maxLength={5000} placeholder="Observații pentru această piesă" /></label>
-            <div className="inline-form"><button className="btn secondary btn-compact" type="submit">{savingInfo?"Se salvează…":"Salvează"}</button><button className="btn secondary btn-compact" type="button" onClick={()=>{if(editorRef.current)editorRef.current.open=false;setInfoError("");}}>Închide</button></div>
+            <div className="inline-form"><button className="btn secondary btn-compact" type="submit">{savingInfo?"Se salvează…":"Salvează"}</button><button className="btn secondary btn-compact" type="button" onClick={()=>{setInfoEditing(false);setInfoError("");}}>Închide</button></div>
             </fieldset>
             {infoError?<p className="error" role="alert">{infoError}</p>:null}
           </form>
-        </details> : null}
+        </div> : null}
       </div>
 
       {canManage ? <div className="program-actions-v10">
@@ -169,7 +189,7 @@ function ProgramCard({
         </div>
         <button className="btn secondary btn-compact program-transfer" type="button" disabled={!draggable} onClick={onTransfer} title={item.is_backup ? "Mută în programul principal" : "Mută în backup"} aria-label={item.is_backup ? "În principal" : "În backup"}>⇄</button>
         {!song ? (
-          <button className="icon-btn" type="button" title="Editează" aria-label="Editează" onClick={() => setEditing((value) => !value)}>✎</button>
+          <button className="icon-btn" type="button" title="Editează" aria-label="Editează" onClick={() => {setEditing((value) => !value);setInfoError("");}}>✎</button>
         ) : null}
         <form action={async data => { const saved = await removeMeetingItemAction(data); state?.apply(saved); }}>
           <input type="hidden" name="meeting_id" value={meetingId} />

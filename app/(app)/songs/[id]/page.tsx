@@ -38,10 +38,10 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
   const [{ data: song }, { data: sections }, { data: sources }, { data: refs }, { data: cats }, { data: files }, { data: history, error: historyError }] = await Promise.all([
     supabase.from("songs").select("*").eq("id", id).single(),
     supabase.from("song_sections").select("*").eq("song_id", id).order("position"),
-    supabase.from("song_sources").select("song_number,source_title,song_collections(id,name,short_code)").eq("song_id", id),
+    supabase.from("song_sources").select("id,song_number,source_title,song_collections(id,name,short_code,color)").eq("song_id", id),
     supabase.from("song_bible_references").select("id,theme,reason,confidence,bible_references(version,book,chapter,verse_start,verse_end,reference_label,text_cache,source_url)").eq("song_id", id),
     supabase.from("song_categories").select("categories(id,name,slug)").eq("song_id", id),
-    supabase.from("song_files").select("id,file_name,import_status,parser_notes,created_at").eq("song_id", id).order("created_at", { ascending: false }),
+    supabase.from("song_files").select("id,file_name,import_status,parser_notes,created_at,presentation_only_v58,upload_complete_v58,preview_path_v58,file_type").eq("song_id", id).order("created_at", { ascending: false }),
     supabase.rpc("get_song_history_v46", {p_song_id: id, p_page: usagePage, p_page_size: 30})
   ]);
 
@@ -49,7 +49,7 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
 
   const sourceFile = (files || [])[0] as any;
   const importStatus = sourceFile?.import_status;
-  const importStatusLabel = importStatus === "approved" ? "Import verificat" : importStatus === "needs_review" ? "Import de verificat" : importStatus ? `Import: ${importStatus}` : null;
+  const importStatusLabel = sourceFile?.presentation_only_v58?"Titlu și prezentare importate":importStatus === "approved" ? "Import verificat" : importStatus === "needs_review" ? "Import de verificat" : importStatus ? `Import: ${importStatus}` : null;
   const sourceNumbers = (sources || []).map((source: any) => String(source.song_number || "")).filter(Boolean);
   const topSourceLabels = (sources || [])
     .map((source: any) => {
@@ -78,7 +78,7 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
           {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/lyrics`}>Versuri</Link> : null}
           {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/verses`}>Versete</Link> : null}
           <Link className="btn secondary btn-compact" href={`/songs/${song.id}/present`}>Prezentare</Link>
-          {editable ? <AddSongToMeeting songId={song.id} songTitle={song.title} /> : null}
+          {editable ? <AddSongToMeeting sourceOptions={(sources||[]).map((s:any)=>({id:s.id,name:(Array.isArray(s.song_collections)?s.song_collections[0]:s.song_collections)?.name||"Colecție",number:s.song_number||null,color:(Array.isArray(s.song_collections)?s.song_collections[0]:s.song_collections)?.color}))} songId={song.id} songTitle={song.title} /> : null}
         </div>
       </div>
 
@@ -88,7 +88,8 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
             <h2 style={{ marginBottom: 0 }}>Versuri structurate</h2>
             <Link className="btn secondary btn-compact" href={`/songs/${song.id}/present`}>Deschide prezentarea</Link>
           </div>
-          {(sections || []).length === 0 ? <p className="lyrics">{song.lyrics_text || "Nu există versuri."}</p> : null}
+          {(files||[]).some((f:any)=>f.presentation_only_v58)?<div className="presentation-file-list">{(files||[]).filter((f:any)=>f.presentation_only_v58).map((f:any)=><div key={f.id} className="presentation-file-row"><div><strong>{f.file_name}</strong><small>{f.upload_complete_v58?(f.preview_path_v58?'PPT original + previzualizare PDF':'Prezentare originală'):'Încărcare neconfirmată — reia importul'}</small></div>{f.upload_complete_v58?<div className="inline-form"><Link className="btn btn-compact" href={`/songs/${song.id}/files/${f.id}`}>Vezi prezentarea</Link><a className="btn secondary btn-compact" href={`/api/song-files/${f.id}/download`}>Descarcă {f.file_type.toUpperCase()}</a></div>:null}</div>)}</div>:null}
+          {(sections || []).length === 0 ? <p className="lyrics">{song.lyrics_text || (sourceFile?.presentation_only_v58?"Titlul și prezentarea sunt disponibile. Versurile pot fi adăugate ulterior.":"Nu există versuri.")}</p> : null}
           {(sections || []).map((section: any) => {
             const cleanContent = stripRepeatedSongTitleLines(section.content, song.title, sourceNumbers);
             return (

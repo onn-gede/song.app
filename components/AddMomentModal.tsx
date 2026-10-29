@@ -1,0 +1,12 @@
+"use client";
+import {useEffect,useRef,useState,useTransition} from 'react';
+import {addTextItemAction} from '@/app/(app)/meetings/actions';
+import {useMeetingState} from './MeetingState';
+export function AddMomentModal({meetingId,onClose}:{meetingId:string;onClose:()=>void}){
+ const dialog=useRef<HTMLDialogElement>(null),locked=useRef(false);const state=useMeetingState();const [pending,start]=useTransition(),[error,setError]=useState('');
+ useEffect(()=>{dialog.current?.showModal();return()=>dialog.current?.close();},[]);
+ function close(){if(!locked.current)onClose();}
+ return <dialog ref={dialog} className="moment-dialog print-hide" onCancel={event=>{event.preventDefault();close();}} onClick={event=>{if(event.target===dialog.current)close();}} aria-labelledby="add-moment-title"><header><h2 id="add-moment-title">Adaugă un moment</h2><button type="button" className="icon-btn" disabled={pending} aria-label="Închide momentul" onClick={close}>×</button></header>
+ <form className="form-grid" onSubmit={event=>{event.preventDefault();if(locked.current)return;locked.current=true;const data=new FormData(event.currentTarget);setError('');start(async()=>{try{const saved=await addTextItemAction(data);state?.apply(saved);onClose();}catch(e){setError(e instanceof Error?e.message:'Nu am putut adăuga momentul.');}finally{locked.current=false;}});}}><fieldset className="meeting-form-fields form-grid" disabled={pending}>
+ <input type="hidden" name="meeting_id" value={meetingId}/><label className="label">Tip<select name="item_type" className="select" defaultValue="prayer"><option value="song">Cântare</option><option value="other">Diverse</option><option value="prayer">Rugăciune</option><option value="text">Poezie</option><option value="encouragement">Îndemn</option><option value="message">Mesaj</option><option value="break">Pauză</option></select></label><label className="label">Titlu<input name="custom_title" className="input" placeholder="Ex.: Rugăciune de mulțumire" maxLength={200} autoFocus/></label><label className="label">Observații<textarea name="custom_text" className="textarea" placeholder="Detalii pentru acest moment"/></label><label className="label">Culoarea momentului<input className="moment-color-input" type="color" name="moment_color" defaultValue="#d97706"/></label><button className="btn" type="submit">{pending?'Se adaugă…':'Adaugă momentul'}</button></fieldset>{error?<p className="error" role="alert">{error}</p>:null}</form></dialog>;
+}

@@ -1,6 +1,6 @@
 {
   "name": "songapp-next-mvp",
-  "version": "0.6.2",
+  "version": "0.8.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,10 +9,14 @@
     "typecheck": "tsc --noEmit",
     "worker:build": "tsc -p tsconfig.worker.json",
     "worker": "node --env-file-if-exists=.env.worker dist-worker/scripts/external-sync-worker.js",
-    "test": "npm run worker:build && node --test dist-worker/tests/*.test.js",
+    "test": "npm run worker:build && node --test dist-worker/tests/*.test.js && node --test tests/red-book-import.test.mjs && node --test tests/black-ppt.test.mjs",
     "sql:package": "node scripts/build-install-sql.mjs",
     "local": "node scripts/start-local.mjs",
-    "build:netlify": "node scripts/netlify-preflight.mjs && next build"
+    "build:netlify": "node scripts/netlify-preflight.mjs && next build",
+    "import:red-book": "node --env-file=.env.local scripts/import-books.mjs --book=cr",
+    "import:black-book": "node --env-file-if-exists=.env.local scripts/import-black-ppt.mjs",
+    "import:books": "node --env-file=.env.local scripts/import-books.mjs",
+    "import:black-ppt": "node --env-file-if-exists=.env.local scripts/import-black-ppt.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.10.3",
@@ -23,7 +27,8 @@
     "next": "16.2.6",
     "pdf-parse": "2.4.5",
     "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react-dom": "19.2.6",
+    "pdfjs-dist": "5.4.296"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.12",

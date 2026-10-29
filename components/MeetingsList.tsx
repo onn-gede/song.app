@@ -1,0 +1,13 @@
+"use client";
+import Link from 'next/link';
+import {Icon} from './Icon';
+import {useMeetingClock,MEETING_STATUS_LABELS} from './MeetingStatus';
+import {meetingStatus} from '@/lib/meeting-state';
+type Row={id:string;title:string;meeting_type:string|null;meeting_date:string;status:string;is_template:boolean};
+export function MeetingsList({meetings,mode,initialNow}:{meetings:Row[];mode:'all'|'upcoming'|'finished'|'templates';initialNow:number}){
+ const now=useMeetingClock(meetings.map(m=>m.meeting_date),initialNow);
+ const visible=meetings.filter(m=>{const status=meetingStatus(m.meeting_date,m.status,m.is_template,new Date(now));return mode==='templates'?m.is_template:mode==='upcoming'?status==='draft'||status==='ready'||status==='in_progress':mode==='finished'?status==='finished':!m.is_template;}).sort((a,b)=>mode==='upcoming'?Date.parse(a.meeting_date)-Date.parse(b.meeting_date):Date.parse(b.meeting_date)-Date.parse(a.meeting_date));
+ return <><div className="results-caption-v44"><span>{mode==='templates'?'Șabloane reutilizabile':mode==='upcoming'?'Întâlniri viitoare și în curs':mode==='finished'?'Programe finalizate':'Programe existente'}</span><small>{visible.length} {mode==='templates'?'șabloane':'programe'}</small></div>
+ <div className="meeting-cards-v44">{visible.map(m=>{const date=new Date(m.meeting_date),status=meetingStatus(m.meeting_date,m.status,m.is_template,new Date(now));return <Link key={m.id} href={`/meetings/${m.id}`} className="meeting-card-v44"><div className="meeting-card-top"><span className={`meeting-date-tile${m.is_template?' is-template':''}`}>{m.is_template?<Icon name="copy" size={26}/>:<><small>{date.toLocaleDateString('ro-RO',{month:'short',timeZone:'Europe/Bucharest'}).replace('.','')}</small><strong>{date.toLocaleDateString('ro-RO',{day:'2-digit',timeZone:'Europe/Bucharest'})}</strong></>}</span><span className={`meeting-status status-${status}`} data-meeting-state={status}><i/>{MEETING_STATUS_LABELS[status]||status}</span></div><h2>{m.title}</h2><p>{m.is_template?'Șablon pentru un program nou':date.toLocaleDateString('ro-RO',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Bucharest'})+' · '+date.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Bucharest'})}</p><div className="meeting-card-bottom"><span>{m.meeting_type?.replace(/_/g,' ')||'Întâlnire'}</span><Icon name="arrow" size={18}/></div></Link>;})}</div>
+ {!visible.length?<div className="empty-state-v44"><span><Icon name="calendar" size={32}/></span><h2>Niciun program aici</h2><p>{mode==='templates'?'Păstrează un program existent ca șablon.':'Creează o întâlnire și alege cântările din bibliotecă.'}</p></div>:null}</>;
+}

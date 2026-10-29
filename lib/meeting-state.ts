@@ -1,8 +1,9 @@
+import type { CollectionSource } from "./collection-colors";
 export type ProgramItem = {
   id: string; position: number; item_type: string; song_id: string | null;
-  custom_title: string | null; custom_text: string | null; selected_key: string | null;
+  moment_kind?:string|null;moment_color?:string|null; custom_title: string | null; custom_text: string | null; selected_key: string | null;
   selected_bpm: number | null; is_backup: boolean; notes: string | null;
-  responsible_name?: string | null;
+  is_congregational?: boolean; responsible_name?: string | null; selected_source_id?:string|null; sources?:CollectionSource[];
   songs: { id: string; title: string; lyrics_text: string | null; default_key: string | null; bpm: number | null; structure: string | null } | null;
 };
 export type MeetingSnapshot = {
@@ -18,7 +19,9 @@ export function bucharestDay(value: string | Date) {
 export function meetingStatus(date: string, status: string, template = false, now = new Date()) {
   if (template) return 'template';
   if (status === 'archived') return 'archived';
-  return bucharestDay(date) < bucharestDay(now) ? 'finished' : status;
+  const start=new Date(date).getTime(),current=now.getTime();
+  if(!Number.isFinite(start))return status;
+  return current<start?'draft':current<start+2*3600000?'in_progress':'finished';
 }
 
 // UTC instant for midnight in Bucharest, including winter/summer offset.

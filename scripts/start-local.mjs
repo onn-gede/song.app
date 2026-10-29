@@ -12,7 +12,7 @@ const builtAt=fs.existsSync(manifest)?fs.statSync(manifest).mtimeMs:0;
 const needsBuild=!builtAt || sources.some(file=>newest(file)>builtAt);
 const cli=path.resolve('node_modules/next/dist/bin/next');
 function run(command) {
-  const result=spawnSync(process.execPath,[cli,command],{stdio:'inherit',env:process.env});
+  const result=spawnSync(process.execPath,[cli,command,...(command==='start'?['--hostname','127.0.0.1']:[])],{stdio:'inherit',env:process.env});
   if(result.error)throw result.error;
   if(result.status!==0)process.exit(result.status || 1);
 }

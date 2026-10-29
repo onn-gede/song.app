@@ -1,3 +1,6 @@
+import { MeetingStatusBadge } from "@/components/MeetingStatus";
+import { collectionStyle,primarySource,type CollectionSource } from "@/lib/collection-colors";
+import { SourceTags } from "@/components/SourceTags";
 import { PublicProgramLive } from "@/components/PublicProgramLive";
 import { publicProgramVersion } from "@/lib/public-program-version";
 import { meetingStatus } from "@/lib/meeting-state";
@@ -13,6 +16,8 @@ import { formatDateTime } from "@/lib/format";
 type PageProps = { params: Promise<{ slug: string }> };
 
 type PublicMeetingItem = {
+ moment_kind?:string|null;moment_color?:string;
+  is_congregational?:boolean; selected_source_id?:string|null; sources?:CollectionSource[];
   position: number;
   responsible_name?: string | null;
   item_type: string;
@@ -56,7 +61,7 @@ type PublicContribution = {
 };
 
 const itemTypeLabels: Record<string, string> = {
-  text: "Poezie",
+  text: "Poezie",other:"Diverse",
   prayer: "Rugăciune",
   encouragement: "Îndemn",
   message: "Mesaj",
@@ -80,20 +85,22 @@ function LyricsDetails({ text }: { text?: string | null }) {
 }
 
 function PublicItem({ item, index }: { item: PublicMeetingItem; index: number }) {
+  const source=primarySource(item.sources,item.selected_source_id);
   return (
-    <div className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}>
+    <div style={item.song?collectionStyle(source):{'--moment-color':item.moment_color||'#d97706'} as React.CSSProperties} data-source-color={item.song?source?.color||"unassigned":undefined} className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}>
       <div className="program-position">{index + 1}</div>
       <div className="program-main">
         <div className="program-title public-program-title-compact">{item.song?.title || item.custom_title || "Element"}</div>
         <div className="badges compact-badges">
-          <span className="badge">{item.song ? "Cântare" : (itemTypeLabels[item.item_type] || "Element")}</span>
-          {item.responsible_name ? <span className="badge">Solist: {item.responsible_name}</span> : null}
-          {sourceBadge(item.song)}
+          <span className="badge">{item.song ? "Cântare" : (itemTypeLabels[item.moment_kind||item.item_type] || "Element")}</span>
+          {item.song && item.responsible_name ? <span className="badge">Solist: {item.responsible_name}</span> : null}
+          {item.song?<SourceTags source={source}/>:null}
+          {item.song&&item.is_congregational?<span className="badge congregational-tag">Cântare în comun</span>:null}
           {item.is_backup ? <span className="badge backup">backup</span> : null}
           {item.song && (item.selected_key || item.song.default_key) ? <span className="badge">Tonalitate: {item.selected_key || item.song.default_key}</span> : null}
           {item.song && (item.selected_bpm || item.song.bpm) ? <span className="badge">{item.selected_bpm || item.song.bpm} BPM</span> : null}
         </div>
-        {item.song ? <LyricsDetails text={item.song.lyrics_text} /> : <LyricsDetails text={item.custom_text} />}
+        {item.song ? <LyricsDetails text={item.song.lyrics_text} /> : <p className="program-moment-observations">{item.custom_text}</p>}
         {item.notes ? <p className="muted small public-item-notes">{item.notes}</p> : null}
       </div>
     </div>
@@ -130,7 +137,7 @@ function buildPositionOptions(items: PublicMeetingItem[]) {
   const main = items.filter((item) => !item.is_backup).sort((a, b) => a.position - b.position);
   const options = [{ value: "1", label: "La început" }];
   main.forEach((item, index) => {
-    const title = item.song?.title || item.custom_title || itemTypeLabels[item.item_type] || "Element";
+    const title = item.song?.title || item.custom_title || itemTypeLabels[item.moment_kind||item.item_type] || "Element";
     options.push({ value: String(index + 2), label: `După ${index + 1}. ${title}` });
   });
   return options;
@@ -161,7 +168,7 @@ export default async function PublicProgramPage({ params }: PageProps) {
         <div>
           <div className="eyebrow">SongApp BCBgiroc · Program partajat</div>
           <h1>{meeting.title}</h1>
-          {meetingStatus(meeting.meeting_date,"draft")==="finished" ? <span className="badge">Finalizat</span> : null}
+          <MeetingStatusBadge date={meeting.meeting_date} initialNow={Date.now()}/>
           <p>{formatDateTime(meeting.meeting_date)}</p>
           {meeting.principal_responsible ? <p>Responsabil principal: {meeting.principal_responsible}</p> : null}
           {meeting.secondary_responsibles?.length ? <p>Responsabili secundari: {meeting.secondary_responsibles.join(", ")}</p> : null}

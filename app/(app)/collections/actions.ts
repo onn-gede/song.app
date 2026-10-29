@@ -1,5 +1,6 @@
 "use server";
 
+import { validCollectionColor } from "@/lib/collection-colors";
 import { requireProfile } from "@/lib/auth";
 
 import { revalidatePath, refresh } from "next/cache";
@@ -45,6 +46,8 @@ async function uniqueShortCode(baseCode: string) {
 export async function createCollectionAction(formData: FormData) {
   await requireProfile("editor");
   const name = readString(formData, "name");
+  const color=readString(formData,"color");const opacity=Number(formData.get("opacity")||100);if(![25,50,75,100].includes(opacity))throw new Error("Intensitate invalidă.");
+  if(!validCollectionColor(color))throw new Error("Alege o culoare validă.");
   const requestedShortCode = readString(formData, "short_code");
   const description = readString(formData, "description");
   const sourceType = readString(formData, "source_type") || "manual";
@@ -57,6 +60,7 @@ export async function createCollectionAction(formData: FormData) {
 
   const { error } = await supabase.from("song_collections").insert({
     name,
+    color,opacity,
     short_code: shortCode,
     description: description || null,
     source_type: sourceType,
@@ -68,6 +72,8 @@ export async function createCollectionAction(formData: FormData) {
   revalidatePath("/collections");
   revalidatePath("/songs");
   revalidatePath("/dashboard");
+  revalidatePath("/meetings", "layout");
+  revalidatePath("/program", "layout");
   refresh();
 }
 
@@ -75,6 +81,8 @@ export async function updateCollectionAction(formData: FormData) {
   await requireProfile("editor");
   const collectionId = readString(formData, "collection_id");
   const name = readString(formData, "name");
+  const color=readString(formData,"color");const opacity=Number(formData.get("opacity")||100);if(![25,50,75,100].includes(opacity))throw new Error("Intensitate invalidă.");
+  if(!validCollectionColor(color))throw new Error("Alege o culoare validă.");
   const shortCode = readString(formData, "short_code");
   const description = readString(formData, "description");
   const sourceType = readString(formData, "source_type") || "manual";
@@ -90,18 +98,21 @@ export async function updateCollectionAction(formData: FormData) {
     .from("song_collections")
     .update({
       name,
+      color,opacity,
       short_code: normalizeCode(shortCode),
       description: description || null,
       source_type: sourceType,
       is_active: isActive
     })
-    .eq("id", collectionId);
+    .eq("id", collectionId).select("id").single();
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/collections");
   revalidatePath("/songs");
   revalidatePath("/dashboard");
+  revalidatePath("/meetings", "layout");
+  revalidatePath("/program", "layout");
   refresh();
 }
 
@@ -118,12 +129,14 @@ export async function deleteCollectionAction(formData: FormData) {
   const { error } = await supabase
     .from("song_collections")
     .delete()
-    .eq("id", collectionId);
+    .eq("id", collectionId).select("id").single();
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/collections");
   revalidatePath("/songs");
   revalidatePath("/dashboard");
+  revalidatePath("/meetings", "layout");
+  revalidatePath("/program", "layout");
   refresh();
 }

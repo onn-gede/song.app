@@ -10,9 +10,9 @@ export function MeetingResponsibles({ meetingId, principal, secondary, editable 
   const [editing, setEditing] = useState(false);
   const [status, setStatus] = useState("");
   const [pending, startTransition] = useTransition();
-  if (!editable) return <section className="meeting-responsibles"><h3>Responsabili</h3><p><strong>Principal:</strong> {principal || "Nespecificat"}</p>{secondary.length > 0 ? <p><strong>Secundari:</strong> {secondary.join(", ")}</p> : null}</section>;
+  if (!editable) return <section className="meeting-responsibles"><h3>Echipa programului</h3><p><strong>Principal:</strong> {principal || "Nespecificat"}</p>{secondary.length > 0 ? <p><strong>Secundari:</strong> {secondary.join(", ")}</p> : null}</section>;
   return <section className="meeting-responsibles print-hide">
-    <div className="responsibles-heading"><h3>Echipă</h3><button className="btn secondary btn-compact" type="button" disabled={pending} aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Închide" : "Editează echipa"}</button></div>
+    <div className="responsibles-heading"><h3>Echipa programului</h3><button className="btn secondary btn-compact" type="button" disabled={pending} aria-expanded={editing} onClick={() => setEditing(!editing)}>{editing ? "Închide" : "Editează echipa"}</button></div>
     {!editing ? <div className="responsibles-summary"><span><strong>Principal:</strong> {principal || "Nespecificat"}</span>{secondary.length ? <span><strong>Secundari:</strong> {secondary.join(", ")}</span> : null}</div> : null}
     {editing ? <form action={data => startTransition(async () => {
       setStatus("");

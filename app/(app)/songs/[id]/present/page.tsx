@@ -1,3 +1,4 @@
+import {redirect} from 'next/navigation';
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SongPresentation } from "@/components/SongPresentation";
@@ -27,6 +28,10 @@ export default async function SongPresentationPage({ params }: PageProps) {
 
   if (!song) notFound();
 
+  if(!(sections||[]).some(s=>s.content?.trim())&&!song.lyrics_text?.trim()){
+    const {data:file}=await supabase.from('song_files').select('id').eq('song_id',id).eq('presentation_only_v58',true).eq('upload_complete_v58',true).not('preview_path_v58','is',null).order('created_at',{ascending:false}).limit(1).maybeSingle();
+    if(file)redirect(`/songs/${id}/files/${file.id}`);
+  }
   const slides = (sections || []).map((section: any, index: number) => ({
     id: section.id || `section-${index}`,
     label: labelForSection(section, index),

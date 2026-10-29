@@ -1,6 +1,6 @@
 "use client";
 import { useState,useTransition } from "react";
-import { createManagedUserAction,updateManagedUserAction,type ManagedUser } from "@/app/(app)/admin/users/actions";
+import { createManagedUserAction,updateManagedUserAction,moderateManagedUserAction,type ManagedUser } from "@/app/(app)/admin/users/actions";
 const roles=[['viewer','Vizualizare'],['worship_leader','Coordonator'],['editor','Editor'],['admin','Administrator']];
 export function AdminUserManager({initial,currentId,canCreate}:{initial:ManagedUser[];currentId:string;canCreate:boolean}){
  const [users,setUsers]=useState(initial),[error,setError]=useState(''),[message,setMessage]=useState(''),[pending,start]=useTransition();
@@ -13,8 +13,8 @@ export function AdminUserManager({initial,currentId,canCreate}:{initial:ManagedU
  </form>}</details>
  {error?<p className="error" role="alert">{error}</p>:null}{message?<p className="success" role="status">{message}</p>:null}
  <div className="admin-user-list">{users.map(u=><form key={`${u.id}:${u.role}:${u.is_active}`} className="card admin-user-row" action={data=>start(async()=>{setError('');setMessage('');try{setUsers(await updateManagedUserAction(u.id,String(data.get('role')||u.role),String(data.get('active'))==='true'));setMessage('Cont actualizat.');}catch(err){setError(err instanceof Error?err.message:'Actualizarea a eșuat.');}})}>
-   <div><strong>{u.full_name||u.email}</strong><small>{u.email}</small></div><span className={`badge ${u.is_active?'':'warning'}`}>{u.is_active?'Activ':'În așteptare / inactiv'}</span>
+   <div><strong>{u.full_name||u.email}</strong><small>{u.email}</small></div><span className={`badge ${u.is_active?'':'warning'}`}>{u.is_active?'Activ':u.moderation_state==='rejected'?'Respins':'În așteptare / inactiv'}</span>
    <label className="sr-only" htmlFor={`role-${u.id}`}>Rol pentru {u.email}</label><select id={`role-${u.id}`} className="select" name="role" defaultValue={u.role} disabled={pending||u.id===currentId}>{roles.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
-   {u.id===currentId?<span className="muted small">Contul tău</span>:<div className="inline-form"><button className="btn secondary" name="active" value={String(u.is_active)} disabled={pending}>Salvează rolul</button><button className={u.is_active?'btn secondary':'btn'} name="active" value={String(!u.is_active)} disabled={pending}>{u.is_active?'Dezactivează':'Aprobă accesul'}</button></div>}
+   {u.id===currentId?<span className="muted small">Contul tău</span>:<div className="inline-form"><button className="btn secondary" name="active" value={String(u.is_active)} disabled={pending}>Salvează rolul</button><button className={u.is_active?'btn secondary':'btn'} name="active" value={String(!u.is_active)} disabled={pending}>{u.is_active?'Dezactivează':'Aprobă accesul'}</button>{!u.is_active?<><button type="button" className="btn secondary" disabled={pending||u.moderation_state==='rejected'} onClick={()=>start(async()=>{setError('');try{setUsers(await moderateManagedUserAction(u.id,false));setMessage('Cont respins. Accesul rămâne blocat.');}catch(e){setError(e instanceof Error?e.message:'Respingerea a eșuat.');}})}>Respinge</button><button type="button" className="btn danger" disabled={pending} onClick={()=>start(async()=>{setError('');try{setUsers(await moderateManagedUserAction(u.id,true));setMessage('Cont eliminat din listă. Istoricul activității este păstrat.');}catch(e){setError(e instanceof Error?e.message:'Eliminarea a eșuat.');}})}>Elimină din listă</button></>:null}</div>}
  </form>)}</div></div>;
 }

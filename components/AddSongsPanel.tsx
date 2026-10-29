@@ -1,95 +1,33 @@
 "use client";
-
-import Link from "next/link";
-import { useMeetingState } from "./MeetingState";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { addSongToMeetingAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
-import { RecentUsageIcon } from "@/components/RecentUsageIcon";
-
-export function AddSongsPanel({ meetingId, recentUsage = {}, initiallyOpen = false }: { meetingId: string; recentUsage?: Record<string, RecentUsage>; initiallyOpen?:boolean }) {
-  const state = useMeetingState();
-  const [open,setOpen]=useState(initiallyOpen);
-  const inputRef=useRef<HTMLInputElement>(null);
-  const adding=useRef(false);
-  useEffect(()=>{if(open)inputRef.current?.focus({preventScroll:true});},[open]);
-  const cache=useRef(new Map<string,SongSearchResult[]>());
-  const [searching,setSearching]=useState(false);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SongSearchResult[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    const trimmed=query.trim();const controller=new AbortController();let active=true;
-    if(trimmed.length<2&&!/^\d$/.test(trimmed)){setResults([]);setSearching(false);setError(null);return;}
-    const cached=cache.current.get(trimmed.toLocaleLowerCase());
-    if(cached){setResults(cached);setSearching(false);setError(null);return;}
-    setSearching(true);setResults([]);setError(null);
-    const handle=window.setTimeout(async()=>{
-      try{
-        const response=await fetch(`/api/songs/search?q=${encodeURIComponent(trimmed)}`,{signal:controller.signal,cache:'no-store'});
-        const data=await response.json();if(!response.ok)throw new Error(data.error||'Căutarea a eșuat.');
-        if(active){if(cache.current.size>40)cache.current.clear();cache.current.set(trimmed.toLocaleLowerCase(),data);setResults(data);}
-      }catch(error){if(active&&!controller.signal.aborted)setError(error instanceof Error?error.message:'Căutarea a eșuat.');}
-      finally{if(active)setSearching(false);}
-    },180);
-    return()=>{active=false;controller.abort();window.clearTimeout(handle);};
-  },[query]);
-
-  function add(song: SongSearchResult, isBackup: boolean) {
-    if(adding.current)return;adding.current=true;
-    setMessage(null);
-    setError(null);
-    startTransition(async () => {
-      try {
-        const saved = await addSongToMeetingAction({
-          meetingId,
-          songId: song.song_id,
-          isBackup,
-          selectedKey: song.default_key,
-          notes: null
-        });
-        state?.apply(saved);
-        setQuery("");setResults([]);setSearching(false);
-        inputRef.current?.focus({preventScroll:true});
-        setMessage(isBackup ? "Cântarea a fost adăugată ca backup." : "Cântarea a fost adăugată în program.");
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "Nu am putut adăuga cântarea.");
-      } finally {adding.current=false;}
-    });
-  }
-
-  return (
-    <details className="program-add-tray print-hide" open={open} onToggle={event=>setOpen(event.currentTarget.open)}>
-      <summary>+ Adaugă cântări</summary>
-    <section className="card grid">
-      {message ? <p className="success">{message}</p> : null}
-      {error ? <p className="error">{error}</p> : null}
-      <input ref={inputRef} aria-label="Caută cântări pentru program" autoComplete="off" className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Caută după titlu, versuri sau număr (ex: 352)" />
-      <p className="song-search-status" role="status" aria-live="polite">{searching?"Se caută…":results.length?`${results.length} rezultate`:query.trim().length>=2?"Nicio cântare găsită.":"Caută după titlu, versuri sau număr."}</p>
-      <div className="list compact-list" aria-busy={searching}>
-        {results.map((song) => {
-          const recent = recentUsage[song.song_id];
-          return (
-            <div className="row compact-row song-pick-row" key={song.song_id}>
-              <div className="row-main">
-                <Link href={`/songs/${song.song_id}`} className="row-title">{song.title}</Link>
-                <div className="badges compact-badges">
-                  {song.matched_source ? <span className="badge">{song.matched_source}</span> : null}
-                  {song.default_key ? <span className="badge">{song.default_key}</span> : null}
-                  {song.bpm ? <span className="badge">{song.bpm} BPM</span> : null}
-                  {recent ? <RecentUsageIcon usage={recent} /> : null}
-                </div>
-              </div>
-              <div className="inline-form nowrap">
-                <button className="btn btn-compact" type="button" disabled={isPending} onClick={() => add(song, false)}>Adaugă</button>
-                <button className="btn secondary btn-compact" type="button" disabled={isPending} onClick={() => add(song, true)}>Backup</button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section></details>
-  );
+import {addProgramSong} from '@/lib/program-add';
+import Link from 'next/link';
+import {useEffect,useRef,useState,useTransition} from 'react';
+import {addSongToMeetingAction,type RecentUsage,type SongSearchResult} from '@/app/(app)/meetings/actions';
+import {collectionStyle,primarySource,type CollectionSource} from '@/lib/collection-colors';
+import {eventDateTime,monthOf,scheduleEventLabel} from '@/lib/song-schedule';
+import {useMeetingState} from './MeetingState';
+import {SourceTags} from './SourceTags';
+import {SongScheduleModal} from './SongScheduleModal';
+import {AddMomentModal} from './AddMomentModal';
+export function AddSongsPanel({meetingId,initiallyOpen=true}:{meetingId:string;recentUsage?:Record<string,RecentUsage>;initiallyOpen?:boolean}){
+ const receipt=useRef<{key:string;id:string}|null>(null);const state=useMeetingState(),input=useRef<HTMLInputElement>(null),adding=useRef(false);
+ const [open,setOpen]=useState(initiallyOpen),[moment,setMoment]=useState(false),[calendar,setCalendar]=useState<SongSearchResult|null>(null);
+ const [query,setQuery]=useState(''),[results,setResults]=useState<SongSearchResult[]>([]),[searching,setSearching]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState(''),[pending,start]=useTransition();
+ const [sources,setSources]=useState<Record<string,string>>({});
+ const cache=useRef(new Map<string,{at:number;rows:SongSearchResult[]}>());
+ useEffect(()=>{if(open)input.current?.focus({preventScroll:true});},[open]);
+ useEffect(()=>{
+  const trimmed=query.trim(),controller=new AbortController();let active=true;
+  if(!open||trimmed.length<2&&!/^\d$/.test(trimmed)){setResults([]);setSearching(false);return;}
+  const cached=cache.current.get(trimmed.toLowerCase());if(cached&&Date.now()-cached.at<30000){setResults(cached.rows);setSearching(false);return;}
+  setSearching(true);setResults([]);setError('');
+  const timer=setTimeout(async()=>{try{const response=await fetch(`/api/songs/search?q=${encodeURIComponent(trimmed)}&exclude=${encodeURIComponent(meetingId)}`,{signal:controller.signal,cache:'no-store'});const rows=await response.json();if(!response.ok)throw Error(rows.error||'Căutarea a eșuat.');if(active){if(cache.current.size>40)cache.current.clear();cache.current.set(trimmed.toLowerCase(),{at:Date.now(),rows});setResults(rows);}}catch(e){if(active&&!controller.signal.aborted)setError(e instanceof Error?e.message:'Căutarea a eșuat.');}finally{if(active)setSearching(false);}},180);
+  return()=>{active=false;controller.abort();clearTimeout(timer);};
+ },[query,meetingId,open]);
+ function add(song:SongSearchResult,backup:boolean,source:CollectionSource|null){if(adding.current)return;adding.current=true;const key=[meetingId,song.song_id,source?.source_id,backup].join(':');if(receipt.current?.key!==key)receipt.current={key,id:crypto.randomUUID()};setError('');setMessage('');start(async()=>{try{const saved=await addProgramSong({meetingId,songId:song.song_id,sourceId:source?.source_id||null,isBackup:backup,selectedKey:song.default_key,requestId:receipt.current!.id});state?.apply(saved);receipt.current=null;cache.current.clear();setQuery('');setResults([]);setSearching(false);input.current?.focus({preventScroll:true});setMessage(backup?'Cântare adăugată în backup.':'Cântare adăugată în program.');}catch(e){setError(e instanceof Error?e.message:'Adăugarea a eșuat.');}finally{adding.current=false;}});}
+ return <section className="program-composer print-hide"><div className="program-add-controls"><button type="button" className={'btn '+(open?'':'secondary')} aria-expanded={open} aria-controls="program-song-search" onClick={()=>setOpen(v=>!v)}>+ Adaugă cântări</button><button type="button" className="btn secondary" onClick={()=>setMoment(true)}>+ Adaugă moment</button></div>
+ {open?<section className="program-song-search" id="program-song-search">{message?<p className="success" role="status">{message}</p>:null}{error?<p className="error" role="alert">{error}</p>:null}<label className="sr-only" htmlFor="song-for-program">Caută cântări pentru program</label><input id="song-for-program" ref={input} className="input" autoComplete="off" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Caută titlu, versuri sau număr (ex: 380)"/><p className="song-search-status" aria-live="polite">{searching?'Se caută…':results.length?`${results.length} ${results.length===1?'cântare găsită':'cântări găsite'} · alege colecția`:query.trim().length>=2?'Nicio cântare găsită.':'Scrie titlul sau numărul cântării.'}</p>
+ <div className="song-search-results" aria-busy={searching}>{results.flatMap(song=>{const numeric=query.trim().replace(/^nr\.?\s*/i,'').replace(/^0+(?=\d)/,'');const activeSources=song.sources?.filter(s=>s.is_active!==false);const exact=activeSources?.filter(s=>String(s.number||'').replace(/^0+(?=\d)/,'')===numeric);const variants=exact?.length?exact:activeSources?.length?activeSources:[null];return variants.map(source=> <article className="song-pick-row collection-colored" key={song.song_id+':'+(source?.source_id||'none')} style={collectionStyle(source)}><div className="song-pick-content"><Link href={`/songs/${song.song_id}`} className="row-title">{song.title}</Link><div className="badges compact-badges"><span className="badge">Tonalitate {song.default_key||'—'}</span><SourceTags source={source}/></div>
+ <div className="search-schedule-summary">{song.schedule?.next?<p className="planned-warning">{scheduleEventLabel(song.schedule.next)} <strong>{eventDateTime(song.schedule.next.meeting_date)}</strong>{song.schedule.next.is_backup?' · backup':''}</p>:null}{song.schedule?.last?<p>{scheduleEventLabel(song.schedule.last)} <strong>{eventDateTime(song.schedule.last.meeting_date)}</strong></p>:null}<button type="button" className="quiet-button" onClick={()=>setCalendar(song)} aria-label={`Calendar și istoric pentru ${song.title}`}>Calendar și istoric</button></div></div><div className="song-pick-actions"><button className="btn btn-compact" type="button" disabled={pending} onClick={()=>add(song,false,source)}>Adaugă</button><button className="btn secondary btn-compact" type="button" disabled={pending} onClick={()=>add(song,true,source)}>Backup</button></div></article>);})}</div></section>:null}
+ {moment?<AddMomentModal meetingId={meetingId} onClose={()=>setMoment(false)}/>:null}{calendar?<SongScheduleModal songId={calendar.song_id} title={calendar.title} meetingId={meetingId} initialMonth={monthOf(calendar.schedule?.next?.meeting_date||calendar.schedule?.last?.meeting_date||new Date().toISOString())} onClose={()=>setCalendar(null)}/>:null}</section>;
 }

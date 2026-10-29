@@ -12,6 +12,7 @@ export type MeetingOption = {
   title: string;
   meeting_date: string;
   status: string;
+  is_template?:boolean;
 };
 
 export type SongSearchResult = {
@@ -21,6 +22,8 @@ export type SongSearchResult = {
   bpm: number | null;
   rank?: number;
   matched_source: string | null;
+  sources?:import("@/lib/collection-colors").CollectionSource[];
+  schedule?:import("@/lib/song-schedule").SongScheduleSummary;
 };
 
 export type RecentUsage = {
@@ -52,7 +55,7 @@ export async function listMeetingsAction(): Promise<MeetingOption[]> {
   const supabase = (await requireProfile("read")).supabase;
   const { data, error } = await supabase
     .from("meetings")
-    .select("id,title,meeting_date,status")
+    .select("id,title,meeting_date,status,is_template")
     .order("meeting_date", { ascending: false })
     .limit(30);
 
@@ -86,13 +89,15 @@ export async function addSongToMeetingAction(input: {
   isBackup?: boolean;
   selectedKey?: string | null;
   notes?: string | null;
+  sourceId?:string|null;
 }) {
   await requireProfile("editor");
   const supabase = (await requireProfile("editor")).supabase;
-  const { error } = await supabase.rpc("add_song_to_meeting", {
+  const { error } = await supabase.rpc("add_program_song_v52", {
     p_meeting_id: input.meetingId,
     p_song_id: input.songId,
     p_is_backup: Boolean(input.isBackup),
+    p_source_id:input.sourceId||null,
     p_selected_key: input.selectedKey || null,
     p_notes: input.notes || null
   });
@@ -103,9 +108,9 @@ export async function addSongToMeetingAction(input: {
   return committedMeetingSnapshot(input.meetingId);
 }
 
-export async function createMeetingAndAddSongAction(input:{title:string;meetingType?:string|null;meetingDate:string;songId:string;isBackup?:boolean;requestId:string}) {
+export async function createMeetingAndAddSongAction(input:{title:string;meetingType?:string|null;meetingDate:string;songId:string;isBackup?:boolean;requestId:string;sourceId?:string|null}) {
  const {supabase}=await requireProfile("editor");
- const {data,error}=await supabase.rpc('create_meeting_once_v49',{p_request_id:input.requestId,p_title:input.title.trim(),p_meeting_type:input.meetingType||null,p_meeting_date:meetingDateISO(input.meetingDate),p_notes:null,p_song_id:input.songId,p_is_backup:!!input.isBackup});
+ const {data,error}=await supabase.rpc('create_program_with_song_v57',{p_request_id:input.requestId,p_title:input.title.trim(),p_meeting_type:input.meetingType||null,p_meeting_date:meetingDateISO(input.meetingDate),p_source_id:input.sourceId||null,p_song_id:input.songId,p_is_backup:!!input.isBackup});
  if(error||!data)throw new Error(error?.message||'Nu am putut crea programul.');
  revalidatePath('/meetings');revalidatePath(`/meetings/${data}`);return data as string;
 }
@@ -118,9 +123,9 @@ export async function addTextItemAction(formData: FormData) {
   const text = readString(formData, "custom_text");
 
   const supabase = (await requireProfile("editor")).supabase;
-  const { error } = await supabase.rpc("add_text_to_meeting", {
+  const { error } = await supabase.rpc("add_moment_v57", {
     p_meeting_id: meetingId,
-    p_item_type: itemType,
+    p_item_type: itemType,p_color:readString(formData,"moment_color")||"#d97706",
     p_custom_title: title || null,
     p_custom_text: text || null
   });
@@ -147,9 +152,12 @@ export async function updateMeetingTextItemAction(formData: FormData) {
   const { error } = await supabase
     .from("meeting_items")
     .update({
-      item_type: itemType,
-      custom_title: title || null,
-      custom_text: text || null
+      item_type: itemType==="other"?"text":itemType,
+      moment_kind:itemType,
+      moment_color: readString(formData,"moment_color")||"#d97706",
+      custom_title: title || (itemType==="other"?"Diverse":null),
+      custom_text: text || null,
+      notes: null, responsible_name: null
     })
     .eq("id", itemId)
     .eq("meeting_id", meetingId)
@@ -371,7 +379,7 @@ export async function updateItemResponsibleAction(formData: FormData) {
   if(musicalKey.length>20)throw new Error("Tonalitatea poate avea maximum 20 de caractere.");
   if (notes.length > 5000) throw new Error("Observațiile pot avea maximum 5000 de caractere.");
   if (!meetingId || !itemId || name.length > 120) throw new Error("Responsabilul poate avea maximum 120 de caractere.");
-  const { error } = await supabase.from("meeting_items").update({ responsible_name: name || null, notes: notes || null, ...(formData.has("selected_key")?{selected_key:musicalKey||null}:{}) }).eq("id",itemId).eq("meeting_id",meetingId);
+  const { error } = await supabase.from("meeting_items").update({ responsible_name: name || null, notes: notes || null, ...(formData.has("selected_key")?{selected_key:musicalKey||null}:{}), ...(formData.has("selected_source_id")?{selected_source_id:readString(formData,"selected_source_id")||null}:{}) }).eq("id",itemId).eq("meeting_id",meetingId);
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`); revalidatePath("/program", "layout");
   refresh();
@@ -430,4 +438,16 @@ export async function setShareContributionsAction(data:FormData){
  const {supabase}=await requireProfile('editor');const meetingId=readString(data,'meeting_id'),linkId=readString(data,'link_id');
  const {error}=await supabase.from('meeting_share_links').update({allow_contributions:data.get('allow_contributions')==='on'}).eq('id',linkId).eq('meeting_id',meetingId);
  if(error)throw new Error(error.message);revalidatePath(`/meetings/${meetingId}`);revalidatePath('/program','layout');refresh();
+}
+
+export async function setCongregationalAction(input: { meetingId: string; itemId: string; enabled: boolean }) {
+  const { supabase } = await requireProfile("editor");
+  if (typeof input.enabled !== "boolean") throw new Error("Marcaj invalid.");
+  const { error } = await supabase.from("meeting_items").update({is_congregational: input.enabled})
+    .eq("id", input.itemId).eq("meeting_id", input.meetingId).not("song_id", "is", null).select("id").single();
+  if (error) throw new Error("Marcajul nu a fost salvat: " + error.message);
+  revalidatePath(`/meetings/${input.meetingId}`);
+  revalidatePath("/program", "layout");
+  refresh();
+  return committedMeetingSnapshot(input.meetingId);
 }

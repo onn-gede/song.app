@@ -1,3 +1,4 @@
+import {PresentationImportWizard} from "@/components/PresentationImportWizard";
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { ImportLinkWizard } from "@/components/ImportLinkWizard";
@@ -75,7 +76,7 @@ export default async function ImportPage() {
 
       <ImportWorkspace
         link={<ImportLinkWizard collections={collections || []}/>}
-        files={<><h2>Importă din fișiere</h2>{process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB ? <p className="muted small">Maximum {process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB} MB în total per lot în varianta online.</p> : null}<p className="muted">Încarcă unul sau mai multe fișiere, verifică preview-ul și confirmă importul.</p><ImportFilesWizard collections={collections || []}/><details className="import-format-help"><summary>Formate acceptate și recomandări</summary><p>PPTX, TXT și PDF cu text selectabil. Poți grupa mai multe fișiere într-un ZIP. Pentru fișierele vechi PPT, salvează mai întâi ca PPTX din PowerPoint.</p></details></>}
+        files={<><h2>Importă din fișiere</h2>{process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB ? <p className="muted small">Maximum {process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB} MB în total per lot în varianta online.</p> : null}<p className="muted">Încarcă unul sau mai multe fișiere, verifică preview-ul și confirmă importul.</p><PresentationImportWizard collections={collections||[]}/><details className="import-format-help"><summary>Import cu extragerea versurilor (PPTX, PDF, TXT)</summary><ImportFilesWizard collections={collections || []}/></details><details className="import-format-help"><summary>Formate acceptate și recomandări</summary><p>PPTX, TXT și PDF cu text selectabil. Poți grupa mai multe fișiere într-un ZIP. Pentru fișierele vechi PPT, salvează mai întâi ca PPTX din PowerPoint.</p></details></>}
         text={<><h2>Adaugă din text</h2><p className="muted">Lipește versurile, cu o linie goală între strofe. După salvare poți verifica secțiunile în editor.</p>          <form action={importTextSongAction} className="form-grid">
             <label className="label">Titlu cântare
               <input className="input" name="title" placeholder="ex: Când furtuni în viață-mi vin" required />

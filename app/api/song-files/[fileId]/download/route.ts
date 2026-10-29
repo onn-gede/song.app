@@ -1,0 +1,5 @@
+import {requireProfile} from '@/lib/auth';
+export async function GET(_request:Request,{params}:{params:Promise<{fileId:string}>}){
+ const headers={'Cache-Control':'private, no-store'};const {fileId}=await params;if(!/^[a-f0-9-]{36}$/i.test(fileId))return Response.json({error:'Fișier invalid.'},{status:400,headers});
+ try{const {supabase}=await requireProfile();const {data:f}=await supabase.from('song_files').select('file_name,storage_path,upload_complete_v58,presentation_only_v58').eq('id',fileId).single();if(!f?.storage_path||f.presentation_only_v58&&!f.upload_complete_v58)return Response.json({error:'Fișierul nu este disponibil.'},{status:404,headers});const {data,error}=await supabase.storage.from('song-files').createSignedUrl(f.storage_path,120,{download:f.file_name});if(error||!data)return Response.json({error:'Descărcarea nu este disponibilă momentan.'},{status:503,headers});return Response.redirect(data.signedUrl,302);}catch{return Response.json({error:'Autentificare necesară.'},{status:403,headers});}
+}

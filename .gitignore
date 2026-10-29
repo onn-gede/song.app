@@ -11,3 +11,8 @@ out
 dist-worker/
 *.tsbuildinfo
 .env.worker
+
+.songapp-imports/
+
+# Local source archive and PDF previews: uploaded once to private Supabase Storage.
+local-assets/

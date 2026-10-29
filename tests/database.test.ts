@@ -33,7 +33,7 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       alter table storage.objects enable row level security;
     `;
     await db.exec(setup);
-    const dir=path.join(process.cwd(),'supabase');
+    const dir=path.join(process.cwd(),'supabase','migrations');
     for(const file of fs.readdirSync(dir).filter((f)=>f.endsWith('.sql')).sort()) {
       if(file.startsWith('003_')||file==='035_v41_full_bible_library.sql')continue;
       try { await db.exec(fs.readFileSync(path.join(dir,file),'utf8')); }
@@ -71,6 +71,189 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       await asUser(INACTIVE);await assert.rejects(()=>db.query("select * from public.search_program_songs_v49('comori',8)"));
       await asUser('','anon');await assert.rejects(()=>db.query("select * from public.search_program_songs_v49('comori',8)"));
       await asUser(ADMIN);await db.query('delete from public.songs where id=$1',[target]);
+    });
+    await t.test('v52 collections get colors, selected source survives add/copy/share and color changes advance program revision',async()=>{
+      await asUser(ADMIN);
+      const s1=await scalar("insert into public.songs(title,lyrics_text) values('Piesă cu două surse','Versuri de test') returning id");
+      const s2=await scalar("insert into public.songs(title,lyrics_text) values('Altă piesă','Versuri') returning id");
+      const c1=await scalar("insert into public.song_collections(name,short_code) values('Tineri test','T52') returning id");
+      const c2=await scalar("insert into public.song_collections(name,short_code) values('Carte test','C52') returning id");
+      assert.notEqual(await scalar('select color from public.song_collections where id=$1',[c1]),await scalar('select color from public.song_collections where id=$1',[c2]));
+      const src1=await scalar("insert into public.song_sources(song_id,collection_id,song_number) values($1,$2,'380A') returning id",[s1,c1]);
+      const src2=await scalar("insert into public.song_sources(song_id,collection_id,song_number) values($1,$2,'004') returning id",[s1,c2]);
+      const wrong=await scalar("insert into public.song_sources(song_id,collection_id,song_number) values($1,$2,'99') returning id",[s2,c1]);
+      const m=await scalar("select public.create_meeting('Surse',null,now()+interval '1 day',null)");
+      const item=await scalar('select public.add_program_song_v52($1,$2,$3,false,null,null)',[m,s1,src2]);
+      const snap=await scalar('select public.get_meeting_snapshot_v46($1)',[m]);assert.equal(snap.items[0].selected_source_id,src2);assert.equal(snap.items[0].sources.length,2);assert.ok(snap.items[0].sources.some((v:any)=>v.number==='004'));
+      await assert.rejects(()=>scalar('select public.add_program_song_v52($1,$2,$3,false,null,null)',[m,s1,wrong]));assert.equal(Number(await scalar('select count(*) from public.meeting_items where meeting_id=$1',[m])),1);
+      await db.query("update public.song_collections set color='#7e22ce' where id=$1",[c2]);const newer=await scalar('select public.get_meeting_snapshot_v46($1)',[m]);assert.ok(newer.revision>snap.revision);assert.equal(newer.items[0].sources.find((v:any)=>v.source_id===src2).color,'#7e22ce');
+      await assert.rejects(()=>db.query("update public.song_collections set color='invalid' where id=$1",[c2]));
+      const copy=await scalar("select public.duplicate_meeting($1,'Copie surse',now()+interval '2 days')",[m]);assert.equal(await scalar('select selected_source_id from public.meeting_items where meeting_id=$1',[copy]),src2);
+      const share=await scalar("select public.create_meeting_share_link($1,'test-v52-surse')",[m]);
+      await asUser('','anon');const shared=await scalar('select public.get_shared_meeting($1)',[share]);assert.equal(shared.items[0].selected_source_id,src2);assert.equal(shared.items[0].sources.length,2);await assert.rejects(()=>scalar('select public.song_sources_v52($1)',[s1]));
+      await asUser(VIEWER);await assert.rejects(()=>scalar('select public.add_program_song_v52($1,$2,$3,false,null,null)',[m,s1,src1]));
+      await asUser(ADMIN);await db.query('delete from public.meetings where id=any($1::uuid[])',[[m,copy]]);await db.query('delete from public.songs where id=any($1::uuid[])',[[s1,s2]]);await db.query('delete from public.song_collections where id=any($1::uuid[])',[[c1,c2]]);
+    });
+    await t.test('v57 global numeric search normalizes zero padding across every collection and confirms an idempotent add',async()=>{
+      await asUser(ADMIN);const ids:string[]=[],cs:string[]=[];for(let i=0;i<3;i++){cs.push(await scalar("insert into public.song_collections(name,short_code,source_type,opacity) values($1,$2,'manual',25) returning id",['Cautare57 '+i,'S57_'+i]));ids.push(await scalar('insert into public.songs(title) values($1) returning id',['Cautare57 '+i]));await db.query('insert into public.song_sources(song_id,collection_id,song_number) values($1,$2,$3)',[ids[i],cs[i],['063','63','00063'][i]]);}
+      await db.query("insert into public.song_sources(song_id,collection_id,song_number) select $1,$2,'63' from generate_series(1,100)",[ids[0],cs[0]]);
+      for(const q of ['063','63','Nr. 063']){const rows=(await db.query<any>('select * from public.search_program_songs_v49($1,30)',[q])).rows;assert.ok(ids.every(id=>rows.some(x=>x.song_id===id)));const lib=await scalar('select public.list_song_library_v46(p_query=>$1)',[q]);assert.ok(ids.every(id=>lib.songs.some((x:any)=>x.id===id)));}
+      const mid=await scalar("select public.create_meeting('Test57',null,now(),null)"),src=await scalar('select id from public.song_sources where song_id=$1 order by id limit 1',[ids[1]]),request=await scalar('select gen_random_uuid()');
+      const added=await scalar('select public.add_program_song_v57($1,$2,$3,$4,false,null)',[mid,ids[1],request,src]);const again=await scalar('select public.add_program_song_v57($1,$2,$3,$4,false,null)',[mid,ids[1],request,src]);assert.equal(added.itemId,again.itemId);assert.equal(again.snapshot.items.length,1);assert.equal(again.snapshot.items[0].selected_source_id,src);assert.equal(again.snapshot.items[0].sources[0].opacity,25);
+      const moment=await scalar("select public.add_moment_v57($1,'other',null,'Detalii','#123456')",[mid]);assert.equal(await scalar('select custom_title from public.meeting_items where id=$1',[moment]),'Diverse');assert.equal(await scalar('select moment_color from public.meeting_items where id=$1',[moment]),'#123456');
+      await asUser(VIEWER);await db.query("update public.profiles set moderation_state='hidden' where id=$1",[VIEWER]);assert.equal(await scalar('select moderation_state from public.profiles where id=$1',[VIEWER]),'visible');await assert.rejects(()=>scalar('select public.add_program_song_v57($1,$2,$3,$4,false,null)',[mid,ids[1],request,src]));await assert.rejects(()=>scalar('select public.admin_moderate_user_v57($1,false)',[INACTIVE]));await asUser(ADMIN);await scalar('select public.admin_moderate_user_v57($1,false)',[INACTIVE]);assert.equal(await scalar('select moderation_state from public.profiles where id=$1',[INACTIVE]),'rejected');await scalar('select public.admin_moderate_user_v57($1,true)',[INACTIVE]);assert.equal(await scalar('select moderation_state from public.profiles where id=$1',[INACTIVE]),'hidden');await db.query("update public.profiles set moderation_state='visible' where id=$1",[INACTIVE]);
+      await db.query('delete from public.meetings where id=$1',[mid]);await db.query('delete from public.songs where id=any($1::uuid[])',[ids]);await db.query('delete from public.song_collections where id=any($1::uuid[])',[cs]);
+    });
+    await t.test('v58 preserves complete red-book import and backups with automatic archival disabled',async()=>{
+      await asUser(ADMIN);const created:string[]=[],collections:string[]=[];
+      for(const code of ['cr']){
+        const catalog=JSON.parse(fs.readFileSync(`data/book-catalogs/${code}.json`,'utf8'));const results:string[]=[];
+        const destination=await scalar('select public.book_collection_v57($1)',[code]);collections.push(destination.id);
+        for(const song of catalog.songs){const args=[code,song.title,song.number,song.lyrics,JSON.stringify(song.sections),JSON.stringify(song.sourceIds),song.url];const result=await scalar('select public.upsert_book_song_v57($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)',args);assert.equal(result.status,'created',`${code} ${song.number}: ${JSON.stringify(result)}`);results.push(result.songId);created.push(result.songId);const repeated=await scalar('select public.upsert_book_song_v57($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)',args);assert.equal(repeated.status,'existing');assert.equal(repeated.songId,result.songId);}
+        assert.equal(new Set(results).size,catalog.songs.length);const finish=await scalar('select public.finalize_book_catalog_v57($1,$2::jsonb,$3)',[code,JSON.stringify(results),catalog.songs.length]);assert.equal(finish.songs,code==='cr'?601:266);const first=catalog.songs[0],sid=results[0];await db.query("update public.songs set lyrics_text='Versuri amestecate de înlocuit' where id=$1",[sid]);await scalar('select public.upsert_book_song_v57($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)',[code,first.title,first.number,first.lyrics,JSON.stringify(first.sections),JSON.stringify(first.sourceIds),first.url]);assert.equal(await scalar('select lyrics_text from public.songs where id=$1',[sid]),first.lyrics);await db.exec('reset role');assert.equal(await scalar('select count(*) from public.book_repair_backups_v57 where song_id=$1',[sid]),1);await asUser(ADMIN);
+      }
+      await asUser(VIEWER);await assert.rejects(()=>scalar("select public.book_collection_v57('cn')"));await assert.rejects(()=>scalar('select count(*) from public.book_repair_backups_v57'));await asUser(ADMIN);
+      const cr=JSON.parse(fs.readFileSync('data/book-catalogs/cr.json','utf8')).songs[0],oldId=created[0],crid=collections[0];
+      const other=await scalar("insert into public.song_collections(name,short_code,source_type) values('Altă ediție 57','OTHER57','manual') returning id");collections.push(other);await db.query('insert into public.song_sources(song_id,collection_id,song_number) values($1,$2,$3)',[oldId,other,'1']);
+      const source=await scalar('select id from public.song_sources where song_id=$1 and collection_id=$2',[oldId,crid]),meeting=await scalar("select public.create_meeting('Referință ediție57',null,now(),null)");await scalar('select public.add_program_song_v52($1,$2,$3,false,null,null)',[meeting,oldId,source]);await db.query("update public.songs set lyrics_text='Versiunea celeilalte colecții rămâne aici' where id=$1",[oldId]);
+      const split=await scalar('select public.upsert_book_song_v57($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)',['cr',cr.title,cr.number,cr.lyrics,JSON.stringify(cr.sections),JSON.stringify(cr.sourceIds),cr.url]);assert.notEqual(split.songId,oldId);created.push(split.songId);assert.equal(await scalar('select song_id from public.meeting_items where meeting_id=$1',[meeting]),split.songId);assert.equal(await scalar('select lyrics_text from public.songs where id=$1',[oldId]),'Versiunea celeilalte colecții rămâne aici');await db.query('delete from public.meetings where id=$1',[meeting]);
+      await db.query('delete from public.songs where id=any($1::uuid[])',[created]);await db.query('delete from public.song_collections where id=any($1::uuid[])',[collections]);
+    });
+    await t.test('v58 imports all 803 title/file identities, preserves edits and confirms storage before exposing files',async()=>{
+      await asUser(ADMIN);const manifest=JSON.parse(fs.readFileSync('data/black-book-ppt.json','utf8'));const collection=await scalar('select public.presentation_collection_v58(null,$1)',[manifest.collectionName]);assert.equal((await scalar('select public.presentation_collection_v58(null,$1)',[manifest.collectionName])).id,collection.id);await db.query("update public.song_collections set name='Colecție redenumită local' where id=$1",[collection.id]);assert.equal((await scalar('select public.presentation_collection_v58(null,$1)',[manifest.collectionName])).id,collection.id);const ids:string[]=[];
+      const register='select public.register_presentation_v58($1,$2,$3,$4,$5,$6,$7)';
+      for(const song of manifest.songs){const args=[collection.id,song.number,song.title,song.fileName,song.sha256,song.previewSha256,song.firstLine];const added=await scalar(register,args);assert.equal(added.status,'created');assert.equal(added.complete,false);ids.push(added.songId);await assert.rejects(()=>scalar('select public.complete_presentation_v58($1)',[added.fileId]));const repeated=await scalar(register,args);assert.equal(repeated.songId,added.songId);assert.equal(repeated.fileId,added.fileId);}
+      assert.equal(new Set(ids).size,803);assert.equal(Number((await scalar('select public.list_song_library_v46(p_collection=>$1)',[collection.id])).total),803);const matched=await scalar("select public.search_program_songs_v52('063',30,null)");assert.ok(matched.some((v:any)=>v.song_id===ids[62]));assert.equal(await scalar('select lyrics_text from public.songs where id=$1',[ids[0]]),null);
+      const song=manifest.songs[0],args=[collection.id,song.number,song.title,song.fileName,song.sha256,song.previewSha256,song.firstLine];const f=await scalar(register,args);
+      await db.exec('reset role');await db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'song-files',$1)",[f.path]);await asUser(ADMIN);await assert.rejects(()=>scalar('select public.complete_presentation_v58($1)',[f.fileId]));
+      await db.exec('reset role');await db.query("insert into storage.objects(id,bucket_id,name) values(gen_random_uuid(),'song-files',$1)",[f.previewPath]);await asUser(ADMIN);assert.equal((await scalar('select public.complete_presentation_v58($1)',[f.fileId])).complete,true);
+      await db.query("update public.songs set title='Titlu editat local',lyrics_text='Versuri păstrate',default_key='F' where id=$1",[f.songId]);const kept=await scalar(register,args);assert.equal(kept.complete,true);assert.equal(await scalar('select title from public.songs where id=$1',[f.songId]),'Titlu editat local');assert.equal(await scalar('select default_key from public.songs where id=$1',[f.songId]),'F');assert.equal(await scalar('select lyrics_text from public.songs where id=$1',[f.songId]),'Versuri păstrate');
+      args[5]=null;assert.equal((await scalar(register,args)).previewPath,f.previewPath);args[4]='a'.repeat(64);args[5]='b'.repeat(64);assert.equal((await scalar(register,args)).complete,false);
+      await assert.rejects(()=>scalar(register,[collection.id,'900','Nevalid','../x.ppt','a'.repeat(64),null,null]));await assert.rejects(()=>scalar(register,[collection.id,'900','Nevalid','x.exe','a'.repeat(64),null,null]));
+      const mid=await scalar("select public.create_meeting('Titlu fără versuri v58',null,now(),null)");const source=await scalar('select id from public.song_sources where song_id=$1 and collection_id=$2',[ids[62],collection.id]);await scalar('select public.add_program_song_v52($1,$2,$3,false,null,null)',[mid,ids[62],source]);assert.equal((await scalar('select public.get_meeting_snapshot_v46($1)',[mid])).items[0].song_id,ids[62]);
+      await asUser(VIEWER);await assert.rejects(()=>scalar(register,args));await assert.rejects(()=>scalar('select public.complete_presentation_v58($1)',[f.fileId]));await asUser(INACTIVE);await assert.rejects(()=>scalar('select public.presentation_collection_v58()'));await asUser('','anon');await assert.rejects(()=>scalar('select public.presentation_collection_v58()'));await asUser(ADMIN);
+      await assert.rejects(()=>scalar("select public.upsert_book_song_v57('cn','Parțial','001','Versuri suficiente pentru test','[]'::jsonb,'[]'::jsonb,'https://www.cantaricrestine.ro/test')"),/001–805/);await assert.rejects(()=>scalar("select public.finalize_book_catalog_v57('cn','[]',266)"));
+      await db.query('delete from public.meetings where id=$1',[mid]);await db.query('delete from public.songs where id=any($1::uuid[])',[ids]);await db.query('delete from public.song_collections where id=$1',[collection.id]);
+    });
+    await t.test('v56 collection counts remain exact above 1000 source rows and match active library totals',async()=>{
+      await asUser(ADMIN);const a=await scalar("insert into public.song_collections(name,short_code,source_type) values('Numărare A v56','CNT_A56','manual') returning id"),b=await scalar("insert into public.song_collections(name,short_code,source_type) values('Numărare B v56','CNT_B56','manual') returning id");
+      await db.query("insert into public.song_sources(song_id,collection_id,song_number,source_title) select id,$1,row_number() over(order by title)::text,'test' from (select id,title from public.songs where title like 'Song %' order by title limit 601) x",[a]);
+      await db.query("insert into public.song_sources(song_id,collection_id,song_number,source_title) select id,$1,row_number() over(order by title)::text,'test' from (select id,title from public.songs where title like 'Song %' order by title limit 700) x",[b]);
+      await db.query("insert into public.song_sources(song_id,collection_id,source_title) select song_id,collection_id,'variantă suplimentară' from public.song_sources where collection_id=$1 limit 1",[a]);
+      const counts=await scalar('select public.collection_song_counts_v56()');assert.equal(Number(counts.find((v:any)=>v.collection_id===a).song_count),601);assert.equal(Number(counts.find((v:any)=>v.collection_id===b).song_count),700);
+      assert.equal(Number((await scalar('select public.list_song_library_v46(p_collection=>$1)',[a])).total),601);
+      await asUser(VIEWER);assert.equal(Number((await scalar('select public.collection_song_counts_v56()')).find((v:any)=>v.collection_id===a).song_count),601);await asUser('','anon');await assert.rejects(()=>scalar('select public.collection_song_counts_v56()'));await asUser(ADMIN);await db.query('delete from public.song_collections where id=any($1::uuid[])',[[a,b]]);
+    });
+    await t.test('v56 recency/frequency sorts ignore future backup and template occurrences',async()=>{
+      await asUser(ADMIN);const c=await scalar("insert into public.song_collections(name,short_code,source_type) values('Ordine v56','SORT_56','manual') returning id");const songs=[];for(let i=0;i<3;i++){const id=await scalar("insert into public.songs(title,created_at) values($1,now()-make_interval(days=>$2)) returning id",['Ordine v56 '+i,3-i]);songs.push(id);await db.query("insert into public.song_sources(song_id,collection_id,source_title) values($1,$2,'test')",[id,c]);}
+      const meetings=[];for(let i=0;i<4;i++)meetings.push(await scalar("select public.create_meeting($1,null,now()+make_interval(days=>$2),null)",['Ordine v56 '+i,i===3?5:i-3]));
+      for(const m of meetings.slice(0,2))await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[m,songs[0]]);
+      for(let i=0;i<2;i++)await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[meetings[2],songs[1]]);
+      await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[meetings[3],songs[2]]);await scalar('select public.add_song_to_meeting($1,$2,true,null,null)',[meetings[0],songs[2]]);
+      const newest=await scalar("select public.list_song_library_v46(p_collection=>$1,p_sort=>'created_desc')",[c]);assert.equal(newest.songs[0].id,songs[2]);
+      const recent=await scalar("select public.list_song_library_v46(p_collection=>$1,p_sort=>'last_sung')",[c]);assert.equal(Number(recent.total),2);assert.equal(recent.songs[0].id,songs[1]);
+      const frequent=await scalar("select public.list_song_library_v46(p_collection=>$1,p_sort=>'most_sung')",[c]);assert.equal(frequent.songs[0].id,songs[0]);assert.equal(Number(frequent.songs[0].times_sung),2);
+      await db.query('delete from public.meetings where id=any($1::uuid[])',[meetings]);await db.query('delete from public.songs where id=any($1::uuid[])',[songs]);await db.query('delete from public.song_collections where id=$1',[c]);
+    });
+    await t.test('v56 activity keeps readable titles after deletion and is admin-only',async()=>{
+      await asUser(ADMIN);const id=await scalar("insert into public.songs(title,default_key) values('Jurnal lizibil v56','C') returning id");await db.query("update public.songs set default_key='F',lyrics_text='TEXT PRIVAT NECOPIAT' where id=$1",[id]);await db.query('delete from public.songs where id=$1',[id]);
+      const result=await scalar("select public.activity_feed_v56(1,'changes',null)");const rows=result.entries.filter((v:any)=>v.resource_id===id);assert.equal(rows.length,3);assert.ok(rows.every((v:any)=>v.resource_label==='Jurnal lizibil v56'));assert.ok(!JSON.stringify(rows).includes('TEXT PRIVAT NECOPIAT'));assert.equal(rows.find((v:any)=>v.event_type==='update').details.after.default_key,'F');
+      await asUser(VIEWER);await assert.rejects(()=>scalar("select public.activity_feed_v56(1,'changes',null)"));await asUser('','anon');await assert.rejects(()=>scalar("select public.activity_feed_v56(1,'changes',null)"));await asUser(ADMIN);
+    });
+    await t.test('v55 red book import preserves edits, maps aliases, resumes and isolates conflicts',async()=>{
+      await asUser(ADMIN);await db.query("insert into public.song_collections(name,short_code,source_type,color) values('Cartea roșie - Cântările Evangheliei','CR_TEST_V55','manual','#b91c1c')");const destination=await scalar('select public.red_book_collection_v55()');
+      assert.equal(destination.name,'Cartea roșie - Cântările Evangheliei');
+      const params=['Un titlu unic de import v55','001','Versuri de test importate în siguranță',JSON.stringify([{section_type:'verse',section_label:'Strofa 1',content:'Versuri de test importate în siguranță'}]),JSON.stringify(['111','222']),'https://www.cantaricrestine.ro/test-import'];
+      const sql='select public.import_red_book_song_v55($1,$2,$3,$4::jsonb,$5::jsonb,$6)';
+      const first=await scalar(sql,params);assert.equal(first.status,'created');const sid=first.songId;
+      await db.query("update public.songs set lyrics_text='Versuri editate local',default_key='F',notes='Observații locale' where id=$1",[sid]);
+      const again=await scalar(sql,params);assert.equal(again.status,'existing');assert.equal(again.songId,sid);
+      const songRow=(await db.query<any>('select * from public.songs where id=$1',[sid])).rows[0];assert.equal(songRow.lyrics_text,'Versuri editate local');assert.equal(songRow.default_key,'F');assert.equal(songRow.notes,'Observații locale');
+      assert.equal(Number(await scalar('select count(*) from public.song_sources where collection_id=$1 and song_id=$2',[destination.id,sid])),1);
+      assert.equal(Number(await scalar("select count(*) from public.song_link_imports where source_key in ('cantaricrestine:cr:111','cantaricrestine:cr:222')")),2);
+      const conflict=await scalar(sql,['Alt titlu',...params.slice(1,4),JSON.stringify(['333']),params[5]]);assert.equal(conflict.status,'review');
+      const missing=await scalar(sql,['Fără versuri v55','002','','[]',JSON.stringify(['444']),params[5]]);assert.equal(missing.status,'review');
+      const variant=await scalar(sql,[params[0],'002','Versuri diferite pentru altă cântare din aceeași carte',params[3],JSON.stringify(['777']),params[5]]);assert.equal(variant.status,'created');assert.notEqual(variant.songId,sid);
+      const existing=await scalar("insert into public.songs(title,lyrics_text,default_key) values('Existent v55','Text local existent','G') returning id");
+      const linked=await scalar(sql,['Existent v55','003',params[2],params[3],JSON.stringify(['555']),params[5]]);assert.equal(linked.songId,existing);assert.equal(linked.status,'linked');assert.equal(await scalar('select default_key from public.songs where id=$1',[existing]),'G');
+      const empty=await scalar("insert into public.songs(title) values('De completat v55') returning id");const filled=await scalar(sql,['De completat v55','004',params[2],params[3],JSON.stringify(['666']),params[5]]);assert.equal(filled.status,'filled');assert.equal(filled.songId,empty);
+      for(const [id,role] of [[VIEWER,'authenticated'],[INACTIVE,'authenticated'],['','anon']]){await asUser(id,role);await assert.rejects(()=>scalar('select public.red_book_collection_v55()'));await assert.rejects(()=>scalar(sql,params));}
+      await asUser('','service_role');assert.equal((await scalar(sql,params)).status,'existing');
+      await asUser(ADMIN);await db.query('delete from public.songs where id=any($1::uuid[])',[[sid,existing,empty,variant.songId]]);await db.query('delete from public.song_collections where id=$1',[destination.id]);
+    });
+    await t.test('v54 approval uses global positions with backup, returns updated notifications and is idempotent',async()=>{
+      await asUser(ADMIN);
+      const song=await scalar("select id from public.songs where title like 'Song %' order by title limit 1");
+      const m=await scalar("select public.create_meeting('Propuneri v54',null,now(),null)");
+      const main=await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[m,song]);
+      const backup=await scalar('select public.add_song_to_meeting($1,$2,true,null,null)',[m,song]);
+      const proposal=await scalar("insert into public.public_meeting_contributions(meeting_id,contribution_type,custom_title,custom_text,is_backup,proposed_position,contributor_name,status) values($1,'prayer','Rugăciune propusă','Observații din propunere',false,1,'Vizitator','pending') returning id",[m]);
+      // Reproduce the pre-v54 failure on the same mixed main/backup fixture.
+      await db.exec('reset role');const old=fs.readFileSync(path.join(process.cwd(),'supabase','migrations','032_v38_public_share_polish.sql'),'utf8');
+      await db.exec(old.slice(old.indexOf('create or replace function public.accept_public_meeting_contribution'),old.indexOf('grant execute on function public.accept_public_meeting_contribution')));
+      await asUser(ADMIN);await assert.rejects(()=>scalar('select public.accept_public_meeting_contribution($1)',[proposal]),(e:any)=>e.code==='23505');
+      await db.exec('reset role');await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V54.sql'),'utf8'));await asUser(ADMIN);
+      assert.equal((await scalar('select public.program_notifications_v54($1)',[m])).length,1);
+      const result=await scalar('select public.review_program_contribution_v54($1,$2,true)',[m,proposal]);
+      assert.equal(result.pending.length,0);assert.equal(result.snapshot.items[0].custom_title,'Rugăciune propusă');assert.equal(result.snapshot.items[0].custom_text,'Observații din propunere');
+      assert.deepEqual(result.snapshot.items.map((v:any)=>v.position),[1,2,3]);assert.equal(result.snapshot.items[1].id,main);assert.equal(result.snapshot.items[2].id,backup);
+      const again=await scalar('select public.review_program_contribution_v54($1,$2,true)',[m,proposal]);assert.equal(again.snapshot.items.length,3);
+      const second=await scalar("insert into public.public_meeting_contributions(meeting_id,contribution_type,song_id,is_backup,proposed_position,status) values($1,'song',$2,true,1,'pending') returning id",[m,song]);
+      const accepted=await scalar('select public.review_program_contribution_v54($1,$2,true)',[m,second]);assert.equal(accepted.snapshot.items.filter((v:any)=>v.is_backup)[1].id,backup);
+      const third=await scalar("insert into public.public_meeting_contributions(meeting_id,contribution_type,custom_title,status) values($1,'text','De respins','pending') returning id",[m]);
+      const rejected=await scalar('select public.review_program_contribution_v54($1,$2,false)',[m,third]);assert.equal(rejected.pending.length,0);assert.equal(rejected.snapshot.items.length,4);
+      await db.query('delete from public.meetings where id=$1',[m]);
+    });
+    await t.test('v54 fast common RPC validates scope, advances revision and denies viewers/anonymous/inactive',async()=>{
+      await asUser(ADMIN);const song=await scalar("select id from public.songs where title like 'Song %' order by title limit 1");
+      const m=await scalar("select public.create_meeting('Marcaj rapid v54',null,now(),null)");
+      const other=await scalar("select public.create_meeting('Alt program v54',null,now(),null)");
+      const item=await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[m,song]);
+      const before=await scalar('select public.get_meeting_snapshot_v46($1)',[m]);const saved=await scalar('select public.set_program_common_v54($1,$2,true)',[m,item]);assert.equal(saved.items[0].is_congregational,true);assert.ok(saved.revision>before.revision);
+      await assert.rejects(()=>scalar('select public.set_program_common_v54($1,$2,false)',[other,item]));
+      const proposal=await scalar("insert into public.public_meeting_contributions(meeting_id,contribution_type,custom_title,status) values($1,'text','Test autorizare','pending') returning id",[m]);
+      await assert.rejects(()=>scalar('select public.review_program_contribution_v54($1,$2,true)',[other,proposal]));
+      for(const [id,role] of [[VIEWER,'authenticated'],[INACTIVE,'authenticated'],['','anon']]){await asUser(id,role);await assert.rejects(()=>scalar('select public.set_program_common_v54($1,$2,false)',[m,item]));await assert.rejects(()=>scalar('select public.program_notifications_v54($1)',[m]));await assert.rejects(()=>scalar('select public.review_program_contribution_v54($1,$2,true)',[m,proposal]));}
+      await asUser(ADMIN);assert.equal((await scalar('select public.get_meeting_snapshot_v46($1)',[m])).items[0].is_congregational,true);
+      await db.query('delete from public.meetings where id=any($1::uuid[])',[[m,other]]);
+    });
+    await t.test('v53 congregational marker is per program, copied/shared/audited and text moments cannot carry it',async()=>{
+      await asUser(ADMIN);
+      const song=await scalar("insert into public.songs(title) values('Cântare comună v53') returning id");
+      const m=await scalar("insert into public.meetings(title,meeting_date,created_by) values('Program v53',now(),auth.uid()) returning id");
+      const other=await scalar("insert into public.meetings(title,meeting_date,created_by) values('Alt program v53',now(),auth.uid()) returning id");
+      const item=await scalar('select public.add_program_song_v52($1,$2,null,false,null,null)',[m,song]);
+      const otherItem=await scalar('select public.add_program_song_v52($1,$2,null,false,null,null)',[other,song]);
+      await db.query('update public.meeting_items set is_congregational=true where id=$1',[item]);
+      assert.equal(await scalar('select is_congregational from public.meeting_items where id=$1',[otherItem]),false);
+      const snapshot=await scalar('select public.get_meeting_snapshot_v46($1)',[m]);assert.equal(snapshot.items[0].is_congregational,true);
+      const copy=await scalar("select public.duplicate_meeting($1,'Copie v53',now())",[m]);assert.equal(await scalar('select is_congregational from public.meeting_items where meeting_id=$1',[copy]),true);
+      const audit=await scalar("select details from public.activity_log_v48 where resource_id=$1 and event_type='update' order by id desc limit 1",[item]);assert.equal(audit.after.is_congregational,true);
+      const moment=await scalar("select public.add_text_to_meeting($1,'prayer','Rugăciune','Observații')",[m]);
+      await db.query('update public.meeting_items set is_congregational=true where id=$1',[moment]);assert.equal(await scalar('select is_congregational from public.meeting_items where id=$1',[moment]),false);
+      const slug=await scalar("select public.create_meeting_share_link($1,'comun-v53')",[m]);
+      await asUser('','anon');const shared=await scalar('select public.get_shared_meeting($1)',[slug]);assert.equal(shared.items.find((v:any)=>v.is_congregational)?.song.title,'Cântare comună v53');
+      await asUser(VIEWER);await db.query('update public.meeting_items set is_congregational=false where id=$1',[item]);
+      await asUser(ADMIN);assert.equal(await scalar('select is_congregational from public.meeting_items where id=$1',[item]),true);
+      await db.query('update public.meeting_items set is_congregational=false where id=$1',[item]);assert.equal((await scalar('select public.get_meeting_snapshot_v46($1)',[m])).items.find((v:any)=>v.id===item).is_congregational,false);
+      await db.exec('reset role');await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V53.sql'),'utf8'));await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V53.sql'),'utf8'));await asUser(ADMIN);
+      await db.query('delete from public.meetings where id=any($1::uuid[])',[[m,other,copy]]);await db.query('delete from public.songs where id=$1',[song]);
+    });
+    await t.test('v52 search warns about another program on the same day and calendar deduplicates/plans past and future with exact Romanian dates',async()=>{
+      await asUser(ADMIN);const song=await scalar("insert into public.songs(title,lyrics_text) values('Planificare v52','Versuri') returning id");
+      const current=await scalar("select public.create_meeting('Dimineața',null,((now() at time zone 'Europe/Bucharest')::date+1+time '08:00') at time zone 'Europe/Bucharest',null)");
+      const future=await scalar("select public.create_meeting('Seara',null,((now() at time zone 'Europe/Bucharest')::date+1+time '18:30') at time zone 'Europe/Bucharest',null)");
+      const past=await scalar("select public.create_meeting('În trecut',null,now()-interval '20 days',null)");
+      const template=await scalar("select public.create_meeting('Șablon ignorat',null,now()+interval '1 hour',null)");await db.query('update public.meetings set is_template=true where id=$1',[template]);
+      for(const id of [current,future,past,template])await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[id,song]);
+      await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[future,song]);
+      const found=await scalar("select public.search_program_songs_v52('Planificare v52',8,$1)",[current]);assert.equal(found[0].schedule.next.meeting_id,future);assert.equal(found[0].schedule.last.meeting_id,past);
+      assert.equal(await scalar("select to_char(meeting_date at time zone 'Europe/Bucharest','HH24:MI') from public.meetings where id=$1",[found[0].schedule.next.meeting_id]),'18:30');
+      const date=await scalar("select (meeting_date at time zone 'Europe/Bucharest')::date::text from public.meetings where id=$1",[future]);
+      const calendar=await scalar('select public.song_schedule_v52($1,$2,$3)',[song,date,current]);assert.equal(calendar.events.filter((e:any)=>e.meeting_id===future).length,1);assert.equal(calendar.events.find((e:any)=>e.meeting_id===future).day,date);assert.equal(Number(calendar.planned_count),1);assert.equal(Number(calendar.past_count),1);assert.ok(!calendar.events.some((e:any)=>e.meeting_id===current||e.meeting_id===template));
+      await asUser(INACTIVE);await assert.rejects(()=>scalar('select public.song_schedule_v52($1,$2,$3)',[song,date,current]));await assert.rejects(()=>scalar("select public.search_program_songs_v52('Planificare',8,null)"));
+      await asUser('','anon');await assert.rejects(()=>scalar('select public.song_schedule_v52($1,$2,$3)',[song,date,current]));await assert.rejects(()=>scalar("select public.search_program_songs_v52('Planificare',8,null)"));
+      await asUser(ADMIN);await db.query('delete from public.meetings where id=any($1::uuid[])',[[current,future,past,template]]);await db.query('delete from public.songs where id=$1',[song]);
     });
     await t.test('stable pages beyond 50 and DB filters',async()=>{
       await asUser(ADMIN);
@@ -448,23 +631,36 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
     });
     await t.test('packaged UPDATE and fresh INSTALL execute successfully',async()=>{
       await db.exec('reset role');
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V42.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V43.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V44.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V45.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V45.sql'),'utf8')); // rerun safe
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V46.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V46.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V47.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V47.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V48.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V48.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V49.sql'),'utf8'));
-      await db.exec(fs.readFileSync(path.join(process.cwd(),'UPDATE-V49.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V42.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V43.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V44.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V45.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V45.sql'),'utf8')); // rerun safe
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V46.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V46.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V47.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V47.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V48.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V48.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V49.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V49.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V52.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V52.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V53.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V54.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V54.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V55.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V55.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V56.sql'),'utf8'));
+      await db.exec(fs.readFileSync(path.join(process.cwd(),'supabase','updates','UPDATE-V56.sql'),'utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V57.sql','utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V57.sql','utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V58.sql','utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V58.sql','utf8'));
       const fresh = new PGlite({ extensions: { pg_trgm, unaccent, pgcrypto } });
       try {
         await fresh.exec(setup);
-        await fresh.exec(fs.readFileSync(path.join(process.cwd(),'INSTALL-NEW.sql'),'utf8'));
+        await fresh.exec(fs.readFileSync(path.join(process.cwd(),'supabase','setup','INSTALL-NEW.sql'),'utf8'));
         assert.equal((await fresh.query<{n:number}>('select count(*)::integer as n from public.songs')).rows[0].n,0);
       } finally { await fresh.close(); }
     });

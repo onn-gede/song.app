@@ -14,8 +14,9 @@ export function MeetingPrintDocument({ title, date, principal, secondary, items 
       if (!group.length) return null;
       return <section key={String(backup)}><h2>{backup ? "Cântări backup" : "Program principal"}</h2><ol>{group.map(item => <li key={item.id} className={!item.song_id ? "print-moment" : ""}>
         <div className="print-item-heading"><strong>{item.songs?.title || item.custom_title || labels[item.item_type] || "Moment"}</strong><span>{[item.selected_key || item.songs?.default_key, (item.selected_bpm || item.songs?.bpm) ? `${item.selected_bpm || item.songs?.bpm} BPM` : null].filter(Boolean).join(" · ")}</span></div>
+        {item.song_id && item.is_congregational ? <p className="congregational-tag">Cântare în comun</p>:null}
         {!item.song_id ? <small>{labels[item.item_type] || "Moment"}</small> : null}
-        {item.responsible_name ? <p>Solist: {item.responsible_name}</p> : null}
+        {item.song_id && item.responsible_name ? <p>Solist: {item.responsible_name}</p> : null}
         {(item.song_id ? item.notes : item.custom_text) ? <p className="print-item-text">{item.song_id ? item.notes : item.custom_text}</p> : null}
         {!item.song_id && item.notes ? <p className="print-item-text">Observații: {item.notes}</p> : null}
       </li>)}</ol></section>;

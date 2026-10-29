@@ -1,0 +1,1 @@
+-- v37: no SQL needed. Importul continuă peste fișierele cu eroare și raportează eșecurile în wizard.
