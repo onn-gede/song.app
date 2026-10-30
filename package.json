@@ -1,15 +1,15 @@
 {
   "name": "songapp-next-mvp",
-  "version": "0.8.2",
+  "version": "0.10.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build-local.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "worker:build": "tsc -p tsconfig.worker.json",
     "worker": "node --env-file-if-exists=.env.worker dist-worker/scripts/external-sync-worker.js",
-    "test": "npm run worker:build && node --test dist-worker/tests/*.test.js && node --test tests/red-book-import.test.mjs && node --test tests/black-ppt.test.mjs",
+    "test": "npm run worker:build && node --test dist-worker/tests/*.test.js && node --test tests/red-book-import.test.mjs && node --test tests/black-ppt.test.mjs && node --test tests/local-build.test.mjs",
     "sql:package": "node scripts/build-install-sql.mjs",
     "local": "node scripts/start-local.mjs",
     "build:netlify": "node scripts/netlify-preflight.mjs && next build",

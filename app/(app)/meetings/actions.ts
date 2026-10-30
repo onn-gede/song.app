@@ -16,6 +16,7 @@ export type MeetingOption = {
 };
 
 export type SongSearchResult = {
+  verse_count?:number|null;first_verse?:string|null;chorus?:string|null;
   song_id: string;
   title: string;
   default_key: string | null;
@@ -286,6 +287,7 @@ export async function deleteMeetingAction(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
+  revalidatePath("/songs");revalidatePath("/songs/[id]","page");
   revalidatePath("/dashboard");
   revalidatePath("/meetings");
   refresh();
@@ -379,7 +381,7 @@ export async function updateItemResponsibleAction(formData: FormData) {
   if(musicalKey.length>20)throw new Error("Tonalitatea poate avea maximum 20 de caractere.");
   if (notes.length > 5000) throw new Error("Observațiile pot avea maximum 5000 de caractere.");
   if (!meetingId || !itemId || name.length > 120) throw new Error("Responsabilul poate avea maximum 120 de caractere.");
-  const { error } = await supabase.from("meeting_items").update({ responsible_name: name || null, notes: notes || null, ...(formData.has("selected_key")?{selected_key:musicalKey||null}:{}), ...(formData.has("selected_source_id")?{selected_source_id:readString(formData,"selected_source_id")||null}:{}) }).eq("id",itemId).eq("meeting_id",meetingId);
+  const {error}=await supabase.rpc('update_program_song_v62',{p_meeting_id:meetingId,p_item_id:itemId,p_data:{responsible_name:name,notes,selected_key:musicalKey,performance_structure:readString(formData,'performance_structure'),verse_count:readString(formData,'verse_count'),...(formData.has('selected_source_id')?{selected_source_id:readString(formData,'selected_source_id')}:{})}});
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`); revalidatePath("/program", "layout");
   refresh();
@@ -428,6 +430,7 @@ export async function saveMeetingResponsiblesAction(formData: FormData) {
 }
 
 async function committedMeetingSnapshot(meetingId: string): Promise<MeetingSnapshot> {
+  revalidatePath('/songs');revalidatePath('/songs/[id]','page');revalidatePath('/dashboard');revalidatePath('/program','layout');
   const { supabase } = await requireProfile("editor");
   const { data, error } = await supabase.rpc("get_meeting_snapshot_v46", { p_meeting_id: meetingId });
   if (error || !data) throw new Error(error?.message || "Datele programului nu au putut fi confirmate.");

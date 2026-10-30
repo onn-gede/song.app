@@ -1,3 +1,4 @@
+import {UsageRefresh} from "@/components/UsageRefresh";
 import Link from "next/link";
 import { SongUsageHistory, type UsageHistory } from "@/components/SongUsageHistory";
 import { libraryPage } from "@/lib/library";
@@ -58,7 +59,7 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
     })
     .filter(Boolean);
 
-  return (
+  return (<> <UsageRefresh/>
     <>
       <div className="song-detail-header">
         <div className="song-title-block">
@@ -170,5 +171,5 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
 
       {editable ? <DeleteSongButton songId={song.id} songTitle={song.title} /> : null}
     </>
-  );
+  </>);
 }

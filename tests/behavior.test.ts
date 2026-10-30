@@ -1,3 +1,4 @@
+import {arrangeSections,normalizePerformanceStructure,changedProgramIds} from "../lib/song-performance";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -102,3 +103,21 @@ test('v50 presentation carries each song key, program override wins, and moments
  });
 
 test('v58 presentation filenames identify number/title without extracting lyrics',async()=>{const {presentationFileIdentity}=await import('../lib/presentation-file.js');assert.equal(presentationFileIdentity('folder/063 Titlu cu ș.ppt')?.number,'063');assert.equal(presentationFileIdentity('016. Glorii din cer.pptx')?.title,'Glorii din cer');assert.equal(presentationFileIdentity('Fără număr.ppt'),null);assert.equal(presentationFileIdentity('001 Invalid.exe'),null);});
+
+
+test('moment presentation preserves Diverse and song type even when stored under the text enum',()=>{
+ const base={id:'moment',position:1,is_backup:false,item_type:'text',custom_title:null,custom_text:null,songs:null};
+ assert.equal(buildProgramSlides([{...base,moment_kind:'other'}])[0].content,'Diverse');
+ assert.equal(buildProgramSlides([{...base,moment_kind:'other'}])[0].label,'Diverse');
+ assert.equal(buildProgramSlides([{...base,item_type:'song',moment_kind:'song'}])[0].content,'Cântare');
+ assert.equal(buildProgramSlides([{...base,moment_kind:'text'}])[0].label,'Poezie');
+ assert.equal(buildProgramSlides([{...base,moment_kind:'other',custom_title:'Moment comun',custom_text:'Observații păstrate'}])[0].content,'Observații păstrate');
+});
+
+
+test('v62 arrangement preserves indexed verse order, repeats refrains and changes are limited to added/edited items',async()=>{
+ const sections=[{id:'s1',section_type:'verse'},{id:'r',section_type:'chorus'},{id:'s2',section_type:'verse'},{id:'b',section_type:'bridge'}];
+ assert.deepEqual(arrangeSections(sections,'S,R,S,R,R,B,S,R').map(x=>x.id),['s1','r','s2','r','r','b','s1','r']);
+ assert.deepEqual(arrangeSections(sections,'S2,R,S1').map(x=>x.id),['s2','r','s1']);assert.equal(normalizePerformanceStructure('s1, r, s2'),'S1,R,S2');assert.throws(()=>normalizePerformanceStructure('invalid'));assert.deepEqual(arrangeSections(sections,'S99'),sections);
+ assert.deepEqual(changedProgramIds(null,{a:'new'}),[]);assert.deepEqual(changedProgramIds({a:'old',b:'same'},{a:'new',b:'same',c:'added'}),['a','c']);
+});

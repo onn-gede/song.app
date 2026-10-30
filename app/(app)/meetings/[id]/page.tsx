@@ -13,6 +13,7 @@ import { formatDateTime } from "@/lib/format";
 import { AddSongsPanel } from "@/components/AddSongsPanel";
 import { CopyButton } from "@/components/CopyButton";
 import { MeetingProgramBoard, type MeetingProgramItem } from "@/components/MeetingProgramBoard";
+import { ExportPackageButton } from "@/components/BackupTools";
 import { PrintButton } from "@/components/PrintButton";
 import {
   setMeetingTemplateAction,
@@ -145,7 +146,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
           {editable?<ProgramNotificationsButton/>:null}
           {activeLink ? <a className="btn public-highlight" href={`/program/${activeLink.public_slug}`} target="_blank" rel="noreferrer">Vezi public ↗</a> : null}
           <details className="program-page-tools"><summary title="Acțiuni program" aria-label="Acțiuni program">•••</summary><div className="program-tools-menu">
-            <Link className="btn secondary" href={`/meetings/${id}/present`}>Prezintă programul</Link><PrintButton /><Link className="btn secondary" href="/meetings">Înapoi la programe</Link>
+            <Link className="btn secondary" href={`/meetings/${id}/present`}>Prezintă programul</Link><PrintButton /><ExportPackageButton meetingId={id} /><Link className="btn secondary" href="/meetings">Înapoi la programe</Link>
           </div></details>
         </div>
       </div>

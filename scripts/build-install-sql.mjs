@@ -47,3 +47,9 @@ fs.writeFileSync('supabase/updates/UPDATE-V57-1-SAFE-IMPORT.sql',read('052_v57_1
 fs.writeFileSync('supabase/updates/UPDATE-V58.sql','-- Actualizare după v57 sau v57.1, în aceeași bază. Nu importă și nu arhivează cântări.\n'+read('052_v57_1_safe_import.sql')+'\n'+read('053_v58_presentation_import.sql'));
 
 fs.writeFileSync('supabase/updates/UPDATE-V59.sql','-- După v58, în aceeași bază.\n'+read('054_v59_public_moment_types.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V62.sql','-- După v59/v61, în aceeași bază.\n'+read('055_v62_program_details.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V63.sql','-- După v62, în aceeași bază.\n'+read('056_v63_current_usage.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V64.sql','-- După v63, pe aceeași bază.\n'+read('057_v64_backup.sql'));

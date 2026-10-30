@@ -28,6 +28,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
    ?await db.rpc('set_program_common_v54',{p_meeting_id:id,p_item_id:body.itemId,p_enabled:body.enabled})
    :await db.rpc('review_program_contribution_v54',{p_meeting_id:id,p_contribution_id:body.contributionId,p_accept:body.accept});
   if(error)return failure(error);
+  revalidatePath('/songs');revalidatePath('/songs/[id]','page');revalidatePath('/dashboard');
   revalidatePath(`/meetings/${id}`);revalidatePath('/program','layout');
   return Response.json(common?{snapshot:data}:data,{headers});
  }catch{return Response.json({error:'Conexiunea s-a întrerupt. Verifică lista și reîncearcă.'},{status:503,headers});}

@@ -1073,3 +1073,7 @@ export async function updateSongSourceNumberAction(formData: FormData) {
   revalidatePath("/songs");revalidatePath(`/songs/${songId}`);revalidatePath(`/songs/${songId}/edit`);refresh();
   redirect(`/songs/${songId}/edit?saved=1`);
 }
+
+export async function assignSongCategoryAction(songId:string,categoryId:string){
+ const {supabase}=await requireProfile('editor');const {error}=await supabase.rpc('assign_song_category_v62',{p_song_id:songId,p_category_id:categoryId});if(error)throw Error(error.message);revalidatePath('/songs');revalidatePath(`/songs/${songId}`);refresh();
+}

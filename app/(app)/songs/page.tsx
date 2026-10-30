@@ -1,3 +1,4 @@
+import {UsageRefresh} from "@/components/UsageRefresh";
 import { redirect } from "next/navigation";
 import { LibraryPagination } from "@/components/LibraryPagination";
 import Link from "next/link";
@@ -16,13 +17,13 @@ export default async function SongsPage({searchParams}:{searchParams?:Promise<Li
  ]);
  const songs=result?.songs||[],total=Number(result?.total||0),pageCount=Math.max(1,Math.ceil(total/PAGE_SIZE));
  if(!error&&page>pageCount)redirect(libraryHref(params,pageCount));
- return <div className="library-page-v44"><div className="page-heading-v44"><div><div className="eyebrow">Biblioteca ta de muzică</div><h1>Cântări<span className="heading-count">{total.toLocaleString("ro-RO")}</span></h1><p>Găsește cântarea potrivită pentru următorul program.</p></div>{editable?<Link className="btn" href="/import"><Icon name="plus" size={18}/>Importă o cântare</Link>:null}</div>
+ return <div className="library-page-v44"><UsageRefresh/><div className="page-heading-v44"><div><div className="eyebrow">Biblioteca ta de muzică</div><h1>Cântări<span className="heading-count">{total.toLocaleString("ro-RO")}</span></h1><p>Găsește cântarea potrivită pentru următorul program.</p></div>{editable?<Link className="btn" href="/import"><Icon name="plus" size={18}/>Importă o cântare</Link>:null}</div>
   <LibraryToolbar collections={(collections||[]).filter(c=>c.is_active)} categories={categories||[]} keys={result?.keys||[]}/>
   {params.q&&(params.collection||params.category||params.key||params.number||params.status||['most_sung','last_sung'].includes(params.sort||''))?<Link className="text-link-v44" href={libraryHref({q:params.q},1)}>Caută „{params.q}” în toate cântările și colecțiile</Link>:null}
   <div className="library-quick-sorts" aria-label="Ordonări rapide">{[['created_desc','Adăugate recent'],['last_sung','Cântate recent în programe'],['most_sung','Cele mai des cântate']].map(([sort,label])=><Link key={sort} className={'btn '+(params.sort===sort?'':'secondary')} aria-current={params.sort===sort?'page':undefined} href={libraryHref({...params,sort},1)}>{label}</Link>)}</div>
   {params.deleted?<p className="success" role="status">Au fost șterse {params.deleted} cântări.</p>:null}
   {error?<p className="error" role="alert">{error.message.includes("list_song_library_v46")?"Rulează UPDATE-V46.sql în baza existentă pentru noua căutare și filtrare.":"Biblioteca nu poate fi încărcată momentan. Încearcă din nou."}</p>:<section className="library-results-v44" aria-label="Lista cântărilor"><div className="library-results-heading"><span>{params.q?`Rezultate pentru „${params.q}”`:({most_sung:"Cele mai des cântate",last_sung:"Cântate recent în programe",created_desc:"Cele mai recente cântări adăugate"} as Record<string,string>)[params.sort||""]||"Biblioteca de cântări"}</span><small role="status">{total?`${(page-1)*PAGE_SIZE+1}–${Math.min(page*PAGE_SIZE,total)} din ${total.toLocaleString("ro-RO")}`:"Niciun rezultat"}</small></div>
-   <LibraryPagination position="top" filters={params} page={page} pages={pageCount}/><SongsBulkList key={`${page}:${JSON.stringify(params)}`} songs={songs} collections={collections||[]} canManage={editable}/>
+   <LibraryPagination position="top" filters={params} page={page} pages={pageCount}/><SongsBulkList key={`${page}:${JSON.stringify(params)}`} songs={songs} categories={categories||[]} collections={collections||[]} canManage={editable}/>
    <LibraryPagination filters={params} page={page} pages={pageCount}/>
   </section>}
  </div>;

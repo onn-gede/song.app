@@ -1,3 +1,6 @@
+import {requireProfile,canEdit} from '@/lib/auth';
+import {SharedProgramEditor} from '@/components/SharedProgramEditor';
+import {ProgramChangeTracker,ChangedProgramItem} from '@/components/ProgramChangeTracker';
 import { MeetingStatusBadge } from "@/components/MeetingStatus";
 import { collectionStyle,primarySource,type CollectionSource } from "@/lib/collection-colors";
 import { SourceTags } from "@/components/SourceTags";
@@ -16,6 +19,7 @@ import { formatDateTime } from "@/lib/format";
 type PageProps = { params: Promise<{ slug: string }> };
 
 type PublicMeetingItem = {
+ id:string;performance_structure?:string|null;
  moment_kind?:string|null;moment_color?:string;
   is_congregational?:boolean; selected_source_id?:string|null; sources?:CollectionSource[];
   position: number;
@@ -32,7 +36,7 @@ type PublicMeetingItem = {
     lyrics_text: string | null;
     default_key: string | null;
     bpm: number | null;
-    structure: string | null;
+    structure: string | null;verse_count?:number|null;
     source_summary?: string | null;
   };
 };
@@ -55,7 +59,7 @@ type PublicContribution = {
     lyrics_text: string | null;
     default_key: string | null;
     bpm: number | null;
-    structure: string | null;
+    structure: string | null;verse_count?:number|null;
     source_summary?: string | null;
   };
 };
@@ -87,14 +91,14 @@ function LyricsDetails({ text }: { text?: string | null }) {
 function PublicItem({ item, index }: { item: PublicMeetingItem; index: number }) {
   const source=primarySource(item.sources,item.selected_source_id);
   return (
-    <div style={item.song?collectionStyle(source):{'--moment-color':item.moment_color||'#d97706'} as React.CSSProperties} data-source-color={item.song?source?.color||"unassigned":undefined} className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}>
+    <ChangedProgramItem id={item.id}><div style={item.song?collectionStyle(source):{'--moment-color':item.moment_color||'#d97706'} as React.CSSProperties} data-source-color={item.song?source?.color||"unassigned":undefined} className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}>
       <div className="program-position">{index + 1}</div>
       <div className="program-main">
         <div className="program-title public-program-title-compact">{item.song?.title || item.custom_title || "Element"}</div>
         <div className="badges compact-badges">
           <span className="badge">{item.song ? "Cântare" : (itemTypeLabels[item.moment_kind||item.item_type] || "Element")}</span>
           {item.song && item.responsible_name ? <span className="badge">Solist: {item.responsible_name}</span> : null}
-          {item.song?<SourceTags source={source}/>:null}
+          {item.song?<><span className="badge">Strofe: {item.song.verse_count??"—"}</span><span className="badge">Structură: {item.performance_structure||item.song.structure||"—"}</span></>:null}{item.song?<SourceTags source={source}/>:null}
           {item.song&&item.is_congregational?<span className="badge congregational-tag">Cântare în comun</span>:null}
           {item.is_backup ? <span className="badge backup">backup</span> : null}
           {item.song && (item.selected_key || item.song.default_key) ? <span className="badge">Tonalitate: {item.selected_key || item.song.default_key}</span> : null}
@@ -103,7 +107,7 @@ function PublicItem({ item, index }: { item: PublicMeetingItem; index: number })
         {item.song ? <LyricsDetails text={item.song.lyrics_text} /> : <p className="program-moment-observations">{item.custom_text}</p>}
         {item.notes ? <p className="muted small public-item-notes">{item.notes}</p> : null}
       </div>
-    </div>
+    </div></ChangedProgramItem>
   );
 }
 
@@ -160,8 +164,14 @@ export default async function PublicProgramPage({ params }: PageProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const publicUrl = `${siteUrl}/program/${slug}`;
 
+  // Sharing remains anonymous/read-only. Only an active editor gets mutation controls.
+  const context=await requireProfile().catch(()=>null);
+  if(context&&canEdit(context.profile.role)&&meeting.id){
+   const {data:snapshot,error:snapshotError}=await context.supabase.rpc('get_meeting_snapshot_v46',{p_meeting_id:meeting.id});
+   if(!snapshotError&&snapshot)return <main className="public-page public-page-v10 public-v48"><PublicProgramLive slug={slug} version={publicProgramVersion(data)}/><header className="public-header"><h1>{meeting.title}</h1><p>{formatDateTime(meeting.meeting_date)}</p></header><SharedProgramEditor meetingId={meeting.id} initial={snapshot}/></main>;
+  }
   return (
-    <main className="public-page public-page-v10 public-v48">
+    <ProgramChangeTracker items={items}><main className="public-page public-page-v10 public-v48">
       <PublicProgramLive slug={slug} version={publicProgramVersion(data)} />
       <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={items.map((item, index) => ({ ...item, id: String(index), song_id: item.song ? String(index) : null, songs: item.song ? { ...item.song, id: String(index) } : null }))} />
       <header className="public-header public-header-v10">
@@ -188,7 +198,7 @@ export default async function PublicProgramPage({ params }: PageProps) {
         </div>
         <div className="public-program-list">
           {mainItems.length === 0 ? <p className="muted">Programul nu conține încă elemente publice.</p> : null}
-          {mainItems.map((item, index) => <PublicItem key={`${item.position}-${item.item_type}-${index}`} item={item} index={index} />)}
+          {mainItems.map((item, index) => <PublicItem key={item.id} item={item} index={index} />)}
         </div>
 
         {backupItems.length > 0 ? (
@@ -229,6 +239,6 @@ export default async function PublicProgramPage({ params }: PageProps) {
           </div>
         </details>
       ) : null}
-    </main>
+    </main></ProgramChangeTracker>
   );
 }

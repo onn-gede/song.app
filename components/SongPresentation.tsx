@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -8,7 +8,7 @@ type PresentationSlide = {
   id: string;
   label: string;
   content: string;
-  musicalKey?:string|null;
+  musicalKey?:string|null;verseCount?:number|null;structure?:string|null;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -49,14 +49,14 @@ export function SongPresentation({
   slides,
   fallbackLyrics,
   returnHref,
-  defaultKey,
+  defaultKey,live=false,
 }: {
   songId: string;
   title: string;
   slides: PresentationSlide[];
   fallbackLyrics?: string | null;
   returnHref?: string;
-  defaultKey?:string|null;
+  defaultKey?:string|null;live?:boolean;
 }) {
   const router = useRouter();
   const exitHref = returnHref || `/songs/${songId}`;
@@ -73,7 +73,11 @@ export function SongPresentation({
 
   const [index, setIndex] = useState(0);
   const [fontScale, setFontScale] = useState(92);
-  const current = allSlides[index];
+  const [flash,setFlash]=useState(false);const previousSlides=useRef<string|null>(null);
+  const contentVersion=JSON.stringify(allSlides);
+  useEffect(()=>{if(previousSlides.current!==null&&previousSlides.current!==contentVersion){setFlash(true);const timer=setTimeout(()=>setFlash(false),5000);previousSlides.current=contentVersion;return()=>clearTimeout(timer);}previousSlides.current=contentVersion;},[contentVersion]);
+  useEffect(()=>{if(!live)return;const update=()=>{if(!document.hidden)router.refresh();};const timer=setInterval(update,15000);window.addEventListener('focus',update);return()=>{clearInterval(timer);window.removeEventListener('focus',update);};},[live,router]);
+  const current = allSlides[Math.min(index,Math.max(0,allSlides.length-1))];
   const musicalKey=current?.musicalKey!==undefined ? current.musicalKey : defaultKey;
   const currentLines = useMemo(() => normalizeLines(current?.content || ""), [current?.content]);
   const autoScale = useMemo(() => calculateAutoScale(currentLines), [currentLines]);
@@ -150,8 +154,8 @@ export function SongPresentation({
         </div>
       </header>
 
-      <main className="presentation-slide" onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}>
-        <div className="presentation-slide-heading"><div className="presentation-label">{current.label}</div>{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>
+      <main className={"presentation-slide"+(flash?" recent-program-change":"")} onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}>
+        <div className="presentation-slide-heading"><div className="presentation-label">{current.label}</div>{current.verseCount!==undefined?<span className="badge">Strofe: {current.verseCount??"—"}</span>:null}{current.structure?<span className="badge">Structură: {current.structure}</span>:null}{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>
         <div
           className="presentation-lyrics"
           style={{

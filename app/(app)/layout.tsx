@@ -5,6 +5,8 @@ import { signOutAction } from "@/app/login/actions";
 import { AppNavigation } from "@/components/AppNavigation";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { Icon } from "@/components/Icon";
+// Private pages depend on the current authenticated request.
+export const dynamic = 'force-dynamic';
 export default async function AppLayout({children}:{children:React.ReactNode}) {
  let context;try{context=await requireProfile();}catch{redirect("/login");}
  const {profile,user}=context;

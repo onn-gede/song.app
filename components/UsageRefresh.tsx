@@ -1,0 +1,4 @@
+"use client";
+import {useEffect} from 'react';
+import {useRouter} from 'next/navigation';
+export function UsageRefresh(){const router=useRouter();useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const update=()=>{if(document.hidden)return;clearTimeout(timer);timer=setTimeout(()=>router.refresh(),200);};const storage=(event:StorageEvent)=>{if(event.key==='songapp:program-updated')update();};let channel:BroadcastChannel|undefined;try{channel=new BroadcastChannel('songapp-programs');channel.onmessage=update;}catch{}window.addEventListener('focus',update);document.addEventListener('visibilitychange',update);window.addEventListener('storage',storage);return()=>{clearTimeout(timer);channel?.close();window.removeEventListener('focus',update);document.removeEventListener('visibilitychange',update);window.removeEventListener('storage',storage);};},[router]);return null;}

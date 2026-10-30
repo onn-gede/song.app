@@ -1,4 +1,5 @@
 "use client";
+import {useProgramChange} from "./ProgramChangeTracker";
 import { PROGRAM_MOMENT_TYPES } from "@/lib/program-moment-types";
 
 import Link from "next/link";
@@ -73,6 +74,7 @@ function ProgramCard({
   last: boolean;
 }) {
   const state = useMeetingState();
+  const changed=useProgramChange(item.id);
   const [editing, setEditing] = useState(false);
   const infoButton=useRef<HTMLButtonElement>(null);
   const [infoEditing,setInfoEditing]=useState(false);
@@ -92,14 +94,13 @@ function ProgramCard({
 
   return (
     <div
-      className={`program-item-v10 ${!item.song_id ? "program-item-moment" : ""} ${item.is_backup ? "program-item-backup" : ""} ${recentLabel ? "program-item-warning" : ""} ${isDragging ? "is-dragging" : ""} ${isDropTarget ? "is-drop-target" : ""}`}
+      className={`program-item-v10 ${changed?"recent-program-change":""} ${!item.song_id ? "program-item-moment" : ""} ${item.is_backup ? "program-item-backup" : ""} ${recentLabel ? "program-item-warning" : ""} ${isDragging ? "is-dragging" : ""} ${isDropTarget ? "is-drop-target" : ""}`}
       data-item-id={item.id}
       data-source-color={song ? source?.color||"unassigned" : undefined}
       style={song ? collectionStyle(source) : {'--moment-color':item.moment_color||'#d97706'} as React.CSSProperties}
     >
       {canManage ? <div className="program-handle" onPointerDown={event => { if (draggable && !editing) onPointerStart(event); }} title="Trage pentru reordonare" aria-label="Trage pentru reordonare">
         <span className="drag-grip">⋮⋮</span>
-        <span className="drag-label">Trage</span>
       </div> : null}
       <div className="program-main">
         <div className="program-title-line-v10">
@@ -112,7 +113,7 @@ function ProgramCard({
               {!song && item.custom_title ? <span className="badge muted-badge">{itemTypeLabels[item.moment_kind||item.item_type] || "Element"}</span> : null}
               {item.is_backup ? <span className="badge backup">backup</span> : null}
               {song ? <span className={`badge program-musical-key${musicalKey ? "" : " is-missing"}`} title={musicalKey ? "Tonalitatea cântării în acest program" : "Completează tonalitatea din editorul piesei"}>Tonalitate {musicalKey || "—"}</span> : null}
-              {song ? <SourceTags source={source}/> : null}
+              {song ? <SourceTags source={source}/> : null}{song?<><span className="badge">{song.verse_count==null?"Strofe: —":`${song.verse_count} strofe`}</span>{canManage?<button type="button" className="badge" title="Editează structura și numărul de strofe" onClick={()=>setInfoEditing(true)}>Structură: {item.performance_structure||song.structure||"—"} ✎</button>:<span className="badge">Structură: {item.performance_structure||song.structure||"—"}</span>}</>:null}
               {song && canManage ? <button type="button" className={"badge congregational-toggle"+(commonValue?" is-selected":"")} aria-pressed={commonValue} aria-busy={commonPending} disabled={commonPending} title={commonValue?"Elimină marcajul de cântare în comun":"Marchează drept cântare în comun"} onClick={async()=>{
                 if(commonSaving.current)return;commonSaving.current=true;const enabled=!commonValue;setCommonOverride(enabled);setCommonPending(true);setCommonError("");
                 try{const response=await fetch(`/api/meetings/${meetingId}/live`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'common',itemId:item.id,enabled})});const data=await response.json();if(!response.ok)throw Error(data.error||"Marcajul nu a fost salvat.");state?.apply(data.snapshot);}
@@ -120,7 +121,7 @@ function ProgramCard({
                 finally{setCommonOverride(null);setCommonPending(false);commonSaving.current=false;}
               }}>{commonValue?"Cântare în comun":"Cântare comun"}</button>:song&&item.is_congregational?<span className="badge congregational-tag">Cântare în comun</span>:null}
               {song && (item.selected_bpm || song.bpm) ? <span className="badge">{item.selected_bpm || song.bpm} BPM</span> : null}
-              {song?.structure ? <span className="badge">{song.structure}</span> : null}
+
               {recentLabel ? <RecentUsageIcon usage={recentUsage} /> : null}
             </div>
           </div>
@@ -166,7 +167,7 @@ function ProgramCard({
           }}>
             <fieldset disabled={savingInfo} className="meeting-form-fields">
             <input type="hidden" name="meeting_id" value={meetingId} /><input type="hidden" name="item_id" value={item.id} />
-            <label className="label">Solist<input className="input" name="responsible_name" defaultValue={item.responsible_name || ""} maxLength={120} placeholder="Nume solist / echipă" /></label>
+            <label className="label">Strofe<input className="input" type="number" name="verse_count" min="0" max="100" defaultValue={song.verse_count??""} placeholder="Necunoscut"/></label><label className="label">Structură în acest program<input className="input" name="performance_structure" defaultValue={item.performance_structure||""} placeholder={song.structure||"S1,R,S2,R,B,R"} maxLength={300}/><small>S = strofă, R = refren, B = bridge. Gol = structura cântării.</small></label><label className="label">Solist<input className="input" name="responsible_name" defaultValue={item.responsible_name || ""} maxLength={120} placeholder="Nume solist / echipă" /></label>
             {song ? <label className="label">Tonalitate<input className="input" name="selected_key" defaultValue={item.selected_key || ""} maxLength={20} placeholder={song.default_key ? `Implicit: ${song.default_key}` : "Ex.: G, Em, F#"} /></label> : null}
             {song && item.sources?.length ? <label className="label program-source-editor">Colecție de referință<select className="select" aria-label="Colecție de referință" name="selected_source_id" defaultValue={source?.source_id||""}>{item.sources.map(s=><option key={s.source_id} value={s.source_id}>{s.name} · nr. {s.number||"—"}</option>)}</select></label>:null}
             <label className="label">Observații<textarea className="textarea textarea-tight" name="notes" defaultValue={item.notes || ""} maxLength={5000} placeholder="Observații pentru această piesă" /></label>

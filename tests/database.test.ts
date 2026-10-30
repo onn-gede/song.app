@@ -44,6 +44,34 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       ('${ADMIN}','admin@example.org','admin',true),('${VIEWER}','viewer@example.org','viewer',true),('${INACTIVE}','inactive@example.org','editor',false) on conflict(id) do update set email=excluded.email,role=excluded.role,is_active=excluded.is_active;
       insert into public.songs(title,lyrics_text) select 'Song '||lpad(i::text,5,'0'),'Prima linie de versuri' from generate_series(1,5205) i;
     `);
+    await t.test('v64 admin-only export, rollback preview, atomic restore, expiry and concurrency protection',async()=>{
+      await asUser(ADMIN);
+      const song=await scalar("insert into songs(title,lyrics_text) values('Backup test','Strofa originală') returning id");
+      const meeting=await scalar("insert into meetings(title,meeting_date,principal_responsible,secondary_responsibles) values('Export program',now(),'Filip',array['Ana']) returning id");
+      await db.query("insert into meeting_items(meeting_id,position,song_id,responsible_name,notes,performance_structure) values($1,1,$2,'Solist test','Observații test','S,R')",[meeting,song]);
+      const pkg=await scalar('select export_package_v64($1)',[meeting]);
+      assert.equal(pkg.tables.meetings[0].principal_responsible,'Filip');assert.equal(pkg.tables.meeting_items[0].notes,'Observații test');assert.equal(pkg.tables.songs.length,1);assert.equal(pkg.kind,'program');
+      const full=await scalar('select export_package_v64()');assert.ok(full.tables.songs.length>5205);assert.ok(full.referenceOnly.profiles.length>=3);
+      await asUser(VIEWER);await assert.rejects(()=>scalar('select export_package_v64()'));await assert.rejects(()=>scalar("select restore_package_v64('{}')"));assert.equal((await scalar('select export_package_v64($1)',[meeting])).kind,'program');
+      await asUser(INACTIVE);await assert.rejects(()=>scalar('select export_package_v64($1)',[meeting]));await asUser('','anon');await assert.rejects(()=>scalar('select export_package_v64($1)',[meeting]));await asUser(ADMIN);
+      const old=await scalar('select to_jsonb(s) from songs s where id=$1',[song]);const tables={songs:[{...old,title:'Titlu restaurat'}]};
+      const auditBefore=await scalar('select count(*) from activity_log_v48');const preview=await scalar('select restore_package_v64($1)',[tables]);
+      assert.equal(preview.summary[0].changed,1);assert.equal(await scalar('select title from songs where id=$1',[song]),'Backup test');assert.equal(await scalar('select count(*) from activity_log_v48'),auditBefore);
+      await assert.rejects(()=>scalar('select restore_package_v64($1,$2)',[{songs:[{...old,title:'Conținut schimbat'}]},preview.ticket]));
+      await scalar('select restore_package_v64($1,$2)',[tables,preview.ticket]);assert.equal(await scalar('select title from songs where id=$1',[song]),'Titlu restaurat');await assert.rejects(()=>scalar('select restore_package_v64($1,$2)',[tables,preview.ticket]));
+      const again=await scalar('select restore_package_v64($1)',[tables]);assert.equal(again.summary[0].unchanged,1);
+      await db.query("update songs set title='Editare paralelă' where id=$1",[song]);await assert.rejects(()=>scalar('select restore_package_v64($1,$2)',[tables,again.ticket]));assert.equal(await scalar('select title from songs where id=$1',[song]),'Editare paralelă');
+      await assert.rejects(()=>scalar('select restore_package_v64($1)',[{profiles:full.referenceOnly.profiles}]));
+      await assert.rejects(()=>scalar('select restore_package_v64($1)',[{songs:[old,old]}]));
+      const invalid={songs:[{...old,title:'Nu salva'}],song_categories:[{song_id:song,category_id:'ffffffff-ffff-ffff-ffff-ffffffffffff'}]};await assert.rejects(()=>scalar('select restore_package_v64($1)',[invalid]));assert.equal(await scalar('select title from songs where id=$1',[song]),'Editare paralelă');
+      const c1='10000000-0064-0000-0000-000000000001',c2='10000000-0064-0000-0000-000000000002';
+      const categories={categories:[{id:c2,name:'Copil backup',slug:'copil-backup-64',parent_id:c1,created_at:old.created_at},{id:c1,name:'Părinte backup',slug:'parinte-backup-64',parent_id:null,created_at:old.created_at}]};
+      const cp=await scalar('select restore_package_v64($1)',[categories]);assert.equal(await scalar('select count(*) from categories where id=$1',[c1]),0);await scalar('select restore_package_v64($1,$2)',[categories,cp.ticket]);assert.equal(await scalar('select parent_id from categories where id=$1',[c2]),c1);
+      const second=await scalar("insert into meeting_items(meeting_id,position,song_id) values($1,2,$2) returning id",[meeting,song]);
+      const orderRows=(await db.query<Record<string,any>>('select to_jsonb(x) as r from meeting_items x where meeting_id=$1 order by position',[meeting])).rows.map(x=>x.r);orderRows[0].position=2;orderRows[1].position=1;
+      const orderData={meeting_items:orderRows};const orderPreview=await scalar('select restore_package_v64($1)',[orderData]);await scalar('select restore_package_v64($1,$2)',[orderData,orderPreview.ticket]);assert.equal(await scalar('select position from meeting_items where id=$1',[second]),1);
+      await db.query('delete from meetings where id=$1',[meeting]);await db.query('delete from songs where id=$1',[song]);await db.query('delete from categories where id=any($1::uuid[])',[[c1,c2]]);
+    });
     await t.test('v49 repeated creation returns one program, preserves quarter-hour and author, and rolls back failed song adds',async()=>{
       await asUser(ADMIN);const token='10000000-0000-0000-0000-000000000049';
       const before=await scalar('select count(*) from public.meetings');
@@ -180,6 +208,40 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       for(const [id,role] of [[VIEWER,'authenticated'],[INACTIVE,'authenticated'],['','anon']]){await asUser(id,role);await assert.rejects(()=>scalar('select public.red_book_collection_v55()'));await assert.rejects(()=>scalar(sql,params));}
       await asUser('','service_role');assert.equal((await scalar(sql,params)).status,'existing');
       await asUser(ADMIN);await db.query('delete from public.songs where id=any($1::uuid[])',[[sid,existing,empty,variant.songId]]);await db.query('delete from public.song_collections where id=$1',[destination.id]);
+    });
+    await t.test('v63 deleting main-list songs during or after a program retracts history, backup never counts, and categories accumulate',async()=>{
+      await asUser(ADMIN);const sid=await scalar("insert into public.songs(title) values('V63 current membership') returning id");
+      const ongoing=await scalar("select public.create_meeting('V63 ongoing',null,now()-interval '1 hour',null)");const finished=await scalar("select public.create_meeting('V63 finished',null,now()-interval '3 hours',null)");const older=await scalar("select public.create_meeting('V63 older',null,now()-interval '2 days',null)");
+      const currentItem=await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[ongoing,sid]);const endedItem=await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[finished,sid]);const olderItem=await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[older,sid]);
+      await scalar('select public.add_song_to_meeting($1,$2,true,null,null)',[ongoing,sid]);await scalar('select public.add_song_to_meeting($1,$2,true,null,null)',[finished,sid]);
+      const usage=async()=> (await db.query<any>('select * from public.get_song_recent_usage(30) where song_id=$1',[sid])).rows[0];assert.equal(Number((await usage()).times_used),3);
+      await scalar('select public.remove_meeting_item($1,$2)',[ongoing,currentItem]);assert.equal(Number((await usage()).times_used),2);assert.equal((await usage()).last_meeting_title,'V63 finished');
+      await scalar('select public.remove_meeting_item($1,$2)',[finished,endedItem]);assert.equal(Number((await usage()).times_used),1);assert.equal((await usage()).last_meeting_title,'V63 older');
+      await scalar('select public.place_meeting_item_v45($1,$2,true,null)',[older,olderItem]);assert.equal(await usage(),undefined);const history=await scalar('select public.get_song_history_v46($1)',[sid]);assert.equal(Number(history.performed_total),0);assert.equal(history.last_used_at,null);
+      const rows=await scalar("select public.list_song_library_v46(p_query=>'V63 current membership',p_sort=>'most_sung')");assert.equal(Number(rows.total),0);
+      await scalar('select public.place_meeting_item_v45($1,$2,false,null)',[older,olderItem]);assert.equal(Number((await usage()).times_used),1);
+      const categories=[];for(let n=0;n<3;n++){const c=await scalar("insert into public.categories(name,slug) values($1,$2) returning id",['V63 cat '+n,'v63-cat-'+n]);categories.push(c);await scalar('select public.assign_song_category_v62($1,$2)',[sid,c]);}await scalar('select public.assign_song_category_v62($1,$2)',[sid,categories[0]]);assert.equal(Number(await scalar('select count(*) from public.song_categories where song_id=$1',[sid])),3);
+      await db.query('delete from public.meetings where id=any($1::uuid[])',[[ongoing,finished,older]]);await db.query('delete from public.songs where id=$1',[sid]);await db.query('delete from public.categories where id=any($1::uuid[])',[categories]);
+    });
+    await t.test('v62 structure, verse counts, scoped public metadata, category assignment and filters enforce active editor permissions',async()=>{
+      await asUser(ADMIN);
+      const song=await scalar("insert into public.songs(title,lyrics_text,default_key,structure) values('V62 Test Hymn','Prima strofă\n\nRefren','F','S1,R,S2,R') returning id");
+      await db.query("insert into public.song_sections(song_id,position,section_type,section_label,content) values($1,1,'verse','Strofa 1','Prima strofă'),($1,2,'chorus','Refren','Un refren'),($1,3,'verse','Strofa 2','A doua strofă')",[song]);
+      const details=await scalar('select public.song_details_v62($1)',[song]);assert.equal(details.verse_count,2);assert.equal(details.first_verse,'Prima strofă');assert.equal(details.chorus,'Un refren');
+      const m=await scalar("select public.create_meeting('V62 program',null,now(),null)");const item=await scalar('select public.add_song_to_meeting($1,$2,false,null,null)',[m,song]);
+      const payload={performance_structure:'s1, r, s2,r,r',verse_count:'2',responsible_name:'Ana',notes:'Test',selected_key:'G'};
+      const snapshot=await scalar('select public.update_program_song_v62($1,$2,$3::jsonb)',[m,item,JSON.stringify(payload)]);assert.equal(snapshot.items[0].performance_structure,'S1,R,S2,R,R');assert.equal(snapshot.items[0].songs.verse_count,2);assert.equal(await scalar('select structure from public.songs where id=$1',[song]),'S1,R,S2,R');
+      await assert.rejects(()=>scalar('select public.update_program_song_v62($1,$2,$3::jsonb)',[m,item,JSON.stringify({...payload,performance_structure:'BAD'})]));
+      const copy=await scalar("select public.duplicate_meeting($1,'Copy v62',now())",[m]);assert.equal(await scalar('select performance_structure from public.meeting_items where meeting_id=$1',[copy]),'S1,R,S2,R,R');
+      const cat=await scalar("insert into public.categories(name,slug) values('V62 Categorie','v62-categorie') returning id");
+      await scalar('select public.assign_song_category_v62($1,$2)',[song,cat]);await scalar('select public.assign_song_category_v62($1,$2)',[song,cat]);assert.equal(Number(await scalar('select count(*) from public.song_categories where song_id=$1 and category_id=$2',[song,cat])),1);
+      const results=await scalar("select public.search_program_songs_v62('V62 Test',30,null,null,$1,'F')",[cat]);assert.equal(results.length,1);assert.equal(results[0].verse_count,2);assert.equal(results[0].chorus,'Un refren');
+      assert.equal((await scalar("select public.search_program_songs_v62('V62 Test',30,null,null,$1,'D')",[cat])).length,0);
+      assert.equal((await scalar("select public.search_program_songs_v62('',30,null,null,$1,null)",[cat])).length,1);
+      const slug=await scalar("select public.create_meeting_share_link($1,'v62-public')",[m]);
+      for(const [id,role] of [[VIEWER,'authenticated'],[INACTIVE,'authenticated'],['','anon']]){await asUser(id,role);await assert.rejects(()=>scalar('select public.update_program_song_v62($1,$2,$3::jsonb)',[m,item,JSON.stringify(payload)]));await assert.rejects(()=>scalar('select public.assign_song_category_v62($1,$2)',[song,cat]));}
+      await asUser('','anon');const shared=await scalar('select public.get_shared_meeting($1)',[slug]);assert.equal(shared.meeting.id,m);assert.equal(shared.items[0].id,item);assert.equal(shared.items[0].song.verse_count,2);assert.equal(shared.items[0].performance_structure,'S1,R,S2,R,R');await assert.rejects(()=>scalar('select public.song_details_v62($1)',[song]));assert.equal(await scalar("select public.get_shared_meeting('unknown-v62')"),null);
+      await asUser(ADMIN);await db.query('delete from public.meetings where id=any($1::uuid[])',[[m,copy]]);await db.query('delete from public.songs where id=$1',[song]);await db.query('delete from public.categories where id=$1',[cat]);
     });
     await t.test('v59 anonymous proposals support all admin moment types and approval preserves type and backup',async()=>{
       await asUser(ADMIN);
