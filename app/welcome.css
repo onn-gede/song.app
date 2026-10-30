@@ -25,3 +25,14 @@
 @media(max-width:1200px) and (min-width:801px){.welcome-frame{width:calc(100% - 150px)}.welcome-login{padding:36px 28px}.welcome-public{padding:36px 26px}.welcome-layout{grid-template-columns:minmax(280px,.9fr) minmax(0,1.2fr)}.welcome-photo{right:-75px;width:350px}.welcome-intro h1{font-size:30px}}
 @media(max-width:800px){.welcome-v66{padding:20px 16px}.welcome-frame{width:100%;max-width:560px;margin:auto}.welcome-brand{min-height:142px;align-items:flex-start;padding-top:10px;box-sizing:border-box;margin-bottom:18px}.welcome-photo{top:-20px;right:-30px;width:240px;height:340px}.welcome-photo img{opacity:.38}.welcome-layout{min-height:0}.welcome-intro h1{font-size:30px}}
 @media(max-width:380px){.welcome-intro h1{font-size:28px}.welcome-photo{right:-42px;width:210px}.welcome-brand{min-height:132px}}
+
+/* Installation is opt-in; browser/OS owns the actual install prompt. */
+.install-app{font-size:12px;line-height:1.6;color:#365b40;max-width:560px;margin:16px 0}
+.install-app summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:32px;display:list-item;list-style-position:inside}
+.install-app summary:focus-visible{outline:3px solid #8fae83;outline-offset:3px}
+.install-app-content{padding:14px;background:#f5f8f1;border:1px solid #dce6d5;border-radius:10px;text-align:left}
+.install-app-content p{margin:0 0 12px}.install-app-content p:last-child{margin-bottom:0}
+.install-app-content .btn{margin-bottom:12px;min-height:44px}
+.welcome-footer .install-app{margin:0;flex-basis:100%;order:3}
+@media(max-width:800px){.welcome-login-form .input{font-size:16px}}
+@media print{.install-app{display:none}}

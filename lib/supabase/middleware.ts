@@ -5,6 +5,7 @@ export async function updateSession(request:NextRequest){
  const path=request.nextUrl.pathname;
  // These handlers validate JWT/role themselves and can persist their own cookies.
  if(/^\/api\/meetings\/[0-9a-f-]{36}\/live$/i.test(path)&&['GET','PATCH'].includes(request.method))return NextResponse.next();
+ if(path==='/manifest.webmanifest')return NextResponse.next();
  if(path==='/pdf.worker-5.4.296.min.mjs'||path==='/notifications-sw.js')return NextResponse.next();
  if((path==='/api/songs/search'||/^\/api\/songs\/[0-9a-f-]{36}\/schedule$/i.test(path))&&request.method==='GET')return NextResponse.next();
  if(path.startsWith('/_next/')||path==='/favicon.ico'||path.startsWith('/api/public-program/'))return NextResponse.next();
