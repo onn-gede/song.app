@@ -1,3 +1,7 @@
+import {PublicSuggestions} from "@/components/PublicSuggestions";
+import {MeetingProgramBoard} from "@/components/MeetingProgramBoard";
+import type {ProgramItem} from "@/lib/meeting-state";
+import Link from "next/link";
 import {requireProfile,canEdit} from '@/lib/auth';
 import {SharedProgramEditor} from '@/components/SharedProgramEditor';
 import {ProgramChangeTracker,ChangedProgramItem} from '@/components/ProgramChangeTracker';
@@ -32,7 +36,7 @@ type PublicMeetingItem = {
   selected_bpm: number | null;
   notes: string | null;
   song: null | {
-    title: string;
+    id?:string; title: string;
     lyrics_text: string | null;
     default_key: string | null;
     bpm: number | null;
@@ -55,7 +59,7 @@ type PublicContribution = {
   contributor_name: string | null;
   notes: string | null;
   song: null | {
-    title: string;
+    id?:string; title: string;
     lyrics_text: string | null;
     default_key: string | null;
     bpm: number | null;
@@ -156,6 +160,7 @@ export default async function PublicProgramPage({ params }: PageProps) {
 
   const meeting = (data as any).meeting;
   const items = (((data as any).items || []) as PublicMeetingItem[]).sort((a, b) => a.position - b.position);
+  const normalized:ProgramItem[]=items.map(item=>({...item,song_id:item.song?.id||null,songs:item.song?{...item.song,id:item.song.id||item.id}:null}));
   const mainItems = items.filter((item) => !item.is_backup);
   const backupItems = items.filter((item) => item.is_backup);
   const contributions = (((data as any).contributions || []) as PublicContribution[]);
@@ -168,12 +173,12 @@ export default async function PublicProgramPage({ params }: PageProps) {
   const context=await requireProfile().catch(()=>null);
   if(context&&canEdit(context.profile.role)&&meeting.id){
    const {data:snapshot,error:snapshotError}=await context.supabase.rpc('get_meeting_snapshot_v46',{p_meeting_id:meeting.id});
-   if(!snapshotError&&snapshot)return <main className="public-page public-page-v10 public-v48"><PublicProgramLive slug={slug} version={publicProgramVersion(data)}/><header className="public-header"><h1>{meeting.title}</h1><p>{formatDateTime(meeting.meeting_date)}</p></header><SharedProgramEditor meetingId={meeting.id} initial={snapshot}/></main>;
+   if(!snapshotError&&snapshot)return <main className="public-page public-page-v10 public-v48"><PublicProgramLive slug={slug} version={publicProgramVersion(data)}/><header className="public-header"><h1>{meeting.title}</h1><p>{formatDateTime(meeting.meeting_date)}</p></header><SharedProgramEditor meetingId={meeting.id} initial={snapshot} title={meeting.title} date={meeting.meeting_date}/></main>;
   }
   return (
     <ProgramChangeTracker items={items}><main className="public-page public-page-v10 public-v48">
       <PublicProgramLive slug={slug} version={publicProgramVersion(data)} />
-      <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={items.map((item, index) => ({ ...item, id: String(index), song_id: item.song ? String(index) : null, songs: item.song ? { ...item.song, id: String(index) } : null }))} />
+      <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={normalized} />
       <header className="public-header public-header-v10">
         <div>
           <div className="eyebrow">SongApp BCBgiroc · Program partajat</div>
@@ -184,11 +189,12 @@ export default async function PublicProgramPage({ params }: PageProps) {
           {meeting.secondary_responsibles?.length ? <p>Responsabili secundari: {meeting.secondary_responsibles.join(", ")}</p> : null}
         </div>
         <div className="inline-form print-hide">
-          <CopyButton text={publicUrl} />
+          <Link className="btn secondary" href="/login">Autentificare</Link><CopyButton text={publicUrl} />
           <PrintButton />
         </div>
       </header>
 
+      {meeting.allow_contributions?<PublicSuggestions slug={slug} positionOptions={positionOptions}/>:null}
       <section className="card public-program-card">
         <div className="program-group-header">
           <div>
@@ -196,19 +202,7 @@ export default async function PublicProgramPage({ params }: PageProps) {
             <h2>Program principal</h2>
           </div>
         </div>
-        <div className="public-program-list">
-          {mainItems.length === 0 ? <p className="muted">Programul nu conține încă elemente publice.</p> : null}
-          {mainItems.map((item, index) => <PublicItem key={item.id} item={item} index={index} />)}
-        </div>
-
-        {backupItems.length > 0 ? (
-          <div className="public-backup-block">
-            <div className="eyebrow">Cântări backup</div>
-            <div className="public-program-list">
-              {backupItems.map((item, index) => <PublicItem key={`backup-${item.position}-${index}`} item={item} index={index} />)}
-            </div>
-          </div>
-        ) : null}
+        <section className="meeting-v48 program-surface-v65"><MeetingProgramBoard meetingId={meeting.id} items={normalized} canManage={false}/></section>
 
         {contributions.length > 0 ? (
           <details className="public-external-block print-hide"><summary>Propuneri externe ({contributions.length})</summary>
@@ -220,9 +214,7 @@ export default async function PublicProgramPage({ params }: PageProps) {
         ) : null}
       </section>
 
-      {meeting.allow_contributions ? <><details className="card public-optional-panel print-hide"><summary>Propune o cântare</summary><PublicContributionPanel slug={slug} positionOptions={positionOptions} /></details>
 
-      <details className="card public-optional-panel print-hide"><summary>Propune o intervenție</summary><PublicTextContributionForm slug={slug} positionOptions={positionOptions} /></details></> : null}
 
       {contributionHistory.length > 0 ? (
         <details className="card public-program-card print-hide history-toggle-card">

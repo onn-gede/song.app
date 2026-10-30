@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath, refresh } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 
 export type PublicSongSearchResult = {
   song_id: string;
@@ -25,7 +25,7 @@ export async function publicSearchSongsAction(slug: string, query: string): Prom
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase.rpc("public_search_songs_for_share", {
     p_public_slug: slug,
     search_query: trimmed,
@@ -46,7 +46,7 @@ export async function addPublicSongContributionAction(input: {
 }) {
   if (!input.slug || !input.songId) throw new Error("Lipsește cântarea selectată.");
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { error } = await supabase.rpc("add_public_meeting_contribution", {
     p_public_slug: input.slug,
     p_contribution_type: "song",
@@ -78,7 +78,7 @@ export async function addPublicTextContributionAction(formData: FormData) {
   if (!slug) throw new Error("Link public invalid.");
   if (!customTitle && !customText) throw new Error("Completează titlul sau textul intervenției.");
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { error } = await supabase.rpc("add_public_meeting_contribution", {
     p_public_slug: slug,
     p_contribution_type: contributionType,

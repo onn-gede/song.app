@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./redesign.css";
 import "./compact.css";
+import "./welcome.css";
 
 export const metadata: Metadata = {
   title: "SongApp BCBgiroc",

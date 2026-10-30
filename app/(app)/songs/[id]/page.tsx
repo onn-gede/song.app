@@ -103,7 +103,7 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
         </section>
 
         <aside className="grid song-side-panel">
-          <SongUsageHistory songId={id} history={history as UsageHistory | null} page={usagePage} error={!!historyError} />
+          <SongUsageHistory editable={editable} songId={id} history={history as UsageHistory | null} page={usagePage} error={!!historyError} />
           <section className="card">
             <div className="inline-form" style={{ justifyContent: "space-between", alignItems: "center" }}>
               <h2 style={{ marginBottom: 0 }}>Versete potrivite</h2>

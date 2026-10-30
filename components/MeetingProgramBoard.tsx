@@ -3,13 +3,13 @@ import {useProgramChange} from "./ProgramChangeTracker";
 import { PROGRAM_MOMENT_TYPES } from "@/lib/program-moment-types";
 
 import Link from "next/link";
+import {reorderedProgram} from "@/lib/program-order";
 import { collectionStyle,primarySource } from "@/lib/collection-colors";
 import { SourceTags } from "./SourceTags";
 import { effectiveMusicalKey } from "@/lib/musical-key";
 import { useMeetingState } from "./MeetingState";
 import { useRef, useState, useTransition } from "react";
 import {
-  placeMeetingItemAction,
   updateItemResponsibleAction,
   removeMeetingItemAction,
   updateMeetingTextItemAction,
@@ -107,7 +107,7 @@ function ProgramCard({
           <span className="program-position">{displayPosition}</span>
           <div className="program-title-wrap">
             <div className="program-title">
-              {song ? <Link href={`/songs/${song.id}`}>{song.title}</Link> : textItemTitle}
+              {song ? canManage?<Link href={`/songs/${song.id}`}>{song.title}</Link>:song.title : textItemTitle}
             </div>
             <div className="badges compact-badges">
               {!song && item.custom_title ? <span className="badge muted-badge">{itemTypeLabels[item.moment_kind||item.item_type] || "Element"}</span> : null}
@@ -152,6 +152,7 @@ function ProgramCard({
         ) : (
           <div className="program-moment-observations">{[item.custom_text,item.notes].filter(Boolean).map((text,index)=><p key={index}>{text}</p>)}</div>
         )}
+        {song&&!canManage&&song.lyrics_text?<details className="public-program-lyrics-details"><summary>Vezi versurile</summary><pre>{song.lyrics_text}</pre></details>:null}
         {commonError?<p className="error" role="alert">{commonError}</p>:null}
         {song ? <div className="program-info-line">{item.responsible_name?<span><strong>Solist:</strong> {item.responsible_name}</span>:null}{item.notes?<span className="program-inline-notes" title={item.notes}><strong>Observații:</strong> {item.notes}</span>:null}{!item.responsible_name&&!item.notes&&canManage?<span className="muted">Solist · observații</span>:null}{canManage?<button ref={infoButton} type="button" className="inline-edit-button" title="Editează solistul și observațiile" aria-label="Solist și observații" aria-expanded={infoEditing} onClick={()=>{setInfoEditing(v=>!v);setInfoError("");}}>✎</button>:null}</div>
         : null}
@@ -200,7 +201,9 @@ function ProgramCard({
 
 export function MeetingProgramBoard({ meetingId, items, recentUsage = {}, canManage = false }: Props) {
   const state = useMeetingState();
-  items = state?.snapshot.items || items;
+  const [optimistic,setOptimistic]=useState<MeetingProgramItem[]|null>(null);
+  const moving=useRef(false);
+  items = optimistic || state?.snapshot.items || items;
   const pointerDrag = useRef<{ id: string; x: number; y: number; started: boolean; target: { backup: boolean; before: string | null } | null } | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
@@ -209,13 +212,16 @@ export function MeetingProgramBoard({ meetingId, items, recentUsage = {}, canMan
 
   function place(itemId: string, isBackup: boolean, beforeId: string | null = null) {
     pointerDrag.current = null; setDraggedId(null); setDropTarget(null);
-    if (!canManage || pending || itemId === beforeId) return;
+    if (!canManage || moving.current || itemId === beforeId) return;
+    moving.current=true;setOptimistic(reorderedProgram(items,itemId,isBackup,beforeId));
     setError("");
     startTransition(async () => {
       try {
-        const saved = await placeMeetingItemAction({ meetingId, itemId, isBackup, beforeId });
-        state?.apply(saved);
+        const response=await fetch(`/api/meetings/${meetingId}/live`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'move',itemId,isBackup,beforeId})});
+        const saved=await response.json();if(!response.ok||!saved.snapshot)throw Error(saved.error||'Mutarea nu a fost confirmată.');
+        state?.apply(saved.snapshot);
       } catch (err) { setError(err instanceof Error ? err.message : "Mutarea nu a putut fi salvată."); }
+      finally{moving.current=false;setOptimistic(null);}
     });
   }
   return <div className="program-board-v10" aria-busy={pending}

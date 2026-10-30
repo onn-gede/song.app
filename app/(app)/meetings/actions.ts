@@ -176,9 +176,10 @@ export async function createShareLinkAction(formData: FormData) {
   const preferredSlug = readString(formData, "preferred_slug");
 
   const supabase = (await requireProfile("editor")).supabase;
-  const { error } = await supabase.rpc("create_meeting_share_link", {
+  const {error} = await supabase.rpc("create_meeting_share_link_v66", {
     p_meeting_id: meetingId,
-    p_preferred_slug: preferredSlug || null
+    p_preferred_slug: preferredSlug || null,
+    p_allow_contributions:formData.get('allow_contributions')==='on'
   });
 
   if (error) throw new Error(error.message);

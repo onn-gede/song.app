@@ -1,0 +1,4 @@
+import Link from 'next/link';
+import {requireProfile} from '@/lib/auth';
+import {YouthLyricsRepair} from '@/components/YouthLyricsRepair';
+export default async function LyricsRepairPage(){const {supabase}=await requireProfile('admin');const [{data,error},{data:repairs}]=await Promise.all([supabase.rpc('youth_lyric_candidates_v65'),supabase.from('youth_lyric_repairs_v65').select('id,song_id,created_at,reverted_at').order('created_at',{ascending:false}).limit(100)]);return <><div className="page-heading-v44"><div><div className="eyebrow">Colecția Tineri</div><h1>Repară primul vers</h1></div><Link className="btn secondary" href="/admin">Administrare</Link></div>{error?<p className="error">Preview indisponibil. Verifică UPDATE-V65.sql.</p>:<YouthLyricsRepair initial={data||[]} repairs={repairs||[]}/>}</>;}

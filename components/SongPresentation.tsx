@@ -1,5 +1,7 @@
 "use client";
 
+import {collectionStyle,type CollectionSource} from "@/lib/collection-colors";
+import {SourceTags} from "./SourceTags";
 import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,7 +10,7 @@ type PresentationSlide = {
   id: string;
   label: string;
   content: string;
-  musicalKey?:string|null;verseCount?:number|null;structure?:string|null;
+  source?:CollectionSource|null;isCongregational?:boolean;momentColor?:string|null;musicalKey?:string|null;verseCount?:number|null;structure?:string|null;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -155,7 +157,7 @@ export function SongPresentation({
       </header>
 
       <main className={"presentation-slide"+(flash?" recent-program-change":"")} onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}>
-        <div className="presentation-slide-heading"><div className="presentation-label">{current.label}</div>{current.verseCount!==undefined?<span className="badge">Strofe: {current.verseCount??"—"}</span>:null}{current.structure?<span className="badge">Structură: {current.structure}</span>:null}{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>
+        <div className="presentation-slide-heading" style={current.source?collectionStyle(current.source):{color:current.momentColor||undefined}}><div className="presentation-label" style={{color:current.source?"var(--collection-ink)":current.momentColor||undefined}}>{current.label}</div>{current.source?<SourceTags source={current.source}/>:null}{current.isCongregational?<span className="badge congregational-tag">Cântare în comun</span>:null}{current.verseCount!==undefined?<span className="badge">Strofe: {current.verseCount??"—"}</span>:null}{current.structure?<span className="badge">Structură: {current.structure}</span>:null}{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>
         <div
           className="presentation-lyrics"
           style={{

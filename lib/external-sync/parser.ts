@@ -268,7 +268,6 @@ function parseMelodiaSong(html: string, url: string): ParsedExternalSong | null 
     .replace(/^Versuri(\s+Versuri)?(\s+Acorduri)?/i, "")
     .replace(/^(Muzica de|Versuri de|Text de|Autor).+$/gim, "")
     .replace(/Modulație\s*[A-G](#|b)?m?/gi, "")
-    .replace(new RegExp(`^${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "gim"), "")
     .trim();
 
   // Unele pagini conțin și varianta cu acorduri după textul simplu. Păstrăm prima zonă consistentă.
@@ -310,7 +309,6 @@ function parseResurseSong(html: string, url: string): ParsedExternalSong | null 
 
   let lyricsCandidate = normalizeLyricsText(slice)
     .replace(/\b\d+\s*\/\s*\d+\s*▲/g, "")
-    .replace(new RegExp(`^${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "gim"), "")
     .trim();
   const relatedIndex = firstStopIndex(lyricsCandidate, 0, RESURSE_STOP_TOKENS);
   if (relatedIndex > 0) lyricsCandidate = lyricsCandidate.slice(0, relatedIndex).trim();

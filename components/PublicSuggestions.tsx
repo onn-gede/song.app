@@ -1,0 +1,6 @@
+"use client";
+import {useState} from 'react';
+import {PublicContributionPanel} from './PublicContributionPanel';
+import {PublicTextContributionForm} from './PublicTextContributionForm';
+import type {PublicPositionOption} from '@/app/program/actions';
+export function PublicSuggestions({slug,positionOptions}:{slug:string;positionOptions:PublicPositionOption[]}){const [tab,setTab]=useState<'song'|'moment'|null>(null);return <section className="public-suggestions-v66 print-hide" aria-label="Sugestii pentru program"><div className="public-suggestions-bar"><div><strong>Ai o propunere pentru program?</strong><span>O poți trimite fără cont. Echipa o verifică înainte de adăugare.</span></div><div className="inline-form"><button className="btn secondary" aria-expanded={tab==='song'} aria-controls="public-suggestion-form" onClick={()=>setTab(t=>t==='song'?null:'song')}>Propune o cântare</button><button className="btn secondary" aria-expanded={tab==='moment'} aria-controls="public-suggestion-form" onClick={()=>setTab(t=>t==='moment'?null:'moment')}>Propune un moment</button></div></div>{tab?<div id="public-suggestion-form">{tab==='song'?<PublicContributionPanel slug={slug} positionOptions={positionOptions}/>:<PublicTextContributionForm slug={slug} positionOptions={positionOptions}/>}</div>:null}</section>;}

@@ -135,7 +135,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
   const processedContributions = ((publicContributionHistory || []) as unknown as PublicMeetingContribution[]);
 
   return (
-    <MeetingState key={id} initial={initial}><ProgramNotifications enabled={editable} meetingId={id} initial={editable?pendingContributions:[]}>
+    <MeetingState key={id} meetingId={id} initial={initial}><ProgramNotifications enabled={editable} meetingId={id} initial={editable?pendingContributions:[]}>
       <div className="top-row page-heading-v44 print-hide">
         <div>
           <div className="eyebrow">Pregătirea întâlnirii</div>
@@ -217,7 +217,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
               <label className="label">Slug opțional
                 <input className="input" name="preferred_slug" placeholder="duminica-dimineata" />
               </label>
-              <button className="btn secondary" type="submit">Generează link public</button>
+              <label><input type="checkbox" name="allow_contributions" defaultChecked/> Permite sugestii de cântări și momente de la vizitatori</label><button className="btn secondary" type="submit">Generează link public</button>
             </form>
           </div></details>
 

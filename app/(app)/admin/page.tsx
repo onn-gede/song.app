@@ -20,7 +20,7 @@ export default async function AdminPage() {
       <div className="top-row">
         <div>
           <div className="eyebrow">Administrare</div>
-          <h1>Administrare</h1><Link className="btn" href="/admin/backup">Backup și restaurare</Link>
+          <h1>Administrare</h1><Link className="btn secondary" href="/admin/lyrics-repair">Repară primul vers · Tineri</Link><Link className="btn" href="/admin/backup">Backup și restaurare</Link>
           <div className="inline-form"><Link className="btn" href="/admin/users">Conturi și aprobări</Link><Link className="btn secondary" href="/admin/activity">Jurnal de activitate</Link></div>
         </div>
       </div>

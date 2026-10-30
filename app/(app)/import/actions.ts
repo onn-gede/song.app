@@ -1,4 +1,5 @@
 "use server";
+import {stripRepeatedSongTitleLines} from "@/lib/songTextCleanup";
 
 import { requireProfile } from "@/lib/auth";
 
@@ -210,38 +211,8 @@ function normalizeHeaderLine(value: string) {
     .trim();
 }
 
-function isSongHeaderLine(line: string, title: string, songNumber?: string | null) {
-  const normalizedLine = normalizeHeaderLine(line);
-  const normalizedTitle = normalizeHeaderLine(title);
-  const normalizedNumber = normalizeHeaderLine(String(songNumber || ""));
-  if (!normalizedLine) return false;
-
-  const compactLine = normalizedLine.replace(/\s+/g, "");
-  const compactTitle = normalizedTitle.replace(/\s+/g, "");
-  const compactNumber = normalizedNumber.replace(/\s+/g, "");
-
-  if (compactTitle && compactLine === compactTitle) return true;
-  if (compactNumber && compactLine === compactNumber) return true;
-  if (compactTitle && compactNumber && compactLine === `${compactNumber}${compactTitle}`) return true;
-  if (compactTitle && compactNumber && compactLine === `${compactTitle}${compactNumber}`) return true;
-
-  // Unele PPTX-uri pun numărul și titlul în același paragraf/header.
-  if (compactTitle && compactNumber && compactLine.includes(compactTitle) && compactLine.includes(compactNumber) && compactLine.length <= compactTitle.length + compactNumber.length + 8) {
-    return true;
-  }
-
-  return false;
-}
-
-function removeRepeatedTitleLines(text: string, title: string, songNumber?: string | null) {
-  return text
-    .split(/\r?\n/)
-    .filter((line) => {
-      if (!line.trim()) return true;
-      return !isSongHeaderLine(line, title, songNumber);
-    })
-    .join("\n");
-}
+function isSongHeaderLine(line: string, _title: string, songNumber?: string | null) {return /^\d+$/.test(line.trim())&&line.trim()===String(songNumber||'');}
+function removeRepeatedTitleLines(text:string,title:string,songNumber?:string|null){return stripRepeatedSongTitleLines(text,title,[songNumber]);}
 
 function normalizeForLooseCompare(value: string) {
   return value
@@ -255,19 +226,7 @@ function normalizeForLooseCompare(value: string) {
     .replace(/[^a-z0-9]+/g, "");
 }
 
-function getSlideHeaderReplacement(line: string, title: string, songNumber?: string | null) {
-  const looseLine = normalizeForLooseCompare(line);
-  const looseTitle = normalizeForLooseCompare(title);
-  const looseNumber = normalizeForLooseCompare(String(songNumber || ""));
-
-  const looksLikeHeader = Boolean(looseTitle && looseLine.includes(looseTitle)) || Boolean(looseNumber && looseLine.includes(looseNumber) && looseLine.length <= looseNumber.length + 4);
-  if (!looksLikeHeader) return null;
-
-  const marker = line.trim().match(/^(r|refren|chorus|\d{1,3})[\s.):-]*/i)?.[1];
-  if (!marker) return "";
-  if (/^(r|refren|chorus)$/i.test(marker)) return "Refren";
-  return `Strofa ${marker}`;
-}
+function getSlideHeaderReplacement(line:string,_title:string,songNumber?:string|null){return isSongHeaderLine(line,'',songNumber)?'':null;}
 
 function cleanPptxSlideText(slideText: string, title: string, songNumber?: string | null) {
   const lines = slideText.split(/\r?\n/);

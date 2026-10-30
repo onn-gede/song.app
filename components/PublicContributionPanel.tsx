@@ -61,7 +61,7 @@ export function PublicContributionPanel({ slug, positionOptions }: { slug: strin
           contributorName: name || null,
           notes: notes || null
         });
-        openStatus("Propunerea a fost trimisă. Va apărea discret cu roșu până este aprobată.");
+        openStatus("Propunerea a fost trimisă. Echipa o va verifica înainte de a o adăuga în program.");
       } catch (err) {
         openStatus(null, err instanceof Error ? err.message : "Nu am putut trimite propunerea.");
       }
@@ -73,7 +73,7 @@ export function PublicContributionPanel({ slug, positionOptions }: { slug: strin
       <div className="top-row public-edit-header">
         <div>
           <div className="eyebrow">Propuneri externe</div>
-          <h2>Adaugă în program</h2>
+          <h2>Propune o cântare</h2>
           <p className="muted small">Propune cântări sau intervenții. Poți indica și poziția dorită în program.</p>
         </div>
       </div>

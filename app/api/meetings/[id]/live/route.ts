@@ -19,17 +19,18 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
  const {id}=await params;if(!uuid.test(id))return Response.json({error:'Program invalid.'},{status:400,headers});
  let body;try{body=await request.json();}catch{return Response.json({error:'Cerere invalidă.'},{status:400,headers});}
  if(!body||typeof body!=='object')return Response.json({error:'Cerere invalidă.'},{status:400,headers});
+ const move=body.action==='move'&&uuid.test(String(body.itemId||''))&&typeof body.isBackup==='boolean'&&(body.beforeId===null||body.beforeId===undefined||uuid.test(String(body.beforeId)));
  const common=body.action==='common'&&uuid.test(String(body.itemId||''))&&typeof body.enabled==='boolean';
  const review=body.action==='review'&&uuid.test(String(body.contributionId||''))&&typeof body.accept==='boolean';
  const add=body.action==='add'&&uuid.test(String(body.songId||''))&&uuid.test(String(body.requestId||''))&&(!body.sourceId||uuid.test(String(body.sourceId)))&&typeof body.isBackup==='boolean';
- if(!common&&!review&&!add)return Response.json({error:'Acțiune invalidă.'},{status:400,headers});
+ if(!move&&!common&&!review&&!add)return Response.json({error:'Acțiune invalidă.'},{status:400,headers});
  try{
-  const db=await createClient();const {data,error}=add?await db.rpc('add_program_song_v57',{p_meeting_id:id,p_song_id:body.songId,p_request_id:body.requestId,p_source_id:body.sourceId||null,p_is_backup:body.isBackup,p_selected_key:body.selectedKey||null}):common
+  const db=await createClient();const {data,error}=move?await db.rpc('move_program_item_v65',{p_meeting:id,p_item:body.itemId,p_backup:body.isBackup,p_before:body.beforeId||null}):add?await db.rpc('add_program_song_v57',{p_meeting_id:id,p_song_id:body.songId,p_request_id:body.requestId,p_source_id:body.sourceId||null,p_is_backup:body.isBackup,p_selected_key:body.selectedKey||null}):common
    ?await db.rpc('set_program_common_v54',{p_meeting_id:id,p_item_id:body.itemId,p_enabled:body.enabled})
    :await db.rpc('review_program_contribution_v54',{p_meeting_id:id,p_contribution_id:body.contributionId,p_accept:body.accept});
   if(error)return failure(error);
   revalidatePath('/songs');revalidatePath('/songs/[id]','page');revalidatePath('/dashboard');
   revalidatePath(`/meetings/${id}`);revalidatePath('/program','layout');
-  return Response.json(common?{snapshot:data}:data,{headers});
+  return Response.json(common||move?{snapshot:data}:data,{headers});
  }catch{return Response.json({error:'Conexiunea s-a întrerupt. Verifică lista și reîncearcă.'},{status:503,headers});}
 }

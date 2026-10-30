@@ -53,3 +53,9 @@ fs.writeFileSync('supabase/updates/UPDATE-V62.sql','-- După v59/v61, în aceea�
 fs.writeFileSync('supabase/updates/UPDATE-V63.sql','-- După v62, în aceeași bază.\n'+read('056_v63_current_usage.sql'));
 
 fs.writeFileSync('supabase/updates/UPDATE-V64.sql','-- După v63, pe aceeași bază.\n'+read('057_v64_backup.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V65.sql','-- După v64, pe aceeași bază. Nu repară automat versurile.\n'+read('058_v65_program_polish.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V66.sql','-- După v65, pe aceeași bază. Nu modifică utilizatori sau sesiuni în bază.\n'+read('059_v66_welcome.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V67.sql','-- După v66, pe aceeași bază. Limitează doar lista publică de la intrare, nu șterge programe.\n'+read('060_v67_welcome_selection.sql'));

@@ -16,7 +16,7 @@ export function PublicTextContributionForm({ slug, positionOptions }: { slug: st
     startTransition(async () => {
       try {
         await addPublicTextContributionAction(formData);
-        setMessage("Propunerea a fost trimisă. Va apărea discret cu roșu până este aprobată.");
+        setMessage("Propunerea a fost trimisă. Echipa o va verifica înainte de a o adăuga în program.");
         setOpen(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Nu am putut trimite propunerea.");
@@ -28,7 +28,7 @@ export function PublicTextContributionForm({ slug, positionOptions }: { slug: st
   return (
     <section className="card public-edit-card print-hide">
       <div className="eyebrow">Intervenție</div>
-      <h2>Propune o intervenție</h2>
+      <h2>Propune un moment</h2>
       <form action={submit} className="form-grid public-text-form">
         <input type="hidden" name="slug" value={slug} />
         <label className="label">Numele tău, opțional
