@@ -1,4 +1,5 @@
 "use client";
+import {PUBLIC_LIMITS} from "@/lib/public-contribution";
 
 import { useState, useTransition } from "react";
 import { addPublicSongContributionAction, publicSearchSongsAction, type PublicPositionOption, type PublicSongSearchResult } from "@/app/program/actions";
@@ -80,7 +81,7 @@ export function PublicContributionPanel({ slug, positionOptions }: { slug: strin
 
       <div className="public-edit-grid public-edit-grid-v38">
         <label className="label">Numele tău, opțional
-          <input className="input" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Andrei" />
+          <input className="input" maxLength={PUBLIC_LIMITS.name} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Andrei" />
         </label>
         <label className="label">Poziție propusă
           <select className="select" value={proposedPosition} onChange={(event) => setProposedPosition(event.target.value)}>
@@ -89,14 +90,14 @@ export function PublicContributionPanel({ slug, positionOptions }: { slug: strin
           </select>
         </label>
         <label className="label">Notă, opțional
-          <input className="input" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex: cântare de final" />
+          <input className="input" maxLength={PUBLIC_LIMITS.notes} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex: cântare de final" />
         </label>
       </div>
 
       <div className="public-contribution-block">
         <h3>Caută cântare</h3>
         <div className="inline-form public-search-row">
-          <input className="input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Caută după titlu, număr sau text, cu/fără diacritice" onKeyDown={(event) => { if (event.key === "Enter") search(); }} />
+          <input className="input" maxLength={PUBLIC_LIMITS.query} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Caută după titlu, număr sau text, cu/fără diacritice" onKeyDown={(event) => { if (event.key === "Enter") search(); }} />
           <button className="btn btn-compact" type="button" disabled={isPending} onClick={search}>{isPending ? "Caut…" : "Caută"}</button>
         </div>
         <div className="list compact-list public-search-results-list">

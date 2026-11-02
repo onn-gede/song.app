@@ -11,3 +11,11 @@ export function collectionStyle(source?:{color?:string|null;opacity?:number|null
  const opacity=[25,50,75,100].includes(source?.opacity||100)?(source?.opacity||100):100;const rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));const mixed=rgb.map(v=>(v*opacity/100+255*(1-opacity/100))/255);const lum=mixed.map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0);
  return {'--collection-tag-bg':`rgba(${rgb.join(',')},${opacity/100})`,'--collection-color':color,'--collection-ink':ink,'--collection-tag-ink':lum>.179?'#172b22':'#ffffff'} as CSSProperties;
 }
+
+export function momentStyle(source?:{moment_color?:string|null;moment_opacity?:number|null;color?:string|null;opacity?:number|null}|null):CSSProperties{
+ const candidate=source?.moment_color??source?.color;
+ const color=validCollectionColor(candidate)?candidate!:'#d97706';
+ const candidateOpacity=source?.moment_opacity??source?.opacity??100;
+ const opacity=[25,50,75,100].includes(candidateOpacity)?candidateOpacity:100;
+ return {'--moment-color':color,'--moment-strength':`${Math.max(4,Math.round(opacity*.12))}%`} as CSSProperties;
+}

@@ -140,3 +140,14 @@ export async function deleteCollectionAction(formData: FormData) {
   revalidatePath("/program", "layout");
   refresh();
 }
+
+export async function updateMomentStyleAction(formData:FormData){
+  const {supabase}=await requireProfile("editor");
+  const color=readString(formData,"color");
+  const opacity=Number(formData.get("opacity")||100);
+  if(!validCollectionColor(color)||![25,50,75,100].includes(opacity))throw new Error("Alege o culoare și o intensitate valide.");
+  const {error}=await supabase.rpc("set_program_moment_style_v80",{p_color:color,p_opacity:opacity});
+  if(error)throw new Error(error.message);
+  revalidatePath("/collections");revalidatePath("/meetings","layout");revalidatePath("/program","layout");revalidatePath("/dashboard");
+  refresh();
+}

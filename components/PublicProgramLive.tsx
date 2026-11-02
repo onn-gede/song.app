@@ -21,6 +21,7 @@ export function PublicProgramLive({slug,version}:{slug:string;version:string}){
   return()=>window.removeEventListener('focus',sync);
  },[]);
  useEffect(()=>{if(permission==='granted'&&'serviceWorker' in navigator){navigator.serviceWorker.register('/notifications-sw.js').then(r=>{registration.current=r;}).catch(()=>{});}},[permission]);
+ useEffect(()=>{const detected=()=>setMessage('Programul a fost modificat. Elementele actualizate sunt marcate cu roșu.');window.addEventListener('songapp:live-changes-detected',detected);return()=>window.removeEventListener('songapp:live-changes-detected',detected);},[]);
  async function systemNotice(){
   if(!('Notification' in window)||Notification.permission!=='granted')return;
   const options:NotificationOptions={body:'Programul a fost modificat. Deschide pagina pentru a vedea noutățile.',tag:`songapp-${slug}`,requireInteraction:true,data:{url:`/program/${encodeURIComponent(slug)}`}};
@@ -47,7 +48,7 @@ export function PublicProgramLive({slug,version}:{slug:string;version:string}){
   document.addEventListener('visibilitychange',check);window.addEventListener('focus',check);window.addEventListener('online',check);
   return()=>{stopped=true;controller.abort();clearInterval(timer);document.removeEventListener('visibilitychange',check);window.removeEventListener('focus',check);window.removeEventListener('online',check);};
  },[slug,router]); // systemNotice/beep read current permission and refs, never request permission automatically.
- function acknowledge(){setMessage('');notice.current?.close();void registration.current?.getNotifications({tag:`songapp-${slug}`}).then(all=>all.forEach(n=>n.close()));}
+ function acknowledge(){setMessage('');window.dispatchEvent(new Event('songapp:acknowledge-live-changes'));notice.current?.close();void registration.current?.getNotifications({tag:`songapp-${slug}`}).then(all=>all.forEach(n=>n.close()));}
  return <div className="public-live print-hide"><span className="live-indicator" title="Actualizare automată când programul se schimbă">● Live</span>
  {permission==='default'?<button type="button" className="btn secondary" onClick={async()=>{try{setPermission(await Notification.requestPermission());}catch{}}}><Icon name="bell" size={15}/> Activează notificările</button>:permission==='granted'?<span className="notification-enabled"><Icon name="bell" size={14}/> Notificări active</span>:permission==='denied'?<span className="muted small" title="Permite notificările din setările acestui site în browser">Notificări blocate în browser</span>:null}
  <button type="button" className="quiet-button" aria-pressed={sound} onClick={()=>{const enabled=!sound;setSound(enabled);soundEnabled.current=enabled;if(enabled){try{audio.current??=new AudioContext();void audio.current.resume();beep();}catch{}}}}>Sunet {sound?'activ':'oprit'}</button>

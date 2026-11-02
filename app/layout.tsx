@@ -1,9 +1,11 @@
+import {ConnectionStatus} from "@/components/ConnectionStatus";
 import { AuditPrintTracker } from "@/components/AuditPrintTracker";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./redesign.css";
 import "./compact.css";
 import "./welcome.css";
+import "./mobile-polish.css";
 
 export const metadata: Metadata = {
   title: "SongApp BCBgiroc",
@@ -19,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ro">
 
-      <body>{children}<AuditPrintTracker/></body>
+      <body><ConnectionStatus/>{children}<AuditPrintTracker/></body>
     </html>
   );
 }

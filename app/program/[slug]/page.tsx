@@ -1,3 +1,5 @@
+import {songProgramMetadata} from '@/lib/program-display';
+import {ProgramSongTags} from '@/components/ProgramSongTags';
 import {PublicSuggestions} from "@/components/PublicSuggestions";
 import {MeetingProgramBoard} from "@/components/MeetingProgramBoard";
 import type {ProgramItem} from "@/lib/meeting-state";
@@ -6,8 +8,7 @@ import {requireProfile,canEdit} from '@/lib/auth';
 import {SharedProgramEditor} from '@/components/SharedProgramEditor';
 import {ProgramChangeTracker,ChangedProgramItem} from '@/components/ProgramChangeTracker';
 import { MeetingStatusBadge } from "@/components/MeetingStatus";
-import { collectionStyle,primarySource,type CollectionSource } from "@/lib/collection-colors";
-import { SourceTags } from "@/components/SourceTags";
+import { collectionStyle,momentStyle,type CollectionSource } from "@/lib/collection-colors";
 import { PublicProgramLive } from "@/components/PublicProgramLive";
 import { publicProgramVersion } from "@/lib/public-program-version";
 import { meetingStatus } from "@/lib/meeting-state";
@@ -24,7 +25,7 @@ type PageProps = { params: Promise<{ slug: string }> };
 
 type PublicMeetingItem = {
  id:string;performance_structure?:string|null;
- moment_kind?:string|null;moment_color?:string;
+ moment_kind?:string|null;moment_color?:string;moment_opacity?:number;
   is_congregational?:boolean; selected_source_id?:string|null; sources?:CollectionSource[];
   position: number;
   responsible_name?: string | null;
@@ -93,20 +94,17 @@ function LyricsDetails({ text }: { text?: string | null }) {
 }
 
 function PublicItem({ item, index }: { item: PublicMeetingItem; index: number }) {
-  const source=primarySource(item.sources,item.selected_source_id);
+  const metadata=songProgramMetadata(item,item.song);const {source}=metadata;
   return (
-    <ChangedProgramItem id={item.id}><div style={item.song?collectionStyle(source):{'--moment-color':item.moment_color||'#d97706'} as React.CSSProperties} data-source-color={item.song?source?.color||"unassigned":undefined} className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}>
+    <ChangedProgramItem id={item.id}><div style={item.song?collectionStyle(source):momentStyle(item)} data-source-color={item.song?source?.color||"unassigned":undefined} className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}>
       <div className="program-position">{index + 1}</div>
       <div className="program-main">
         <div className="program-title public-program-title-compact">{item.song?.title || item.custom_title || "Element"}</div>
         <div className="badges compact-badges">
           <span className="badge">{item.song ? "Cântare" : (itemTypeLabels[item.moment_kind||item.item_type] || "Element")}</span>
           {item.song && item.responsible_name ? <span className="badge">Solist: {item.responsible_name}</span> : null}
-          {item.song?<><span className="badge">Strofe: {item.song.verse_count??"—"}</span><span className="badge">Structură: {item.performance_structure||item.song.structure||"—"}</span></>:null}{item.song?<SourceTags source={source}/>:null}
-          {item.song&&item.is_congregational?<span className="badge congregational-tag">Cântare în comun</span>:null}
+          {item.song?<ProgramSongTags metadata={metadata}/>:null}
           {item.is_backup ? <span className="badge backup">backup</span> : null}
-          {item.song && (item.selected_key || item.song.default_key) ? <span className="badge">Tonalitate: {item.selected_key || item.song.default_key}</span> : null}
-          {item.song && (item.selected_bpm || item.song.bpm) ? <span className="badge">{item.selected_bpm || item.song.bpm} BPM</span> : null}
         </div>
         {item.song ? <LyricsDetails text={item.song.lyrics_text} /> : <p className="program-moment-observations">{item.custom_text}</p>}
         {item.notes ? <p className="muted small public-item-notes">{item.notes}</p> : null}
@@ -154,7 +152,7 @@ function buildPositionOptions(items: PublicMeetingItem[]) {
 export default async function PublicProgramPage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_shared_meeting", { p_public_slug: slug });
+  const { data, error } = await supabase.rpc("get_shared_meeting_v79", { p_public_slug: slug });
 
   if (error || !data) notFound();
 
@@ -173,17 +171,18 @@ export default async function PublicProgramPage({ params }: PageProps) {
   const context=await requireProfile().catch(()=>null);
   if(context&&canEdit(context.profile.role)&&meeting.id){
    const {data:snapshot,error:snapshotError}=await context.supabase.rpc('get_meeting_snapshot_v46',{p_meeting_id:meeting.id});
-   if(!snapshotError&&snapshot)return <main className="public-page public-page-v10 public-v48"><PublicProgramLive slug={slug} version={publicProgramVersion(data)}/><header className="public-header"><h1>{meeting.title}</h1><p>{formatDateTime(meeting.meeting_date)}</p></header><SharedProgramEditor meetingId={meeting.id} initial={snapshot} title={meeting.title} date={meeting.meeting_date}/></main>;
+   if(!snapshotError&&snapshot)return <ProgramChangeTracker items={snapshot.items||[]} persistent storageKey={slug}><main className="public-page public-page-v10 public-v48"><PublicProgramLive slug={slug} version={publicProgramVersion(data)}/><header className="public-header"><h1>{meeting.title}</h1><p>{formatDateTime(meeting.meeting_date)}</p></header><SharedProgramEditor meetingId={meeting.id} initial={snapshot} title={meeting.title} date={meeting.meeting_date} programKind={meeting.program_kind}/></main></ProgramChangeTracker>;
   }
   return (
-    <ProgramChangeTracker items={items}><main className="public-page public-page-v10 public-v48">
+    <ProgramChangeTracker items={items} persistent storageKey={slug}><main className="public-page public-page-v10 public-v48">
       <PublicProgramLive slug={slug} version={publicProgramVersion(data)} />
-      <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={normalized} />
+      <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} programKind={meeting.program_kind} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={normalized} />
       <header className="public-header public-header-v10">
         <div>
           <div className="eyebrow">SongApp BCBgiroc · Program partajat</div>
           <h1>{meeting.title}</h1>
           <MeetingStatusBadge date={meeting.meeting_date} initialNow={Date.now()}/>
+          <span className="program-kind-text">{meeting.program_kind==='rehearsal'?'Repetiție':'Program oficial'}</span>
           <p>{formatDateTime(meeting.meeting_date)}</p>
           {meeting.principal_responsible ? <p>Responsabil principal: {meeting.principal_responsible}</p> : null}
           {meeting.secondary_responsibles?.length ? <p>Responsabili secundari: {meeting.secondary_responsibles.join(", ")}</p> : null}

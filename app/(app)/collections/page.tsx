@@ -2,7 +2,7 @@ import { SaveForm } from "@/components/SaveForm";
 import Link from "next/link";
 import { COLLECTION_PALETTE,collectionStyle } from "@/lib/collection-colors";
 import { requireProfile, canEdit } from "@/lib/auth";
-import { createCollectionAction, updateCollectionAction, deleteCollectionAction } from "./actions";
+import { createCollectionAction, updateCollectionAction, deleteCollectionAction,updateMomentStyleAction } from "./actions";
 
 const sourceTypes = [
   ["manual", "Manual"],
@@ -18,12 +18,14 @@ export default async function CollectionsPage() {
   const { supabase, profile } = await requireProfile();
   const editable = canEdit(profile.role);
 
-  const [{ data: collections, error }, { data: sources, error: countsError }] = await Promise.all([
+  const [{ data: collections, error }, { data: sources, error: countsError },{data:momentStyle},{count:momentCount}] = await Promise.all([
     supabase
       .from("song_collections")
       .select("id,name,short_code,description,source_type,is_active,created_at,color,opacity")
       .order("name"),
-    supabase.rpc("collection_song_counts_v56")
+    supabase.rpc("collection_song_counts_v56"),
+    supabase.from("program_moment_style_v80").select("name,color,opacity").eq("id",1).maybeSingle(),
+    supabase.from("meeting_items").select("id",{count:"exact",head:true}).is("song_id",null)
   ]);
 
   const nextColor=COLLECTION_PALETTE.find(c=>!(collections||[]).some(v=>v.color===c))||COLLECTION_PALETTE[0];
@@ -34,7 +36,7 @@ export default async function CollectionsPage() {
       <div className="top-row">
         <div>
           <div className="eyebrow">Administrare bibliotecă</div>
-          <h1>Colecții de cântări</h1>
+          <h1>Colecții și momente</h1>
           <p className="muted">Ține separat Tineri, Cântările Evangheliei, colinde sau orice altă bază importată.</p>
         </div>
         <div className="inline-form">
@@ -77,6 +79,11 @@ export default async function CollectionsPage() {
           </div>
           {error ? <p className="error">{error.message}</p> : null}{countsError?<p className="error" role="alert">Numărătoarea nu a putut fi încărcată. Verifică UPDATE-V56.sql în baza existentă.</p>:null}
           <div className="list">
+            <details id="momente" className="collection-card collection-colored moment-collection-card" style={collectionStyle(momentStyle||{color:'#d97706',opacity:100})}>
+              <summary><span><strong className="collection-title"><i className="collection-color-dot"/>Momente</strong><span className="badges compact-badges"><span className="badge">MOMENTE</span><span className="badge">{momentCount||0} în programe</span></span></span><span className="muted small">{editable?"Editează":"Detalii"}</span></summary>
+              <p className="muted small">Colecția vizuală pentru rugăciuni, îndemnuri, poezii, mesaje și alte elemente fără cântare. Culoarea aleasă se aplică automat peste tot.</p>
+              {editable?<SaveForm action={updateMomentStyleAction} className="form-grid collection-edit-form"><label className="label collection-color-control">Culoare standard<input type="color" name="color" defaultValue={momentStyle?.color||'#d97706'}/></label><label className="label">Intensitate<select name="opacity" className="select" defaultValue={momentStyle?.opacity||100}>{[25,50,75,100].map(n=><option key={n} value={n}>{n}%</option>)}</select></label><button className="btn" type="submit">Salvează stilul momentelor</button></SaveForm>:null}
+            </details>
             {(collections || []).map((collection: any) => (
               <details className="collection-card collection-colored" key={JSON.stringify([collection.id,collection.name,collection.color,collection.opacity,collection.short_code,collection.description,collection.source_type,collection.is_active])} style={collectionStyle(collection)}>
                 <summary>

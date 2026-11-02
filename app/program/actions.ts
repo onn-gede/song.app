@@ -1,5 +1,6 @@
 "use server";
 
+import {PUBLIC_LIMITS, publicText, publicPosition, publicContributionError} from "@/lib/public-contribution";
 import { revalidatePath, refresh } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 
@@ -22,7 +23,8 @@ function clean(value: unknown) {
 }
 
 export async function publicSearchSongsAction(slug: string, query: string): Promise<PublicSongSearchResult[]> {
-  const trimmed = query.trim();
+  slug=publicText(slug,PUBLIC_LIMITS.slug,"Link");
+  const trimmed = publicText(query,PUBLIC_LIMITS.query,"Căutare");
   if (trimmed.length < 2) return [];
 
   const supabase = createPublicClient();
@@ -32,7 +34,7 @@ export async function publicSearchSongsAction(slug: string, query: string): Prom
     result_limit: 20
   });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error("Căutarea nu poate fi efectuată momentan.");
   return (data || []) as PublicSongSearchResult[];
 }
 
@@ -44,6 +46,8 @@ export async function addPublicSongContributionAction(input: {
   contributorName?: string | null;
   notes?: string | null;
 }) {
+  input={...input,slug:publicText(input.slug,PUBLIC_LIMITS.slug,"Link"),contributorName:publicText(input.contributorName,PUBLIC_LIMITS.name,"Nume"),notes:publicText(input.notes,PUBLIC_LIMITS.notes,"Notă"),proposedPosition:publicPosition(input.proposedPosition)};
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.songId)) throw new Error("Cântare invalidă.");
   if (!input.slug || !input.songId) throw new Error("Lipsește cântarea selectată.");
 
   const supabase = createPublicClient();
@@ -59,20 +63,20 @@ export async function addPublicSongContributionAction(input: {
     p_notes: input.notes || null
   });
 
-  if (error) throw new Error(error.message);
+  if (error) throw publicContributionError(error);
   revalidatePath(`/program/${input.slug}`);
   refresh();
 }
 
 export async function addPublicTextContributionAction(formData: FormData) {
-  const slug = clean(formData.get("slug"));
+  const slug = publicText(formData.get("slug"),PUBLIC_LIMITS.slug,"Link");
   const contributionType = clean(formData.get("contribution_type")) || "text";
-  const contributorName = clean(formData.get("contributor_name"));
+  const contributorName = publicText(formData.get("contributor_name"),PUBLIC_LIMITS.name,"Nume");
   const proposedPositionRaw = clean(formData.get("proposed_position"));
-  const proposedPosition = proposedPositionRaw ? Number(proposedPositionRaw) : null;
-  const customTitle = clean(formData.get("custom_title"));
-  const customText = clean(formData.get("custom_text"));
-  const notes = clean(formData.get("notes"));
+  const proposedPosition = publicPosition(proposedPositionRaw);
+  const customTitle = publicText(formData.get("custom_title"),PUBLIC_LIMITS.title,"Titlu");
+  const customText = publicText(formData.get("custom_text"),PUBLIC_LIMITS.text,"Observații");
+  const notes = publicText(formData.get("notes"),PUBLIC_LIMITS.notes,"Notă");
   const isBackup = formData.get("is_backup") === "on";
 
   if (!slug) throw new Error("Link public invalid.");
@@ -91,7 +95,7 @@ export async function addPublicTextContributionAction(formData: FormData) {
     p_notes: notes || null
   });
 
-  if (error) throw new Error(error.message);
+  if (error) throw publicContributionError(error);
   revalidatePath(`/program/${slug}`);
   refresh();
 }

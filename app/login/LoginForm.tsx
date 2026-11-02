@@ -19,12 +19,12 @@ export function LoginForm({welcome=false}:{welcome?:boolean}) {
 
       <label className="label">
         Email
-        <input className="input" name="email" value={email} onChange={event=>setEmail(event.target.value)} type="email" autoComplete="email" placeholder="nume@exemplu.ro" required />
+        <input className="input" name="email" value={email} onChange={event=>setEmail(event.target.value)} type="email" maxLength={320} autoCapitalize="none" spellCheck={false} autoComplete="username" placeholder="nume@exemplu.ro" required />
       </label>
 
       <label className="label">
         Parolă
-        <input className="input" name="password" type="password" autoComplete="current-password" placeholder="Parola ta" required />
+        <input className="input" name="password" type="password" maxLength={1024} autoComplete="current-password" placeholder="Parola ta" required />
       </label>
 
       <button className="btn" type="submit" disabled={pending}>

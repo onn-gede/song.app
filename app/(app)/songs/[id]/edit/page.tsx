@@ -1,7 +1,9 @@
+import {SongSourceEditor} from "@/components/SongSourceEditor";
+import {deleteSongAction} from "../../actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { updateSongMetadataAction, updateSongSourceNumberAction } from "../../actions";
+import { updateSongMetadataAction } from "../../actions";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -13,10 +15,12 @@ export default async function SongEditPage({ params }: PageProps) {
     supabase.from("songs").select("id,title,default_key,bpm,structure,notes").eq("id", id).single(),
     supabase.from("categories").select("id,name,slug").order("name"),
     supabase.from("song_categories").select("category_id").eq("song_id", id),
-    supabase.from("song_sources").select("id,song_number,source_title,song_collections(name,short_code)").eq("song_id", id)
+    supabase.from("song_sources").select("id,collection_id,song_number,source_title,song_collections(name,short_code)").eq("song_id", id)
   ]);
 
   if (!song) notFound();
+  const [{data:collections},{data:nextNumbers}]=await Promise.all([supabase.from("song_collections").select("id,name").eq("is_active",true).order("name"),supabase.rpc("next_song_numbers_v80")]);
+  const numberSuggestions=Object.fromEntries((nextNumbers||[]).map((row:any)=>[row.collection_id,row.next_number]));
 
   const selected = new Set((selectedCategories || []).map((item: any) => item.category_id));
 
@@ -82,10 +86,8 @@ export default async function SongEditPage({ params }: PageProps) {
           </div>
         </section>
       </form>
-      <details className="card"><summary>Numere în colecții</summary><div className="grid">{(sources||[]).map((source:any)=><form className="inline-form" action={updateSongSourceNumberAction} key={source.id}>
-        <input type="hidden" name="song_id" value={id}/><input type="hidden" name="source_id" value={source.id}/>
-        <label className="label">{source.song_collections?.name||"Colecție"}<input className="input" name="song_number" defaultValue={source.song_number||""} maxLength={60}/></label><button className="btn secondary">Salvează numărul</button>
-      </form>)}</div></details>
+      <section className="card"><h2>Colecții și numere</h2><p className="muted small">La schimbarea colecției, aplicația completează automat următorul număr disponibil. Îl poți edita înainte de salvare.</p><div className="grid">{(sources||[]).map((source:any)=><SongSourceEditor key={source.id} songId={id} source={source} collections={collections||[]} suggestions={numberSuggestions}/>)}</div></section>
+      <details className="card"><summary>Ștergere definitivă</summary><p>Elimină cântarea din bibliotecă și din toate programele. Numerele eliberate pot fi refolosite. Operațiunea nu are anulare.</p><form action={deleteSongAction} className="form-grid"><input type="hidden" name="song_id" value={id}/><label className="label">Scrie STERGE pentru confirmare<input className="input" name="confirm" required pattern="STERGE"/></label><button className="btn danger" type="submit">Șterge definitiv cântarea</button></form></details>
     </>
   );
 }

@@ -23,6 +23,7 @@ const SECTION_TYPES = [
   { value: "ending", label: "Final" },
   { value: "text", label: "Text" }
 ];
+const SECTION_LABELS:Record<string,string>={verse:"Strofă",chorus:"Refren",bridge:"Bridge",prechorus:"Pre-refren",ending:"Final",text:"Text"};
 
 function createEmptySection(index: number): Required<Pick<SectionInput, "section_type" | "section_label" | "content">> & { id: string } {
   return {
@@ -51,6 +52,10 @@ export function SongSectionsEditor({ sections, songTitle }: Props) {
 
   function updateItem(index: number, key: "section_type" | "section_label" | "content", value: string) {
     setItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item));
+  }
+
+  function updateSectionType(index:number,value:string){
+    setItems(current=>current.map((item,itemIndex)=>itemIndex===index?{...item,section_type:value,section_label:SECTION_LABELS[value]||""}:item));
   }
 
   function addSection(afterIndex?: number) {
@@ -95,7 +100,7 @@ export function SongSectionsEditor({ sections, songTitle }: Props) {
             <div className="section-edit-top">
               <span className="program-position">{index + 1}</span>
               <label className="label section-type-field">Tip
-                <select className="select" name={`section_type_${index}`} value={section.section_type} onChange={(event) => updateItem(index, "section_type", event.target.value)}>
+                <select className="select" name={`section_type_${index}`} value={section.section_type} onChange={(event) => updateSectionType(index,event.target.value)}>
                   {SECTION_TYPES.map((type) => <option value={type.value} key={type.value}>{type.label}</option>)}
                 </select>
               </label>

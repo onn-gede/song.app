@@ -7,6 +7,7 @@ import { PGlite } from "@electric-sql/pglite";
 const ADMIN='00000000-0000-0000-0000-000000000001';
 const VIEWER='00000000-0000-0000-0000-000000000002';
 const INACTIVE='00000000-0000-0000-0000-000000000003';
+const EDITOR='00000000-0000-0000-0000-000000000004';
 
 test("migrations, RLS, library pagination, duplicate and durable queue", async (t) => {
   const [{ pg_trgm }, { unaccent }, { pgcrypto }] = await Promise.all([
@@ -39,11 +40,131 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       try { await db.exec(fs.readFileSync(path.join(dir,file),'utf8')); }
       catch(error) { throw new Error(`Migration ${file}: ${(error as Error).message}`); }
     }
-    await db.exec(`insert into auth.users(id) values('${ADMIN}'),('${VIEWER}'),('${INACTIVE}');
+    await db.exec(`insert into auth.users(id) values('${ADMIN}'),('${VIEWER}'),('${INACTIVE}'),('${EDITOR}');
       insert into public.profiles(id,email,role,is_active) values
-      ('${ADMIN}','admin@example.org','admin',true),('${VIEWER}','viewer@example.org','viewer',true),('${INACTIVE}','inactive@example.org','editor',false) on conflict(id) do update set email=excluded.email,role=excluded.role,is_active=excluded.is_active;
+      ('${ADMIN}','admin@example.org','admin',true),('${VIEWER}','viewer@example.org','viewer',true),('${INACTIVE}','inactive@example.org','editor',false),('${EDITOR}','editor@example.org','editor',true) on conflict(id) do update set email=excluded.email,role=excluded.role,is_active=excluded.is_active;
       insert into public.songs(title,lyrics_text) select 'Song '||lpad(i::text,5,'0'),'Prima linie de versuri' from generate_series(1,5205) i;
     `);
+    await t.test('v79 title-only songs, official/rehearsal statistics, public metadata and authorship are enforced',async()=>{
+      await asUser(ADMIN);
+      const collection=await scalar("insert into song_collections(name,short_code,source_type) values('v79 Titluri','V79','manual') returning id");
+      const song=await scalar("select create_title_only_song_v79($1,'Titlu fără versuri',null,'F',90,'S,R',null)",[collection]);
+      assert.equal(await scalar('select lyrics_text from songs where id=$1',[song]),null);
+      assert.equal(Number(await scalar('select count(*) from song_sections where song_id=$1',[song])),0);
+      assert.ok(await scalar('select song_number from song_sources where song_id=$1',[song]));
+      const official=await scalar("select create_meeting_v79(gen_random_uuid(),'Oficial v79',null,now()-interval '30 minutes',null,'official',$1,false,null)",[song]);
+      const rehearsal=await scalar("select create_meeting_v79(gen_random_uuid(),'Repetiție v79',null,now()-interval '20 minutes',null,'rehearsal',$1,false,null)",[song]);
+      assert.equal(Number(await scalar('select count(*) from song_performance_occurrences_v46 where song_id=$1',[song])),1);
+      const history=await scalar('select get_song_history_v46($1)',[song]);assert.equal(Number(history.performed_total),1);assert.equal(history.entries.length,1);assert.equal(history.entries[0].meeting_id,official);
+      assert.equal(Number(await scalar('select count(*) from song_program_events_v52($1)',[song])),1);
+      assert.equal(await scalar('select created_by from meetings where id=$1',[rehearsal]),ADMIN);
+      assert.equal(await scalar('select last_modified_by from meetings where id=$1',[rehearsal]),ADMIN);
+      const slug=await scalar("select create_meeting_share_link_v66($1,'v79-rehearsal',true)",[rehearsal]);
+      const copy=await scalar("select duplicate_meeting($1,'Copie repetiție',now()+interval '1 day')",[rehearsal]);assert.equal(await scalar('select program_kind from meetings where id=$1',[copy]),'rehearsal');
+      await asUser('','anon');const shared=await scalar('select get_shared_meeting_v79($1)',[slug]);assert.equal(shared.meeting.program_kind,'rehearsal');
+      await asUser(EDITOR);await db.query("update meetings set title='Repetiție editată v79' where id=$1",[rehearsal]);assert.equal(await scalar('select last_modified_by from meetings where id=$1',[rehearsal]),EDITOR);
+      await scalar("select add_text_to_meeting($1,'other','Moment editor','Observații')",[rehearsal]);assert.equal(await scalar('select last_modified_by from meetings where id=$1',[rehearsal]),EDITOR);
+      await scalar("select set_meeting_kind_v79($1,'rehearsal')",[official]);assert.equal(Number(await scalar('select count(*) from song_performance_occurrences_v46 where song_id=$1',[song])),0);
+      await scalar("select set_meeting_kind_v79($1,'official')",[official]);assert.equal(Number(await scalar('select count(*) from song_performance_occurrences_v46 where song_id=$1',[song])),1);
+      await asUser(VIEWER);await assert.rejects(()=>scalar("select create_title_only_song_v79($1,'Interzis')",[collection]));await assert.rejects(()=>scalar("select set_meeting_kind_v79($1,'rehearsal')",[official]));
+      await asUser(ADMIN);await db.query('delete from meetings where id=any($1::uuid[])',[[official,rehearsal,copy]]);await scalar('select delete_song_v78($1)',[song]);await db.query('delete from song_collections where id=$1',[collection]);
+    });
+    await t.test('v80 applies one Moments style and suggests the next collection number',async()=>{
+      await asUser(ADMIN);
+      const collection=await scalar("insert into song_collections(name,short_code,source_type) values('v80 Numere','V80','manual') returning id");
+      const first=await scalar("insert into songs(title) values('v80 unu') returning id");
+      const second=await scalar("insert into songs(title) values('v80 doi') returning id");
+      await db.query("insert into song_sources(song_id,collection_id,song_number,source_title) values($1,$2,'001','Unu'),($3,$2,'002','Doi')",[first,collection,second]);
+      const suggested=(await db.query<any>('select * from next_song_numbers_v80() where collection_id=$1',[collection])).rows[0];assert.equal(suggested.next_number,'003');
+      const meeting=await scalar("select create_meeting('Momente v80',null,now(),null)");
+      const item=await scalar("select add_text_to_meeting($1,'other','Moment','Text')",[meeting]);
+      await scalar("select set_program_moment_style_v80('#123456',50)");
+      const styled=(await db.query<any>('select moment_color,moment_opacity from meeting_items where id=$1',[item])).rows[0];assert.deepEqual(styled,{moment_color:'#123456',moment_opacity:50});
+      const slug=await scalar("select create_meeting_share_link_v66($1,'v80-momente',false)",[meeting]);
+      await db.exec('reset role');assert.ok((await scalar('select backup_tables_v64()')).includes('program_moment_style_v80'));await asUser(ADMIN);
+      await scalar("select admin_update_profile_v80($1,'Vizitator Test','viewer',true)",[VIEWER]);assert.equal(await scalar('select full_name from profiles where id=$1',[VIEWER]),'Vizitator Test');
+      await asUser(VIEWER);await assert.rejects(()=>scalar("select set_program_moment_style_v80('#654321',100)"));await assert.rejects(()=>scalar("select admin_update_profile_v80($1,'Interzis','admin',true)",[VIEWER]));
+      await asUser('','anon');assert.equal((await scalar('select get_shared_meeting_v79($1)',[slug])).items[0].moment_opacity,50);await assert.rejects(()=>db.query('select * from next_song_numbers_v80()'));
+      await asUser(ADMIN);await db.query('delete from meetings where id=$1',[meeting]);await db.query('delete from songs where id=any($1::uuid[])',[[first,second]]);await db.query('delete from song_collections where id=$1',[collection]);
+    });
+    await t.test('v78 delete is permanent and atomic, numbers reused, source collection editable and permissions enforced',async()=>{
+      await asUser(ADMIN);
+      const collection=await scalar("insert into song_collections(name,short_code,source_type) values('v78 A','V78_A','manual') returning id");
+      const other=await scalar("insert into song_collections(name,short_code,source_type) values('v78 B','V78_B','manual') returning id");
+      const song=await scalar("insert into songs(title) values('v78 delete') returning id");
+      const next=await scalar("insert into songs(title) values('v78 replacement') returning id");
+      const source=await scalar("insert into song_sources(song_id,collection_id,song_number,source_title) values($1,$2,'063','Original') returning id",[song,collection]);
+      const meeting=await scalar("select create_meeting('v78',null,now(),null)");await scalar('select add_song_to_meeting($1,$2,false,null,null)',[meeting,song]);
+      await asUser(VIEWER);await assert.rejects(()=>scalar('select delete_song_v78($1)',[song]));await assert.rejects(()=>scalar("select edit_song_source_v78($1,$2,$3,'8')",[song,source,other]));
+      await asUser(ADMIN);assert.equal(await scalar('select count(*) from songs where id=$1',[song]),1);
+      await scalar("select edit_song_source_v78($1,$2,$3,'007')",[song,source,other]);assert.equal(await scalar('select collection_id from song_sources where id=$1',[source]),other);
+      await db.query("insert into song_sources(song_id,collection_id,song_number,source_title) values($1,$2,null,'Replacement')",[next,collection]);assert.equal(await scalar('select song_number from song_sources where song_id=$1',[next]),'063');
+      await scalar('select delete_song_v78($1)',[song]);assert.equal(await scalar('select count(*) from songs where id=$1',[song]),0);assert.equal(await scalar('select count(*) from meeting_items where meeting_id=$1',[meeting]),0);
+      await db.query("insert into song_sources(song_id,collection_id,song_number,source_title) values($1,$2,null,'Other')",[next,other]);assert.equal(await scalar('select song_number from song_sources where song_id=$1 and collection_id=$2',[next,other]),'007');
+      const conflict=await scalar("insert into song_sources(song_id,collection_id,song_number,source_title) values($1,$2,'20','Conflict') returning id",[next,other]);
+      await assert.rejects(()=>scalar("select edit_song_source_v78($1,$2,$3,'7')",[next,conflict,other]),/deja folosit/);
+      await db.query('delete from meetings where id=$1',[meeting]);await scalar('select delete_song_v78($1)',[next]);await db.query('delete from song_collections where id=any($1::uuid[])',[[collection,other]]);
+    });
+    await t.test('v74 legacy overload cannot bypass disabled/expired links, limits or shared retry identity',async()=>{
+      await asUser(ADMIN);
+      const meeting=await scalar("select public.create_meeting('Legacy v74',null,now(),null)");
+      const slug=await scalar("select public.create_meeting_share_link_v66($1,'legacy-v74',true)",[meeting]);
+      const legacy=(title:string)=>scalar("select public.add_public_meeting_contribution($1::text,'other'::text,null::uuid,$2::text,'Text'::text,false::boolean,'Vizitator'::text,null::text)",[slug,title]);
+      const current=(title:string)=>scalar("select public.add_public_meeting_contribution($1::text,'other'::text,null::uuid,$2::text,'Text'::text,false::boolean,null::integer,'Vizitator'::text,null::text)",[slug,title]);
+      try {
+        await asUser('','anon');
+        const first=await legacy('Legacy');assert.equal(await current('Legacy'),first);
+        await assert.rejects(()=>legacy('x'.repeat(181)),/limitele/);
+        for(let i=1;i<20;i++)await (i%2?legacy:current)('Legacy '+i);
+        await assert.rejects(()=>legacy('Limită veche'),/multe propuneri/);
+        await assert.rejects(()=>current('Limită nouă'),/multe propuneri/);
+        await asUser(ADMIN);await db.query('update meeting_share_links set allow_contributions=false where meeting_id=$1',[meeting]);
+        await asUser('','anon');await assert.rejects(()=>legacy('Oprit'),/nu este activ/);
+        await asUser(ADMIN);await db.query("update meeting_share_links set allow_contributions=true,expires_at=now()-interval '1 minute' where meeting_id=$1",[meeting]);
+        await asUser('','anon');await assert.rejects(()=>legacy('Expirat'),/nu este activ/);
+      } finally {await asUser(ADMIN);await db.query('delete from meetings where id=$1',[meeting]);}
+    });
+    await t.test('v74 hardening revokes legacy bulk helper anonymous privilege and keeps editor guard',async()=>{
+      await db.exec('reset role');
+      // Reproduce the exact deployed helper supplied in the diagnostic.
+      await db.exec(`create or replace function public.bulk_update_import_status(p_file_ids uuid[],p_status public.import_status) returns integer language plpgsql security definer set search_path=public as $$ declare v_count integer;begin if not public.can_edit_content() then raise exception 'Acces interzis';end if;if p_file_ids is null or array_length(p_file_ids,1) is null then return 0;end if;update public.song_files set import_status=p_status,updated_at=now() where id=any(p_file_ids);get diagnostics v_count=row_count;return v_count;end $$;grant execute on function public.bulk_update_import_status(uuid[],public.import_status) to public,anon;`);
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V74.sql','utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V74.sql','utf8')); // Safe repeat, including v59 compatibility.
+      assert.equal(await scalar("select has_function_privilege('anon','public.bulk_update_import_status(uuid[],public.import_status)','execute')"),false);
+      await asUser('','anon');await assert.rejects(()=>scalar('select public.bulk_update_import_status(null,null)'),/permission denied/);
+      await asUser(VIEWER);await assert.rejects(()=>scalar('select public.bulk_update_import_status(null,null)'),/Acces interzis/);
+      await asUser(INACTIVE);await assert.rejects(()=>scalar('select public.bulk_update_import_status(null,null)'),/Acces interzis/);
+      await asUser(ADMIN);assert.equal(await scalar('select public.bulk_update_import_status(null,null)'),0);
+    });
+    await t.test('v73 public proposals enforce length, retry deduplication, shared budgets and disabled link boundaries',async()=>{
+      await asUser(ADMIN);
+      const meeting=await scalar("select public.create_meeting('Limite v73',null,now(),null)");
+      const slug=await scalar("select public.create_meeting_share_link_v66($1,'v73',true)",[meeting]);
+      const submit=(title:string,text='Text',name='Vizitator')=>scalar("select public.add_public_meeting_contribution($1,'text',null,$2,$3,false,null,$4,null)",[slug,title,text,name]);
+      try {
+        await asUser('','anon');
+        for(const [title,text,name] of [['x'.repeat(181),'Text','Vizitator'],['Titlu','x'.repeat(4001),'Vizitator'],['Titlu','Text','x'.repeat(121)]])await assert.rejects(()=>submit(title,text,name),/limitele/);
+        const first=await submit('Titlu');assert.equal(await submit('  Titlu  '),first);
+        const boundary=await submit('T'.repeat(180),'😀'.repeat(4000),'N'.repeat(120));assert.ok(boundary);
+        for(let i=2;i<20;i++)await submit('Titlu '+i);
+        await assert.rejects(()=>submit('Peste minut'),/multe propuneri/);
+        assert.equal(await submit('Titlu'),first); // A retry never consumes another row, even at the budget.
+        await asUser(ADMIN);
+        assert.equal(await scalar('select count(*) from public.public_meeting_contributions where meeting_id=$1',[meeting]),20);
+        assert.equal(await scalar('select count(*) from public.meeting_items where meeting_id=$1',[meeting]),0);
+        await db.query("update public.public_meeting_contributions set created_at=now()-interval '2 minutes',status='rejected' where meeting_id=$1",[meeting]);
+        await asUser('','anon');await submit('După minut');
+        await asUser(ADMIN);
+        await db.query("insert into public.public_meeting_contributions(meeting_id,share_link_id,contribution_type,custom_title,status,created_at) select $1,l.id,'text','Test oră '||n,'rejected',now()-interval '2 minutes' from public.meeting_share_links l cross join generate_series(1,179) n where l.meeting_id=$1",[meeting]);
+        await asUser('','anon');await assert.rejects(()=>submit('Peste oră'),/multe propuneri/);
+        await asUser(ADMIN);
+        await db.query("delete from public.public_meeting_contributions where meeting_id=$1",[meeting]);
+        await db.query("insert into public.public_meeting_contributions(meeting_id,share_link_id,contribution_type,custom_title,status,created_at) select $1,l.id,'text','Test pending '||n,'pending',now()-interval '2 hours' from public.meeting_share_links l cross join generate_series(1,100) n where l.meeting_id=$1",[meeting]);
+        await asUser('','anon');await assert.rejects(()=>submit('Peste pending'),/așteptare/);
+        await asUser(ADMIN);await db.query('update public.meeting_share_links set allow_contributions=false where meeting_id=$1',[meeting]);
+        await asUser('','anon');await assert.rejects(()=>submit('Link oprit'),/nu este activ/);
+      }finally{await asUser(ADMIN);await db.query('delete from public.meetings where id=$1',[meeting]);}
+    });
     await t.test('v67 welcome shows only latest started and next programs, hard maximum four without older pages',async()=>{
       await asUser(ADMIN);const ids:string[]=[];
       try{
@@ -60,7 +181,7 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
         for(const [title,delta] of [['Curent',-30],['Viitor 1',60],['Viitor 2',120],['Trecut',-300],['Privat',5],['Expirat',10]] as const)ids.push(await scalar("insert into meetings(title,meeting_date) values($1,now()+$2*interval '1 minute') returning id",[title,delta]));
         const slugs:string[]=[];for(let n=0;n<4;n++)slugs.push(await scalar("select create_meeting_share_link_v66($1,'v66',true)",[ids[n]]));
         await db.query("insert into meeting_share_links(meeting_id,public_slug,expires_at) values($1,'v66-expired',now()-interval '1 minute')",[ids[5]]);
-        await asUser('','anon');const page=await scalar('select list_public_programs_v66(1,2)');assert.equal(page.total,3);assert.deepEqual(page.programs.map((p:any)=>p.title),['Curent','Viitor 1','Viitor 2']);assert.deepEqual((await scalar('select list_public_programs_v66(2,999)')).programs.map((p:any)=>p.title),['Curent','Viitor 1','Viitor 2']);assert.deepEqual(Object.keys(page.programs[0]).sort(),['date','phase','slug','title']);
+        await asUser('','anon');const page=await scalar('select list_public_programs_v66(1,2)');assert.equal(page.total,3);assert.deepEqual(page.programs.map((p:any)=>p.title),['Curent','Viitor 1','Viitor 2']);assert.deepEqual((await scalar('select list_public_programs_v66(2,999)')).programs.map((p:any)=>p.title),['Curent','Viitor 1','Viitor 2']);assert.deepEqual(Object.keys(page.programs[0]).sort(),['date','phase','programKind','slug','title']);assert.equal(page.programs[0].programKind,'official');
         const songProposal=await scalar("select add_public_meeting_contribution($1,'song',$2,null,null,false,null,'Vizitator',null)",[slugs[0],target]);
         const moment=await scalar("select add_public_meeting_contribution($1,'other',null,'Moment propus','Observații',false,null,'Vizitator',null)",[slugs[0]]);
         await assert.rejects(()=>scalar('select accept_public_meeting_contribution($1)',[moment]));
@@ -617,7 +738,7 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       const section=[{section_type:'verse',section_label:'Strofa 1',position:1,content:'Text de test suficient de lung pentru import.'}];
       const args=[key,link,'Generic link test','Text de test suficient de lung pentru import.',JSON.stringify(section),[collection]];
       const imported=await scalar('select public.import_reviewed_song_link($1,$2,$3,$4,$5::jsonb,$6::uuid[])',args);
-      assert.equal(await scalar('select song_number from public.song_sources where song_id=$1',[imported.songId]),'43');
+      assert.equal(await scalar('select song_number from public.song_sources where song_id=$1',[imported.songId]),'9'); // v78 reuses the number released by renumbering.
       const again=await scalar('select public.import_reviewed_song_link($1,$2,$3,$4,$5::jsonb,$6::uuid[])',args);assert.equal(again.songId,imported.songId);assert.equal(again.created,false);
       await assert.rejects(()=>db.query('select public.import_reviewed_song_link($1,$2,$3,$4,$5::jsonb,$6::uuid[])',['web:wrong',...args.slice(1)]));
       await asUser(VIEWER);await assert.rejects(()=>db.query('select public.ensure_manual_collection_v47()'));await asUser(ADMIN);
@@ -823,6 +944,10 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       await db.exec(fs.readFileSync('supabase/updates/UPDATE-V58.sql','utf8'));
       await db.exec(fs.readFileSync('supabase/updates/UPDATE-V65.sql','utf8'));
       await db.exec(fs.readFileSync('supabase/updates/UPDATE-V65.sql','utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V79.sql','utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V79.sql','utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V80.sql','utf8'));
+      await db.exec(fs.readFileSync('supabase/updates/UPDATE-V80.sql','utf8'));
       const fresh = new PGlite({ extensions: { pg_trgm, unaccent, pgcrypto } });
       try {
         await fresh.exec(setup);

@@ -16,11 +16,12 @@ export async function createManagedUserAction(data:FormData){
  if(profileError)throw new Error('Contul este în așteptare. Verifică rolul în lista de utilizatori.');
  return users();
 }
-export async function updateManagedUserAction(id:string,role:string,active:boolean){
+export async function updateManagedUserAction(id:string,name:string,role:string,active:boolean){
  const {supabase}=await requireProfile('admin');
+ name=name.trim();if(!name||name.length>120)throw new Error('Numele de utilizator este obligatoriu și poate avea maximum 120 de caractere.');
  if(!['admin','editor','worship_leader','viewer'].includes(role)||typeof active!=='boolean')throw new Error('Rol invalid.');
- const {error}=await supabase.rpc('admin_set_profile_v48',{p_id:id,p_role:role,p_active:active});
- if(error)throw new Error(error.message);revalidatePath('/admin/users');refresh();return users();
+ const {error}=await supabase.rpc('admin_update_profile_v80',{p_id:id,p_name:name,p_role:role,p_active:active});
+ if(error)throw new Error(error.message);revalidatePath('/admin/users');revalidatePath('/meetings','layout');refresh();return users();
 }
 
 export async function moderateManagedUserAction(id:string,remove:boolean){

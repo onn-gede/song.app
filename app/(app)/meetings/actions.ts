@@ -13,6 +13,7 @@ export type MeetingOption = {
   meeting_date: string;
   status: string;
   is_template?:boolean;
+  program_kind?:"official"|"rehearsal";
 };
 
 export type SongSearchResult = {
@@ -43,9 +44,11 @@ export async function createMeetingAction(formData: FormData):Promise<string> {
   const {supabase}=await requireProfile("editor");
   const title=readString(formData,"title"),requestId=readString(formData,"request_id");
   if(!title||title.length>200||!/^[0-9a-f-]{36}$/i.test(requestId))throw new Error("Completează titlul și reîncearcă salvarea.");
-  const {data,error}=await supabase.rpc("create_meeting_once_v49",{
+  const programKind=readString(formData,"program_kind")==="rehearsal"?"rehearsal":"official";
+  const {data,error}=await supabase.rpc("create_meeting_v79",{
     p_request_id:requestId,p_title:title,p_meeting_type:readString(formData,"meeting_type")||null,
-    p_meeting_date:meetingDateISO(readString(formData,"meeting_date")),p_notes:readString(formData,"notes")||null
+    p_meeting_date:meetingDateISO(readString(formData,"meeting_date")),p_notes:readString(formData,"notes")||null,p_program_kind:programKind,
+    p_song_id:null,p_is_backup:false,p_source_id:null
   });
   if(error||!data)throw new Error(error?.message||"Nu am putut crea programul.");
   revalidatePath("/meetings");return data as string;
@@ -56,7 +59,7 @@ export async function listMeetingsAction(): Promise<MeetingOption[]> {
   const supabase = (await requireProfile("read")).supabase;
   const { data, error } = await supabase
     .from("meetings")
-    .select("id,title,meeting_date,status,is_template")
+    .select("id,title,meeting_date,status,is_template,program_kind")
     .order("meeting_date", { ascending: false })
     .limit(30);
 
@@ -109,9 +112,9 @@ export async function addSongToMeetingAction(input: {
   return committedMeetingSnapshot(input.meetingId);
 }
 
-export async function createMeetingAndAddSongAction(input:{title:string;meetingType?:string|null;meetingDate:string;songId:string;isBackup?:boolean;requestId:string;sourceId?:string|null}) {
+export async function createMeetingAndAddSongAction(input:{title:string;meetingType?:string|null;meetingDate:string;songId:string;isBackup?:boolean;requestId:string;sourceId?:string|null;programKind?:"official"|"rehearsal"}) {
  const {supabase}=await requireProfile("editor");
- const {data,error}=await supabase.rpc('create_program_with_song_v57',{p_request_id:input.requestId,p_title:input.title.trim(),p_meeting_type:input.meetingType||null,p_meeting_date:meetingDateISO(input.meetingDate),p_source_id:input.sourceId||null,p_song_id:input.songId,p_is_backup:!!input.isBackup});
+ const {data,error}=await supabase.rpc('create_meeting_v79',{p_request_id:input.requestId,p_title:input.title.trim(),p_meeting_type:input.meetingType||null,p_meeting_date:meetingDateISO(input.meetingDate),p_notes:null,p_program_kind:input.programKind||'official',p_source_id:input.sourceId||null,p_song_id:input.songId,p_is_backup:!!input.isBackup});
  if(error||!data)throw new Error(error?.message||'Nu am putut crea programul.');
  revalidatePath('/meetings');revalidatePath(`/meetings/${data}`);return data as string;
 }
@@ -370,6 +373,13 @@ export async function setMeetingTemplateAction(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${id}`); revalidatePath("/meetings"); revalidatePath("/dashboard");
   refresh();
+}
+
+export async function setMeetingProgramKindAction(formData:FormData){
+ const {supabase}=await requireProfile("editor");const id=readString(formData,"meeting_id"),kind=readString(formData,"program_kind");
+ if(!id||!['official','rehearsal'].includes(kind))throw new Error("Alege un tip de program valid.");
+ const {error}=await supabase.rpc('set_meeting_kind_v79',{p_meeting:id,p_kind:kind});if(error)throw new Error(error.message);
+ revalidatePath(`/meetings/${id}`);revalidatePath('/meetings');revalidatePath('/dashboard');revalidatePath('/songs');revalidatePath('/songs/[id]','page');revalidatePath('/program','layout');refresh();
 }
 
 export async function updateItemResponsibleAction(formData: FormData) {

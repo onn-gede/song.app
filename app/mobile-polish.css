@@ -1,0 +1,27 @@
+/* Touch ergonomics; desktop and print layouts retain their established density. */
+.connection-status{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:20000;max-width:min(560px,calc(100vw - 24px));box-sizing:border-box;padding:12px 16px;border:1px solid #a8c7ac;border-radius:10px;background:#edf7ed;color:#214c31;box-shadow:0 4px 24px #0002;font-size:13px;line-height:1.5;pointer-events:none}
+.connection-status.is-offline{background:#fff2dc;border-color:#d2a558;color:#754d13}
+.create-meeting-dialog{margin:auto;max-width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #dce5d7;border-radius:16px;padding:24px;background:white;color:inherit}
+.create-meeting-dialog::backdrop{background:#172b2266}
+@media(max-width:800px){
+ .workspace-v44 input:not([type=checkbox]):not([type=radio]):not([type=color]),.workspace-v44 textarea,.workspace-v44 select,.public-v48 input,.public-v48 textarea,.public-v48 select{font-size:16px}
+ .moment-dialog,.song-schedule-dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box}
+ .program-add-controls{flex-wrap:wrap}
+ .song-pick-row{min-width:0}.song-pick-content{min-width:0}.song-pick-content .row-title{overflow-wrap:anywhere}
+ .program-info-line{flex-wrap:wrap;gap:6px}.program-info-line .program-inline-notes{white-space:normal;overflow-wrap:anywhere}
+ .connection-status{bottom:max(12px,env(safe-area-inset-bottom))}
+}
+@media(pointer:coarse){
+ .program-actions-v10 .icon-btn,.program-actions-v10 .program-transfer,.program-add-controls .btn,.song-pick-actions .btn,.inline-edit-button,.workspace-menu-toggle,.workspace-mobile-close{min-width:44px;min-height:44px}
+ .program-title-wrap .badge:is(button),.advanced-search-tools button,.search-schedule-summary button,.song-preview-trigger button{min-height:36px}
+ .song-lyrics-tooltip{pointer-events:auto}
+}
+@media(prefers-reduced-motion:reduce){.public-attention-notice,.recent-program-change{animation:none!important}}
+@media print{.connection-status,.create-meeting-dialog{display:none!important}}
+.song-lyrics-touch-dialog{margin:auto;width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 32px);box-sizing:border-box;overflow:auto;overscroll-behavior:contain;border:1px solid #dce5d7;border-radius:14px;padding:20px;background:white;color:#20392d}
+.song-lyrics-touch-dialog::backdrop{background:#172b2266}.song-lyrics-touch-dialog>strong,.song-lyrics-touch-dialog small{display:block;margin-top:16px}.song-lyrics-touch-dialog pre{font:inherit;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}.song-lyrics-touch-dialog>.btn{min-height:44px}
+@media print{.song-lyrics-touch-dialog{display:none!important}}
+@media(prefers-reduced-motion:reduce){.recent-program-change{outline:2px solid #dc2626;outline-offset:2px}}
+.program-board-v10>[role=status] .error{display:block;white-space:normal;overflow-wrap:anywhere;max-width:100%;box-sizing:border-box}
+.connection-status{width:min(560px,calc(100vw - 24px))}
+@media(max-width:800px){.meeting-v48 input:not([type=checkbox]):not([type=radio]):not([type=color]),.meeting-v48 textarea,.meeting-v48 select{font-size:16px}}

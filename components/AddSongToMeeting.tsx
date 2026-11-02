@@ -62,13 +62,14 @@ export function AddSongToMeeting({ songId, songTitle, compact = false,sourceOpti
         const meetingType = String(formData.get("meeting_type") || "").trim();
         const meetingDate = String(formData.get("meeting_date") || "");
         const isBackup = formData.get("is_backup") === "on";
+        const programKind = formData.get("program_kind") === "rehearsal" ? "rehearsal" : "official";
 
         const meetingId = await createMeetingAndAddSongAction({
           title,
           meetingType: meetingType || null,
           meetingDate,
           songId,sourceId:sourceId||null,
-          isBackup,requestId:requestId.current
+          isBackup,requestId:requestId.current,programKind
         });
 
         receipt.current=null;setCreatedMeetingId(meetingId);
@@ -131,6 +132,7 @@ export function AddSongToMeeting({ songId, songTitle, compact = false,sourceOpti
                   <label className="label">Tip întâlnire
                     <input className="input" name="meeting_type" placeholder="duminica_dimineata" />
                   </label>
+                  <fieldset className="program-kind-picker compact"><legend>Tip program</legend><label><input type="radio" name="program_kind" value="official" defaultChecked/><span><strong>Oficial</strong><small>Se numără în istoric</small></span></label><label><input type="radio" name="program_kind" value="rehearsal"/><span><strong>Repetiție</strong><small>Nu se numără în istoric</small></span></label></fieldset>
                   <MeetingDatePicker disabled={isPending}/>
                   <label className="inline-form small">
                     <input name="is_backup" type="checkbox" /> Adaugă direct ca backup

@@ -1,23 +1,18 @@
 "use client";
 
-import {collectionStyle,type CollectionSource} from "@/lib/collection-colors";
+import {collectionStyle} from "@/lib/collection-colors";
 import {SourceTags} from "./SourceTags";
 import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-type PresentationSlide = {
-  id: string;
-  label: string;
-  content: string;
-  source?:CollectionSource|null;isCongregational?:boolean;momentColor?:string|null;musicalKey?:string|null;verseCount?:number|null;structure?:string|null;
-};
+import type {PresentationSlide} from '@/lib/presentation';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function splitFallbackLyrics(lyricsText: string | null | undefined): PresentationSlide[] {
+function splitFallbackLyrics(lyricsText: string | null | undefined,lyricsOnly=false): PresentationSlide[] {
   const chunks = String(lyricsText || "")
     .split(/\n{2,}/)
     .map((chunk) => chunk.trim())
@@ -26,7 +21,7 @@ function splitFallbackLyrics(lyricsText: string | null | undefined): Presentatio
   return chunks.map((content, index) => ({
     id: `fallback-${index}`,
     label: `Slide ${index + 1}`,
-    content,
+    content,lyricsOnly,
   }));
 }
 
@@ -52,15 +47,17 @@ export function SongPresentation({
   fallbackLyrics,
   returnHref,
   defaultKey,live=false,
+  programKind,lyricsOnly=false,
 }: {
   songId: string;
   title: string;
   slides: PresentationSlide[];
   fallbackLyrics?: string | null;
   returnHref?: string;
-  defaultKey?:string|null;live?:boolean;
+  defaultKey?:string|null;live?:boolean;programKind?:string;lyricsOnly?:boolean;
 }) {
   const router = useRouter();
+  const shell=useRef<HTMLDivElement>(null);
   const exitHref = returnHref || `/songs/${songId}`;
   const allSlides = useMemo(() => {
     const prepared = slides
@@ -70,14 +67,14 @@ export function SongPresentation({
         label: slide.label?.trim() || "Slide",
       }))
       .filter((slide) => slide.content.length > 0);
-    return prepared.length > 0 ? prepared : splitFallbackLyrics(fallbackLyrics);
-  }, [slides, fallbackLyrics]);
+    return prepared.length > 0 ? prepared : splitFallbackLyrics(fallbackLyrics,lyricsOnly);
+  }, [slides, fallbackLyrics,lyricsOnly]);
 
   const [index, setIndex] = useState(0);
   const [fontScale, setFontScale] = useState(92);
   const [flash,setFlash]=useState(false);const previousSlides=useRef<string|null>(null);
   const contentVersion=JSON.stringify(allSlides);
-  useEffect(()=>{if(previousSlides.current!==null&&previousSlides.current!==contentVersion){setFlash(true);const timer=setTimeout(()=>setFlash(false),5000);previousSlides.current=contentVersion;return()=>clearTimeout(timer);}previousSlides.current=contentVersion;},[contentVersion]);
+  useEffect(()=>{if(previousSlides.current!==null&&previousSlides.current!==contentVersion)setFlash(true);previousSlides.current=contentVersion;},[contentVersion]);
   useEffect(()=>{if(!live)return;const update=()=>{if(!document.hidden)router.refresh();};const timer=setInterval(update,15000);window.addEventListener('focus',update);return()=>{clearInterval(timer);window.removeEventListener('focus',update);};},[live,router]);
   const current = allSlides[Math.min(index,Math.max(0,allSlides.length-1))];
   const musicalKey=current?.musicalKey!==undefined ? current.musicalKey : defaultKey;
@@ -140,24 +137,26 @@ export function SongPresentation({
   }
 
   return (
-    <div className="presentation-shell">
+    <div className="presentation-shell" ref={shell}>
       <header className="presentation-topbar">
         <div>
-          <div className="presentation-eyebrow">Prezentare</div>
+          <div className="presentation-eyebrow">{programKind==='rehearsal'?'Repetiție · prezentare':'Prezentare'}</div>
           <strong>{title}</strong>
         </div>
         <div className="presentation-actions">
+          {flash?<button className="presentation-mini-button presentation-acknowledge" type="button" onClick={()=>setFlash(false)}>Am văzut</button>:null}
           <span>{index + 1} / {allSlides.length}</span>
           <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value - 5, 60, 115))}>A−</button>
           <span className="presentation-scale">{fontScale}%</span>
           <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value + 5, 60, 115))}>A+</button>
           <button className="presentation-mini-button" type="button" onClick={() => setFontScale(92)}>Reset</button>
+          <button className="presentation-mini-button" type="button" onClick={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void shell.current?.requestFullscreen?.();}}>Ecran complet</button>
           <Link className="presentation-link" href={exitHref}>Ieșire</Link>
         </div>
       </header>
 
       <main className={"presentation-slide"+(flash?" recent-program-change":"")} onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}>
-        <div className="presentation-slide-heading" style={current.source?collectionStyle(current.source):{color:current.momentColor||undefined}}><div className="presentation-label" style={{color:current.source?"var(--collection-ink)":current.momentColor||undefined}}>{current.label}</div>{current.source?<SourceTags source={current.source}/>:null}{current.isCongregational?<span className="badge congregational-tag">Cântare în comun</span>:null}{current.verseCount!==undefined?<span className="badge">Strofe: {current.verseCount??"—"}</span>:null}{current.structure?<span className="badge">Structură: {current.structure}</span>:null}{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>
+        {!current.lyricsOnly?<div className="presentation-slide-heading" style={current.source?collectionStyle(current.source):{color:current.momentColor||undefined}}><div className="presentation-label" style={{color:current.source?"var(--collection-ink)":current.momentColor||undefined}}>{current.label}</div>{current.source?<SourceTags source={current.source}/>:null}{current.isCongregational?<span className="badge congregational-tag">Cântare în comun</span>:null}{current.verseCount!==undefined?<span className="badge">Strofe: {current.verseCount??"—"}</span>:null}{current.structure?<span className="badge">Structură: {current.structure}</span>:null}{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>:null}
         <div
           className="presentation-lyrics"
           style={{

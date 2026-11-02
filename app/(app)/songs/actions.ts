@@ -1000,16 +1000,16 @@ export async function deleteSongAction(formData: FormData) {
 
   const supabase = (await requireProfile("editor")).supabase;
 
-  // Eliminăm mai întâi aparițiile din programe; altfel FK-ul ar păstra elemente goale cu song_id null.
-  const { error: meetingItemsError } = await supabase
-    .from("meeting_items")
-    .delete()
-    .eq("song_id", songId);
-  if (meetingItemsError) throw new Error(meetingItemsError.message);
-
-  const { error } = await supabase.from("songs").delete().eq("id", songId);
-
-  if (error) throw new Error(error.message);
+  const {data:files,error:filesError}=await supabase.from('song_files').select('storage_path,preview_path_v58').eq('song_id',songId);
+  if(filesError)throw new Error('Nu pot verifica fișierele cântării.');
+  const {error}=await supabase.rpc('delete_song_v78',{p_song:songId});
+  if(error)throw new Error(error.message);
+  const paths=[...new Set((files||[]).flatMap(f=>[f.storage_path,f.preview_path_v58]).filter((path):path is string=>!!path))];
+  for(const path of paths){
+    const [original,preview]=await Promise.all([supabase.from('song_files').select('id',{count:'exact',head:true}).eq('storage_path',path),supabase.from('song_files').select('id',{count:'exact',head:true}).eq('preview_path_v58',path)]);
+    if(!original.error&&!preview.error&&original.count===0&&preview.count===0){const {error:cleanup}=await supabase.storage.from('song-files').remove([path]);if(cleanup)console.warn('Song file cleanup unavailable');}
+  }
+  revalidatePath('/collections');revalidatePath('/program','layout');
 
   revalidatePath("/dashboard");
   revalidatePath("/songs");
@@ -1076,4 +1076,10 @@ export async function updateSongSourceNumberAction(formData: FormData) {
 
 export async function assignSongCategoryAction(songId:string,categoryId:string){
  const {supabase}=await requireProfile('editor');const {error}=await supabase.rpc('assign_song_category_v62',{p_song_id:songId,p_category_id:categoryId});if(error)throw Error(error.message);revalidatePath('/songs');revalidatePath(`/songs/${songId}`);refresh();
+}
+
+export async function editSongSourceAction(data:FormData){
+ const {supabase}=await requireProfile('editor');const song=readString(data,'song_id');
+ const {error}=await supabase.rpc('edit_song_source_v78',{p_song:song,p_source:readString(data,'source_id'),p_collection:readString(data,'collection_id'),p_number:readString(data,'song_number')});
+ if(error)throw new Error(error.message);revalidatePath('/songs');revalidatePath(`/songs/${song}`);revalidatePath(`/songs/${song}/edit`);revalidatePath('/collections');revalidatePath('/meetings','layout');revalidatePath('/program','layout');refresh();
 }

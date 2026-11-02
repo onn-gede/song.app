@@ -1,8 +1,9 @@
-import {primarySource,type CollectionSource} from "./collection-colors";
+import {songProgramMetadata} from './program-display';
+import {type CollectionSource} from "./collection-colors";
 import {arrangeSections} from "./song-performance";
 import { effectiveMusicalKey } from "./musical-key";
 import { stripRepeatedSongTitleLines } from "./songTextCleanup";
-export type PresentationSlide = { id: string; label: string; content: string; source?:CollectionSource|null;isCongregational?:boolean;momentColor?:string|null;musicalKey?:string|null;verseCount?:number|null;structure?:string|null };
+export type PresentationSlide = { id: string; label: string; content: string; lyricsOnly?:boolean;source?:CollectionSource|null;isCongregational?:boolean;momentColor?:string|null;musicalKey?:string|null;verseCount?:number|null;structure?:string|null };
 type Section = { id: string; position: number; section_label: string | null; section_type: string; content: string };
 export type PresentationItem = {
   sources?:CollectionSource[];selected_source_id?:string|null;is_congregational?:boolean;moment_color?:string|null;performance_structure?:string|null; id: string; position: number; is_backup: boolean; custom_title: string | null;
@@ -18,9 +19,9 @@ export function buildProgramSlides(items: PresentationItem[], includeBackup = fa
       const musicalKey=item.songs ? effectiveMusicalKey(item.selected_key,item.songs.default_key) : undefined;
       const originalSections=[...(item.songs?.song_sections||[])].sort((a,b)=>a.position-b.position);
       const verseCount=item.songs?item.songs.verse_count_override??(originalSections.filter(s=>s.section_type==='verse').length||null):undefined;
-      const structure=item.performance_structure||item.songs?.structure||null;
+      const structure=item.performance_structure?.trim()||item.songs?.structure?.trim()||null;
       let ordered=originalSections;try{ordered=arrangeSections(originalSections,structure);}catch{}
-      const metadata={verseCount,structure,source:primarySource(item.sources,item.selected_source_id),isCongregational:!!item.is_congregational,momentColor:item.songs?null:item.moment_color};
+      const metadata={...songProgramMetadata(item,item.songs?{...item.songs,verse_count:verseCount}:null),verseCount,structure,momentColor:item.songs?null:item.moment_color,lyricsOnly:!!item.songs};
       const sections = ordered
         .map((section,index) => ({ id: `${item.id}:${section.id}:${index}`, ...metadata,musicalKey, label: `${title} · ${section.section_label || types[section.section_type] || "Strofă"}`, content: stripRepeatedSongTitleLines(section.content,title) }))
         .filter((slide) => slide.content.trim());

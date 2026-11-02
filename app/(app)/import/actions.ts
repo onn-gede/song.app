@@ -926,12 +926,17 @@ export async function importTextSongAction(formData: FormData) {
   const songNumber = readNullableString(formData, "song_number");
 
   if (!title) throw new Error("Titlul cântării este obligatoriu.");
-  if (!lyricsText) throw new Error("Textul cântării este obligatoriu.");
   if (!allowedSourceTypes.has(sourceType)) throw new Error("Tipul sursei nu este valid.");
 
   const collectionId = readString(formData,"collection_id") || readString(formData,"new_collection_name")
     ? await resolveCollectionId(formData, sourceType)
     : await (async () => { const {supabase}=await requireProfile("editor"); const {data,error}=await supabase.rpc("ensure_manual_collection_v47"); if(error||!data)throw new Error(error?.message||"Colecția nu poate fi creată."); return String(data); })();
+  if(!lyricsText){
+    const {supabase}=await requireProfile("editor");const bpm=readNullableInteger(formData,"bpm");
+    const {data:createdSongId,error}=await supabase.rpc("create_title_only_song_v79",{p_collection:collectionId,p_title:title,p_number:songNumber,p_default_key:readNullableString(formData,"default_key"),p_bpm:bpm,p_structure:readNullableString(formData,"structure"),p_notes:readNullableString(formData,"notes")});
+    if(error||!createdSongId)throw new Error(error?.message||"Cântarea nu a putut fi adăugată.");
+    revalidatePath("/dashboard");revalidatePath("/songs");revalidatePath("/collections");refresh();redirect(`/songs/${createdSongId}`);
+  }
   const parsed: ParsedImport = {
     fileName: `${songNumber ? `${songNumber} - ` : ""}${title}.txt`,
     fileType: sourceType === "manual" ? "txt" : (sourceType as any),

@@ -77,13 +77,13 @@ export default async function ImportPage() {
       <ImportWorkspace
         link={<ImportLinkWizard collections={collections || []}/>}
         files={<><h2>Importă din fișiere</h2>{process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB ? <p className="muted small">Maximum {process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB} MB în total per lot în varianta online.</p> : null}<p className="muted">Încarcă unul sau mai multe fișiere, verifică preview-ul și confirmă importul.</p><PresentationImportWizard collections={collections||[]}/><details className="import-format-help"><summary>Import cu extragerea versurilor (PPTX, PDF, TXT)</summary><ImportFilesWizard collections={collections || []}/></details><details className="import-format-help"><summary>Formate acceptate și recomandări</summary><p>PPTX, TXT și PDF cu text selectabil. Poți grupa mai multe fișiere într-un ZIP. Pentru fișierele vechi PPT, salvează mai întâi ca PPTX din PowerPoint.</p></details></>}
-        text={<><h2>Adaugă din text</h2><p className="muted">Lipește versurile, cu o linie goală între strofe. După salvare poți verifica secțiunile în editor.</p>          <form action={importTextSongAction} className="form-grid">
+        text={<><h2>Adaugă o cântare</h2><p className="muted">Titlul este suficient. Poți adăuga versurile acum sau mai târziu din pagina cântării.</p>          <form action={importTextSongAction} className="form-grid">
             <label className="label">Titlu cântare
               <input className="input" name="title" placeholder="ex: Când furtuni în viață-mi vin" required />
             </label>
 
-            <label className="label">Versuri
-              <textarea className="textarea import-lyrics" name="lyrics_text" required placeholder={"Strofa 1\n...\n\nRefren\n...\n\nStrofa 2\n..."} />
+            <label className="label">Versuri <span className="muted small">(opțional)</span>
+              <textarea className="textarea import-lyrics" name="lyrics_text" placeholder={"Strofa 1\n...\n\nRefren\n...\n\nStrofa 2\n..."} />
             </label>
 
             <details className="import-optional-fields"><summary>Detalii opționale și colecție</summary><div className="form-grid">
@@ -107,7 +107,7 @@ export default async function ImportPage() {
             </label>
 
             </div></details>
-            <button className="btn secondary" type="submit">Importă textul și verifică versurile</button>
+            <button className="btn secondary" type="submit">Adaugă cântarea</button>
           </form></>}
       />
     </>

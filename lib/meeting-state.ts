@@ -1,7 +1,7 @@
 import type { CollectionSource } from "./collection-colors";
 export type ProgramItem = {
   performance_structure?:string|null; id: string; position: number; item_type: string; song_id: string | null;
-  moment_kind?:string|null;moment_color?:string|null; custom_title: string | null; custom_text: string | null; selected_key: string | null;
+  moment_kind?:string|null;moment_color?:string|null;moment_opacity?:number|null; custom_title: string | null; custom_text: string | null; selected_key: string | null;
   selected_bpm: number | null; is_backup: boolean; notes: string | null;
   is_congregational?: boolean; responsible_name?: string | null; selected_source_id?:string|null; sources?:CollectionSource[];
   songs: { verse_count?:number|null; id: string; title: string; lyrics_text: string | null; default_key: string | null; bpm: number | null; structure: string | null } | null;

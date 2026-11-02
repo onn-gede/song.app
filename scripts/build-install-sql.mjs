@@ -59,3 +59,11 @@ fs.writeFileSync('supabase/updates/UPDATE-V65.sql','-- După v64, pe aceeași ba
 fs.writeFileSync('supabase/updates/UPDATE-V66.sql','-- După v65, pe aceeași bază. Nu modifică utilizatori sau sesiuni în bază.\n'+read('059_v66_welcome.sql'));
 
 fs.writeFileSync('supabase/updates/UPDATE-V67.sql','-- După v66, pe aceeași bază. Limitează doar lista publică de la intrare, nu șterge programe.\n'+read('060_v67_welcome_selection.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V73.sql','-- Pe aceeași bază, după v67. Nu importă și nu șterge date.\n'+read('061_v73_public_proposal_limits.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V74.sql','-- După v67 / v72 / v73, pe aceeași bază. Nu șterge date.\n'+read('054_v59_public_moment_types.sql')+'\n'+read('061_v73_public_proposal_limits.sql')+'\n'+read('062_v74_legacy_public_rpc.sql'));
+
+fs.writeFileSync('supabase/updates/UPDATE-V78.sql',read('063_v78_song_management.sql'));
+fs.writeFileSync('supabase/updates/UPDATE-V79.sql','-- Pachet cumulativ peste v77. Include v78 și v79; nu rula separat UPDATE-V78.sql.\n'+read('063_v78_song_management.sql')+'\n'+read('064_v79_rehearsals_projection_authorship.sql'));
+fs.writeFileSync('supabase/updates/UPDATE-V80.sql','-- Pachet cumulativ peste v77. Include v78, v79 și v80; nu rula separat UPDATE-V78.sql sau UPDATE-V79.sql.\n'+read('063_v78_song_management.sql')+'\n'+read('064_v79_rehearsals_projection_authorship.sql')+'\n'+read('065_v80_moments_live_labels.sql'));

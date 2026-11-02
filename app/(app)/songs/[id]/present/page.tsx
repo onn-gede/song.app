@@ -36,7 +36,8 @@ export default async function SongPresentationPage({ params }: PageProps) {
     id: section.id || `section-${index}`,
     label: labelForSection(section, index),
     content: stripRepeatedSongTitleLines(section.content || "", song.title),
+    lyricsOnly: true,
   }));
 
-  return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} defaultKey={song.default_key} />;
+  return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} defaultKey={song.default_key} lyricsOnly />;
 }

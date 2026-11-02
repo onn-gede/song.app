@@ -10,7 +10,7 @@ export async function signInAction(_prevState: LoginState, formData: FormData): 
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
 
-  if (!email || !password) {
+  if (!email || !password || email.length > 320 || password.length > 1024) {
     return { error: "Completează emailul și parola." };
   }
 

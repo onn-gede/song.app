@@ -1,4 +1,5 @@
 "use client";
+import {PUBLIC_LIMITS} from "@/lib/public-contribution";
 import { PROGRAM_MOMENT_TYPES } from "@/lib/program-moment-types";
 
 import { useState, useTransition } from "react";
@@ -32,7 +33,7 @@ export function PublicTextContributionForm({ slug, positionOptions }: { slug: st
       <form action={submit} className="form-grid public-text-form">
         <input type="hidden" name="slug" value={slug} />
         <label className="label">Numele tău, opțional
-          <input className="input" name="contributor_name" placeholder="Ex: Andrei" />
+          <input className="input" name="contributor_name" maxLength={PUBLIC_LIMITS.name} placeholder="Ex: Andrei" />
         </label>
         <label className="label">Poziție propusă
           <select className="select" name="proposed_position" defaultValue="">
@@ -44,17 +45,17 @@ export function PublicTextContributionForm({ slug, positionOptions }: { slug: st
           <select className="select" name="contribution_type" defaultValue="text">{PROGRAM_MOMENT_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}</select>
         </label>
         <label className="label">Titlu
-          <input className="input" name="custom_title" placeholder="Titlul intervenției" />
+          <input className="input" name="custom_title" maxLength={PUBLIC_LIMITS.title} placeholder="Titlul intervenției" />
         </label>
         <label className="label">Observații
-          <textarea className="textarea" name="custom_text" placeholder="Scrie intervenția propusă" />
+          <textarea className="textarea" name="custom_text" maxLength={PUBLIC_LIMITS.text} placeholder="Scrie intervenția propusă" />
         </label>
         <label className="check-row public-checkbox">
           <input type="checkbox" name="is_backup" />
           <span>Marchează ca element de backup</span>
         </label>
         <label className="label">Notă, opțional
-          <input className="input" name="notes" placeholder="Ex: doar dacă mai este timp" />
+          <input className="input" name="notes" maxLength={PUBLIC_LIMITS.notes} placeholder="Ex: doar dacă mai este timp" />
         </label>
         <button className="btn" type="submit" disabled={isPending}>{isPending ? "Se trimite…" : "Trimite propunerea"}</button>
       </form>
