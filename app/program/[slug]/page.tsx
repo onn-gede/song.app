@@ -201,7 +201,7 @@ export default async function PublicProgramPage({ params }: PageProps) {
             <h2>Program principal</h2>
           </div>
         </div>
-        <section className="meeting-v48 program-surface-v65"><MeetingProgramBoard meetingId={meeting.id} items={normalized} canManage={false}/></section>
+        <section className="meeting-v48 program-surface-v65"><MeetingProgramBoard meetingId={meeting.id} items={normalized} canManage={false} returnHref={`/program/${slug}`} publicSlug={slug}/></section>
 
         {contributions.length > 0 ? (
           <details className="public-external-block print-hide"><summary>Propuneri externe ({contributions.length})</summary>

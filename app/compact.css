@@ -149,3 +149,20 @@ html,body{height:auto;min-height:100%;overflow-x:clip;overflow-y:visible}
 .administration-layout-v79{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-setting-card form>.btn{width:100%;justify-content:center}
 @media(max-width:900px){.administration-layout-v79{grid-template-columns:1fr 1fr}.administration-layout-v79>.danger-card{grid-column:1/-1}}
 @media(max-width:650px){.administration-layout-v79,.song-source-edit-row{grid-template-columns:1fr}.administration-layout-v79>.danger-card{grid-column:auto}}
+
+/* v81: contextual navigation, public song presentation and distraction-free fullscreen. */
+.presentation-fullscreen-reveal{display:none}
+.presentation-shell.presentation-song-mode:fullscreen{display:block;overflow:hidden;width:100vw;height:100dvh}
+.presentation-shell.presentation-song-mode:fullscreen .presentation-fullscreen-reveal{display:block;position:fixed;inset:0 0 auto;height:34px;z-index:10001}
+.presentation-shell.presentation-song-mode:fullscreen .presentation-topbar{position:fixed;inset:0 0 auto;z-index:10002;transform:translateY(-110%);opacity:0;pointer-events:none;transition:transform .18s ease,opacity .18s ease}
+.presentation-shell.presentation-song-mode:fullscreen .presentation-fullscreen-reveal:hover+.presentation-topbar,.presentation-shell.presentation-song-mode:fullscreen .presentation-topbar:hover,.presentation-shell.presentation-song-mode:fullscreen .presentation-topbar:focus-within{transform:translateY(0);opacity:1;pointer-events:auto}
+.presentation-shell.presentation-song-mode:fullscreen .presentation-footer{display:none}
+.presentation-shell.presentation-song-mode:fullscreen .presentation-slide{height:100dvh;min-height:100dvh;padding:clamp(28px,5vw,72px)}
+.program-return-button{position:fixed;right:20px;bottom:20px;z-index:10020;display:inline-flex;align-items:center;min-height:38px;padding:8px 13px;border-radius:999px;background:#174f38;color:#fff!important;text-decoration:none;box-shadow:0 8px 24px #163a2b38;font-size:13px;font-weight:650}
+.program-return-button:hover{background:#0f3f2b;transform:translateY(-1px)}
+.program-song-present{min-height:24px!important;padding:2px 7px!important;font-size:11px!important;text-decoration:none!important}
+@media(max-width:650px){.program-return-button{right:12px;bottom:12px}.presentation-shell.presentation-song-mode:fullscreen .presentation-topbar{flex-wrap:wrap}.presentation-shell.presentation-song-mode:fullscreen .presentation-actions{gap:6px}}
+
+/* v82: FreeShow import/export. */
+.freeshow-import{border-color:#b8cdbd!important;background:#f8fbf7}.freeshow-import>summary{color:#24583d;font-weight:650}.freeshow-import-body{padding-top:12px}.freeshow-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:14px}.freeshow-preview-heading h3{margin:3px 0}.freeshow-section-preview{border:1px solid #dce6da;border-radius:9px;background:#fff;padding:10px 12px}.freeshow-section-preview>summary{cursor:pointer;font-size:13px;font-weight:600;color:#375c44}.freeshow-section-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;max-height:420px;overflow:auto}.freeshow-section-list article{border:1px solid #e4e9e1;border-radius:8px;padding:10px}.freeshow-section-list pre{font:13px/1.55 inherit;white-space:pre-wrap;margin:7px 0 0;color:#425247}
+@media(max-width:650px){.freeshow-preview-heading{align-items:flex-start;flex-direction:column}.freeshow-section-list{grid-template-columns:1fr}}

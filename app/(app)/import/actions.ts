@@ -11,6 +11,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { parseFreeShow } from "@/lib/freeshow";
 
 const allowedSourceTypes = new Set(["manual", "pptx", "ppt", "pdf", "txt", "docx", "other"]);
 const supportedFileExtensions = new Set(["txt", "md", "pptx", "ppt", "pdf", "zip"]);
@@ -954,6 +955,27 @@ export async function importTextSongAction(formData: FormData) {
   revalidatePath("/collections");
   refresh();
   redirect(`/songs/${createdSongId}/lyrics`);
+}
+
+export async function importFreeShowAction(formData: FormData) {
+  await requireProfile("editor");
+  const raw = readString(formData, "freeshow_json");
+  if (!raw || raw.length > 5 * 1024 * 1024) throw new Error("Fișierul FreeShow lipsește sau este prea mare.");
+  let imported;
+  try { imported = parseFreeShow(raw); }
+  catch (error) { throw new Error(error instanceof Error ? error.message : "Fișierul FreeShow nu poate fi interpretat."); }
+  const title = readString(formData, "title") || imported.title;
+  if (!title) throw new Error("Titlul cântării este obligatoriu.");
+  const selectedCollection = readString(formData, "collection_id");
+  const collectionId = selectedCollection || await (async()=>{const {supabase}=await requireProfile("editor");const {data,error}=await supabase.rpc("ensure_manual_collection_v47");if(error||!data)throw new Error(error?.message||"Colecția manuală nu poate fi pregătită.");return String(data);})();
+  const metadata = new FormData();
+  metadata.set("default_key", imported.defaultKey || readString(formData,"default_key"));
+  metadata.set("structure", imported.structure || readString(formData,"structure"));
+  const fileName = readString(formData,"file_name") || `${title}.show`;
+  const parsed: ParsedImport = {fileName,fileType:"other",title,songNumber:readNullableString(formData,"song_number")||imported.songNumber,lyricsText:imported.lyricsText,parserNotes:`Import FreeShow din ${fileName}. Secțiunile și ordinea slide-urilor au fost păstrate.`,storagePath:null};
+  const createdSongId = await createSongFromParsedImport(parsed, collectionId, metadata, {title,songNumber:parsed.songNumber});
+  revalidatePath("/dashboard");revalidatePath("/songs");revalidatePath("/review");revalidatePath("/collections");refresh();
+  redirect(`/songs/${createdSongId}/lyrics?imported=freeshow`);
 }
 
 

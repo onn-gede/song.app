@@ -152,7 +152,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
           {editable?<ProgramNotificationsButton/>:null}
           {activeLink ? <a className="btn public-highlight" href={`/program/${activeLink.public_slug}`} target="_blank" rel="noreferrer">Vezi public ↗</a> : null}
           <details className="program-page-tools"><summary title="Acțiuni program" aria-label="Acțiuni program">•••</summary><div className="program-tools-menu">
-            <PresentationLaunchButton href={`/meetings/${id}/present`} label="Prezintă programul"/><PrintButton /><ExportPackageButton meetingId={id} /><Link className="btn secondary" href="/meetings">Înapoi la programe</Link>
+            <PresentationLaunchButton href={`/meetings/${id}/present`} label="Prezintă programul"/><PrintButton /><a className="btn secondary" href={`/api/meetings/${id}/freeshow`} download>FreeShow .show ↓</a><ExportPackageButton meetingId={id} /><Link className="btn secondary" href="/meetings">Înapoi la programe</Link>
           </div></details>
         </div>
       </div>
@@ -176,7 +176,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
           </div>
 
           {editable ? <AddSongsPanel key={meeting.id} meetingId={meeting.id} recentUsage={recentUsage} initiallyOpen={true} /> : null}
-          <MeetingProgramBoard meetingId={meeting.id} items={typedItems} recentUsage={recentUsage} canManage={editable} />
+          <MeetingProgramBoard meetingId={meeting.id} items={typedItems} recentUsage={recentUsage} canManage={editable} returnHref={`/meetings/${meeting.id}`} />
         </section>
 
         {editable ? <details className="program-secondary card print-hide"><summary>Partajare și administrare</summary><aside className="grid">

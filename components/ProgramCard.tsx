@@ -28,7 +28,9 @@ export function ProgramCard({
   onMove,
   onTransfer,
   first,
-  last
+  last,
+  returnHref,
+  publicSlug
 }: {
   item: MeetingProgramItem;
   meetingId: string;
@@ -43,6 +45,8 @@ export function ProgramCard({
   onTransfer: () => void;
   first: boolean;
   last: boolean;
+  returnHref?: string;
+  publicSlug?: string;
 }) {
   const state = useMeetingState();
   const changed=useProgramChange(item.id);
@@ -64,6 +68,8 @@ export function ProgramCard({
   const {source}=metadata;
   const recentLabel = song ? getRecentUsageTooltip(recentUsage) : null;
   const textItemTitle = itemLabel(item);
+  const songHref = song ? `/songs/${song.id}${returnHref?`?returnTo=${encodeURIComponent(returnHref)}`:""}` : "";
+  const presentationHref = song ? (publicSlug ? `/program/${publicSlug}/songs/${song.id}/present` : `/songs/${song.id}/present${returnHref?`?returnTo=${encodeURIComponent(returnHref)}`:""}`) : "";
 
   return (
     <div
@@ -80,7 +86,7 @@ export function ProgramCard({
           <span className="program-position">{displayPosition}</span>
           <div className="program-title-wrap">
             <div className="program-title">
-              {song ? canManage?<Link href={`/songs/${song.id}`}>{song.title}</Link>:song.title : textItemTitle}
+              {song ? canManage?<Link href={songHref}>{song.title}</Link>:song.title : textItemTitle}
             </div>
             <div className="badges compact-badges">
               {!song && item.custom_title ? <span className="badge muted-badge">{itemTypeLabels[item.moment_kind||item.item_type] || "Element"}</span> : null}
@@ -93,6 +99,7 @@ export function ProgramCard({
               }}>{commonValue?"Cântare în comun":"Cântare comun"}</button>:song&&item.is_congregational?<span className="badge congregational-tag">Cântare în comun</span>:null}/> : null}
 
               {song?<SongLyricsTooltip songId={song.id} title={song.title}/>:null}
+              {song && (canManage || publicSlug) ? <Link className="btn secondary btn-compact program-song-present" href={presentationHref} title={`Prezintă ${song.title}`}>Prezintă</Link> : null}
               {recentLabel ? <RecentUsageIcon usage={recentUsage} /> : null}
             </div>
           </div>

@@ -137,7 +137,8 @@ export function SongPresentation({
   }
 
   return (
-    <div className="presentation-shell" ref={shell}>
+    <div className={`presentation-shell${lyricsOnly?" presentation-song-mode":""}`} ref={shell}>
+      <div className="presentation-fullscreen-reveal" aria-hidden="true" />
       <header className="presentation-topbar">
         <div>
           <div className="presentation-eyebrow">{programKind==='rehearsal'?'Repetiție · prezentare':'Prezentare'}</div>

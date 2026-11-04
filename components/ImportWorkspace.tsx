@@ -1,6 +1,6 @@
 "use client";
 import { useState, type ReactNode } from "react";
-const tabs=[{id:"link",title:"Din link",hint:"O cântare de pe internet"},{id:"files",title:"Din fișiere",hint:"PPTX, PDF, TXT sau ZIP"},{id:"text",title:"Din text",hint:"Scrie sau lipește versurile"}];
+const tabs=[{id:"link",title:"Din link",hint:"O cântare de pe internet"},{id:"files",title:"Din fișiere",hint:"FreeShow, PPTX, PDF, TXT sau ZIP"},{id:"text",title:"Din text",hint:"Scrie sau lipește versurile"}];
 export function ImportWorkspace({link,files,text}:{link:ReactNode;files:ReactNode;text:ReactNode}) {
   const [active,setActive]=useState("link");
   return <div className="import-workspace"><div className="import-method-tabs" role="tablist" aria-label="Alege metoda de import" onKeyDown={e=>{

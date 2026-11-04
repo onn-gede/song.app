@@ -14,6 +14,8 @@ type Props = {
   items: MeetingProgramItem[];
   recentUsage?: Record<string, RecentUsage>;
   canManage?: boolean;
+  returnHref?: string;
+  publicSlug?: string;
 };
 
 function sortItems(items: MeetingProgramItem[]) {
@@ -22,7 +24,7 @@ function sortItems(items: MeetingProgramItem[]) {
 
 
 
-export function MeetingProgramBoard({ meetingId, items, recentUsage = {}, canManage = false }: Props) {
+export function MeetingProgramBoard({ meetingId, items, recentUsage = {}, canManage = false, returnHref, publicSlug }: Props) {
   const state = useMeetingState();
   const [optimistic,setOptimistic]=useState<MeetingProgramItem[]|null>(null);
   const moving=useRef(false);
@@ -89,6 +91,8 @@ export function MeetingProgramBoard({ meetingId, items, recentUsage = {}, canMan
             }}
             isDragging={draggedId === item.id} isDropTarget={dropTarget === item.id && draggedId !== item.id}
             recentUsage={item.song_id ? recentUsage[item.song_id] : undefined}
+            returnHref={returnHref}
+            publicSlug={publicSlug}
           />)}
         </div>
         {canManage ? <div className={`program-drop-zone print-hide ${dropTarget === endTarget ? "is-active" : ""}`} title={`Plasează la sfârșitul ${isBackup ? "listei backup" : "programului principal"}`} aria-label={`Plasează în ${isBackup ? "backup" : "programul principal"}`}>

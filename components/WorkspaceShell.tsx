@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "./Icon";
 const labels:Record<string,string>={dashboard:"Acasă",songs:"Cântări",meetings:"Programe",collections:"Colecții",categories:"Categorii",import:"Import",review:"De verificat",duplicates:"Duplicate",admin:"Administrare",users:"Utilizatori",activity:"Activitate",edit:"Editare",lyrics:"Versuri",verses:"Versete",present:"Prezentare","youth-keys":"Game Tineri"};
+function segmentLabel(parts:string[],part:string,index:number){if(labels[part])return labels[part];if(index===1&&parts[0]==="songs")return "Cântare";if(index===1&&parts[0]==="meetings")return "Program";return index===parts.length-1?"Detalii":"Secțiune";}
 export function WorkspaceShell({sidebar,children}:{sidebar:ReactNode;children:ReactNode}) {
  const [open,setOpen]=useState(false);const [mobile,setMobile]=useState(false);const path=usePathname();const drawer=useRef<HTMLElement>(null);const toggle=useRef<HTMLButtonElement>(null);
  const parts=path.split("/").filter(Boolean);const isPresentation=parts.at(-1)==="present";
@@ -22,7 +23,7 @@ export function WorkspaceShell({sidebar,children}:{sidebar:ReactNode;children:Re
   <aside id="workspace-sidebar" ref={drawer} className={`workspace-sidebar${open?" is-open":""}`} inert={mobile&&!open} aria-hidden={mobile&&!open?true:undefined} role={open?"dialog":undefined} aria-modal={open?true:undefined} aria-label="Navigare" onClick={e=>{if((e.target as HTMLElement).closest('a'))setOpen(false);}}>
    <button className="workspace-mobile-close" aria-label="Închide meniul" onClick={()=>setOpen(false)}><Icon name="close"/></button>{sidebar}
   </aside>
-  <div className="workspace-body"><header className="workspace-topbar"><div className="workspace-breadcrumb"><button ref={toggle} className="workspace-menu-toggle" aria-label="Deschide meniul" aria-expanded={open} aria-controls="workspace-sidebar" onClick={()=>setOpen(!open)}><Icon name="menu"/></button><span>Biblioteca echipei</span><Icon name="chevron" size={14}/><strong>{labels[parts[0]]||"SongApp"}</strong>{parts.length>1?<><Icon name="chevron" size={14}/><span>{labels[parts.at(-1)!]||"Detalii"}</span></>:null}</div><Link href="/songs" className="workspace-top-search"><Icon name="search" size={18}/><span>Caută o cântare</span></Link></header>
+  <div className="workspace-body"><header className="workspace-topbar"><nav className="workspace-breadcrumb" aria-label="Breadcrumb"><button ref={toggle} className="workspace-menu-toggle" aria-label="Deschide meniul" aria-expanded={open} aria-controls="workspace-sidebar" onClick={()=>setOpen(!open)}><Icon name="menu"/></button><Link href="/dashboard">Biblioteca echipei</Link>{parts.map((part,index)=>{const href=`/${parts.slice(0,index+1).join("/")}`;const label=segmentLabel(parts,part,index);return <span className="workspace-breadcrumb-part" key={href}><Icon name="chevron" size={14}/><Link href={href} aria-current={index===parts.length-1?"page":undefined} className={index===parts.length-1?"current":undefined}>{label}</Link></span>;})}</nav><Link href="/songs" className="workspace-top-search"><Icon name="search" size={18}/><span>Caută o cântare</span></Link></header>
    <main id="main-content" className="main-v44">{children}</main>
   </div>
  </div>;

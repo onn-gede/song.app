@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SongPresentation } from "@/components/SongPresentation";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = { params: Promise<{ id: string }>; searchParams: Promise<{returnTo?:string}> };
 
 function labelForSection(section: any, index: number) {
   if (section.section_label) return section.section_label;
@@ -17,8 +17,9 @@ function labelForSection(section: any, index: number) {
   return `Strofa ${index + 1}`;
 }
 
-export default async function SongPresentationPage({ params }: PageProps) {
+export default async function SongPresentationPage({ params,searchParams }: PageProps) {
   const { id } = await params;
+  const {returnTo}=await searchParams;
   const supabase = await createClient();
 
   const [{ data: song }, { data: sections }] = await Promise.all([
@@ -30,7 +31,7 @@ export default async function SongPresentationPage({ params }: PageProps) {
 
   if(!(sections||[]).some(s=>s.content?.trim())&&!song.lyrics_text?.trim()){
     const {data:file}=await supabase.from('song_files').select('id').eq('song_id',id).eq('presentation_only_v58',true).eq('upload_complete_v58',true).not('preview_path_v58','is',null).order('created_at',{ascending:false}).limit(1).maybeSingle();
-    if(file)redirect(`/songs/${id}/files/${file.id}`);
+    if(file)redirect(`/songs/${id}/files/${file.id}${returnTo?`?returnTo=${encodeURIComponent(returnTo)}`:""}`);
   }
   const slides = (sections || []).map((section: any, index: number) => ({
     id: section.id || `section-${index}`,
@@ -39,5 +40,6 @@ export default async function SongPresentationPage({ params }: PageProps) {
     lyricsOnly: true,
   }));
 
-  return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} defaultKey={song.default_key} lyricsOnly />;
+  const safeReturn=/^\/meetings\/[0-9a-f-]+$/i.test(returnTo||"")?returnTo:undefined;
+  return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} defaultKey={song.default_key} lyricsOnly returnHref={safeReturn} />;
 }

@@ -79,6 +79,7 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
           {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/lyrics`}>Versuri</Link> : null}
           {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/verses`}>Versete</Link> : null}
           <Link className="btn secondary btn-compact" href={`/songs/${song.id}/present`}>Prezentare</Link>
+          <a className="btn secondary btn-compact" href={`/api/songs/${song.id}/freeshow`} download>FreeShow .show ↓</a>
           {editable ? <AddSongToMeeting sourceOptions={(sources||[]).map((s:any)=>({id:s.id,name:(Array.isArray(s.song_collections)?s.song_collections[0]:s.song_collections)?.name||"Colecție",number:s.song_number||null,color:(Array.isArray(s.song_collections)?s.song_collections[0]:s.song_collections)?.color}))} songId={song.id} songTitle={song.title} /> : null}
         </div>
       </div>
