@@ -69,6 +69,18 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       await asUser(VIEWER);await assert.rejects(()=>scalar("select create_title_only_song_v79($1,'Interzis')",[collection]));await assert.rejects(()=>scalar("select set_meeting_kind_v79($1,'rehearsal')",[official]));
       await asUser(ADMIN);await db.query('delete from meetings where id=any($1::uuid[])',[[official,rehearsal,copy]]);await scalar('select delete_song_v78($1)',[song]);await db.query('delete from song_collections where id=$1',[collection]);
     });
+    await t.test('v83 normalizes and confirms keys on every database path and validates YouTube links',async()=>{
+      await asUser(ADMIN);
+      const song=await scalar("insert into songs(title,default_key,youtube_url) values('v83 tonalitate','  F#   minor  ','https://www.youtube.com/watch?v=dQw4w9WgXcQ') returning id");
+      assert.equal(await scalar('select default_key from songs where id=$1',[song]),'F# minor');
+      await assert.rejects(()=>db.query("update songs set youtube_url='https://example.com/video' where id=$1",[song]));
+      const meeting=await scalar("select create_meeting('v83 tonalitate',null,now()+interval '1 day',null)");
+      const item=await scalar("select add_song_to_meeting($1,$2,false,'  G   minor  ',null)",[meeting,song]);
+      assert.equal(await scalar('select selected_key from meeting_items where id=$1',[item]),'G minor');
+      const snapshot=await scalar("select update_program_song_v62($1,$2,jsonb_build_object('selected_key','  A#  ','responsible_name','','notes','','performance_structure',''))",[meeting,item]);
+      assert.equal(snapshot.items.find((entry:any)=>entry.id===item).selected_key,'A#');
+      await db.query('delete from meetings where id=$1',[meeting]);await db.query('delete from songs where id=$1',[song]);
+    });
     await t.test('v80 applies one Moments style and suggests the next collection number',async()=>{
       await asUser(ADMIN);
       const collection=await scalar("insert into song_collections(name,short_code,source_type) values('v80 Numere','V80','manual') returning id");

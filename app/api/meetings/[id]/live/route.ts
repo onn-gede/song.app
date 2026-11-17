@@ -1,5 +1,6 @@
 import {createClient} from '@/lib/supabase/server';
 import {revalidatePath} from 'next/cache';
+import {normalizeMusicalKey} from '@/lib/musical-key';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const headers={'Cache-Control':'private, no-store'};
 function failure(error:{code?:string}){
@@ -22,13 +23,15 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
  const move=body.action==='move'&&uuid.test(String(body.itemId||''))&&typeof body.isBackup==='boolean'&&(body.beforeId===null||body.beforeId===undefined||uuid.test(String(body.beforeId)));
  const common=body.action==='common'&&uuid.test(String(body.itemId||''))&&typeof body.enabled==='boolean';
  const review=body.action==='review'&&uuid.test(String(body.contributionId||''))&&typeof body.accept==='boolean';
+ let requestedKey:string|null=null;try{requestedKey=normalizeMusicalKey(body.selectedKey);}catch{return Response.json({error:'Tonalitatea poate avea maximum 20 de caractere.'},{status:400,headers});}
  const add=body.action==='add'&&uuid.test(String(body.songId||''))&&uuid.test(String(body.requestId||''))&&(!body.sourceId||uuid.test(String(body.sourceId)))&&typeof body.isBackup==='boolean';
  if(!move&&!common&&!review&&!add)return Response.json({error:'Acțiune invalidă.'},{status:400,headers});
  try{
-  const db=await createClient();const {data,error}=move?await db.rpc('move_program_item_v65',{p_meeting:id,p_item:body.itemId,p_backup:body.isBackup,p_before:body.beforeId||null}):add?await db.rpc('add_program_song_v57',{p_meeting_id:id,p_song_id:body.songId,p_request_id:body.requestId,p_source_id:body.sourceId||null,p_is_backup:body.isBackup,p_selected_key:body.selectedKey||null}):common
+  const db=await createClient();const {data,error}=move?await db.rpc('move_program_item_v65',{p_meeting:id,p_item:body.itemId,p_backup:body.isBackup,p_before:body.beforeId||null}):add?await db.rpc('add_program_song_v57',{p_meeting_id:id,p_song_id:body.songId,p_request_id:body.requestId,p_source_id:body.sourceId||null,p_is_backup:body.isBackup,p_selected_key:requestedKey}):common
    ?await db.rpc('set_program_common_v54',{p_meeting_id:id,p_item_id:body.itemId,p_enabled:body.enabled})
    :await db.rpc('review_program_contribution_v54',{p_meeting_id:id,p_contribution_id:body.contributionId,p_accept:body.accept});
   if(error)return failure(error);
+  if(add&&requestedKey){const saved=(data as any)?.snapshot?.items?.find((item:any)=>item.id===(data as any)?.itemId);if(!saved||normalizeMusicalKey(saved.selected_key)!==requestedKey)return Response.json({error:'Cântarea a fost adăugată, dar tonalitatea nu a putut fi confirmată. Deschide elementul și salveaz-o din nou.'},{status:409,headers});}
   revalidatePath('/songs');revalidatePath('/songs/[id]','page');revalidatePath('/dashboard');
   revalidatePath(`/meetings/${id}`);revalidatePath('/program','layout');
   return Response.json(common||move?{snapshot:data}:data,{headers});

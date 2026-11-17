@@ -6,6 +6,8 @@ import { revalidatePath, refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { buildStableBibleSourceUrl, getLocalFreeBibleText } from "@/lib/freeBibleText";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
+import { normalizeMusicalKey } from "@/lib/musical-key";
+import { normalizeYouTubeUrl } from "@/lib/youtube";
 
 function readString(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
@@ -42,21 +44,29 @@ export async function updateSongMetadataAction(formData: FormData) {
   }
 
   const supabase = (await requireProfile("editor")).supabase;
+  const defaultKey = normalizeMusicalKey(formData.get("default_key"));
+  const youtubeUrl = normalizeYouTubeUrl(formData.get("youtube_url"));
 
   // Folosim update direct, nu RPC, ca să evităm problemele de PostgREST schema cache
   // când adăugăm/înlocuim funcții SQL în timpul dezvoltării.
-  const { error: metadataError } = await supabase
+  const { data: savedMetadata, error: metadataError } = await supabase
     .from("songs")
     .update({
       title,
-      default_key: readNullableString(formData, "default_key"),
+      default_key: defaultKey,
+      youtube_url: youtubeUrl,
       bpm,
       structure: readNullableString(formData, "structure"),
       notes: readNullableString(formData, "notes"),
     })
-    .eq("id", songId);
+    .eq("id", songId)
+    .select("id,default_key,youtube_url")
+    .single();
 
   if (metadataError) throw new Error(metadataError.message);
+  if (!savedMetadata || savedMetadata.default_key !== defaultKey || savedMetadata.youtube_url !== youtubeUrl) {
+    throw new Error("Tonalitatea sau linkul YouTube nu au putut fi confirmate. Reîncearcă salvarea.");
+  }
 
   const { error: deleteError } = await supabase
     .from("song_categories")

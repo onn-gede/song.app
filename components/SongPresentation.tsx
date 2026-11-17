@@ -71,7 +71,8 @@ export function SongPresentation({
   }, [slides, fallbackLyrics,lyricsOnly]);
 
   const [index, setIndex] = useState(0);
-  const [fontScale, setFontScale] = useState(92);
+  const [fontScale, setFontScale] = useState(105);
+  const [controlsVisible,setControlsVisible]=useState(false);
   const [flash,setFlash]=useState(false);const previousSlides=useRef<string|null>(null);
   const contentVersion=JSON.stringify(allSlides);
   useEffect(()=>{if(previousSlides.current!==null&&previousSlides.current!==contentVersion)setFlash(true);previousSlides.current=contentVersion;},[contentVersion]);
@@ -85,12 +86,12 @@ export function SongPresentation({
   const canGoNext = index < allSlides.length - 1;
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("songapp:presentation-font-scale");
-    if (saved) setFontScale(clamp(Number(saved) || 92, 60, 115));
+    const saved = window.localStorage.getItem("songapp:presentation-font-scale-v83");
+    if (saved) setFontScale(clamp(Number(saved) || 105, 70, 135));
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("songapp:presentation-font-scale", String(fontScale));
+    window.localStorage.setItem("songapp:presentation-font-scale-v83", String(fontScale));
   }, [fontScale]);
 
   useEffect(() => {
@@ -112,11 +113,11 @@ export function SongPresentation({
       if (event.key === "End") setIndex(Math.max(0, allSlides.length - 1));
       if ((event.ctrlKey || event.metaKey) && ["+", "="].includes(event.key)) {
         event.preventDefault();
-        setFontScale((value) => clamp(value + 5, 60, 115));
+        setFontScale((value) => clamp(value + 5, 70, 135));
       }
       if ((event.ctrlKey || event.metaKey) && event.key === "-") {
         event.preventDefault();
-        setFontScale((value) => clamp(value - 5, 60, 115));
+        setFontScale((value) => clamp(value - 5, 70, 135));
       }
     };
 
@@ -137,8 +138,8 @@ export function SongPresentation({
   }
 
   return (
-    <div className={`presentation-shell${lyricsOnly?" presentation-song-mode":""}`} ref={shell}>
-      <div className="presentation-fullscreen-reveal" aria-hidden="true" />
+    <div className={`presentation-shell${lyricsOnly?" presentation-song-mode":""}${controlsVisible?" presentation-controls-visible":""}`} ref={shell}>
+      <button className="presentation-fullscreen-reveal" type="button" aria-label="Arată comenzile prezentării" onClick={()=>setControlsVisible(value=>!value)} />
       <header className="presentation-topbar">
         <div>
           <div className="presentation-eyebrow">{programKind==='rehearsal'?'Repetiție · prezentare':'Prezentare'}</div>
@@ -147,10 +148,10 @@ export function SongPresentation({
         <div className="presentation-actions">
           {flash?<button className="presentation-mini-button presentation-acknowledge" type="button" onClick={()=>setFlash(false)}>Am văzut</button>:null}
           <span>{index + 1} / {allSlides.length}</span>
-          <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value - 5, 60, 115))}>A−</button>
+          <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value - 5, 70, 135))}>A−</button>
           <span className="presentation-scale">{fontScale}%</span>
-          <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value + 5, 60, 115))}>A+</button>
-          <button className="presentation-mini-button" type="button" onClick={() => setFontScale(92)}>Reset</button>
+          <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value + 5, 70, 135))}>A+</button>
+          <button className="presentation-mini-button" type="button" onClick={() => setFontScale(105)}>Reset</button>
           <button className="presentation-mini-button" type="button" onClick={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void shell.current?.requestFullscreen?.();}}>Ecran complet</button>
           <Link className="presentation-link" href={exitHref}>Ieșire</Link>
         </div>
@@ -161,7 +162,7 @@ export function SongPresentation({
         <div
           className="presentation-lyrics"
           style={{
-            fontSize: `clamp(24px, ${(5.7 * combinedScale).toFixed(2)}vw, ${(82 * combinedScale).toFixed(0)}px)`,
+            fontSize: `clamp(30px, ${(6.35 * combinedScale).toFixed(2)}vw, ${(104 * combinedScale).toFixed(0)}px)`,
             lineHeight: currentLines.length > 7 ? 1.16 : 1.2,
           }}
         >

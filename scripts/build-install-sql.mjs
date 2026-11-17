@@ -67,3 +67,4 @@ fs.writeFileSync('supabase/updates/UPDATE-V74.sql','-- După v67 / v72 / v73, pe
 fs.writeFileSync('supabase/updates/UPDATE-V78.sql',read('063_v78_song_management.sql'));
 fs.writeFileSync('supabase/updates/UPDATE-V79.sql','-- Pachet cumulativ peste v77. Include v78 și v79; nu rula separat UPDATE-V78.sql.\n'+read('063_v78_song_management.sql')+'\n'+read('064_v79_rehearsals_projection_authorship.sql'));
 fs.writeFileSync('supabase/updates/UPDATE-V80.sql','-- Pachet cumulativ peste v77. Include v78, v79 și v80; nu rula separat UPDATE-V78.sql sau UPDATE-V79.sql.\n'+read('063_v78_song_management.sql')+'\n'+read('064_v79_rehearsals_projection_authorship.sql')+'\n'+read('065_v80_moments_live_labels.sql'));
+fs.writeFileSync('supabase/updates/UPDATE-V83.sql','-- Actualizare v83 peste v80. Păstrează toate datele și adaugă salvarea robustă a tonalității plus linkul YouTube.\n'+read('066_v83_tonality_youtube.sql'));

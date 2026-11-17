@@ -936,6 +936,7 @@ export async function importTextSongAction(formData: FormData) {
     const {supabase}=await requireProfile("editor");const bpm=readNullableInteger(formData,"bpm");
     const {data:createdSongId,error}=await supabase.rpc("create_title_only_song_v79",{p_collection:collectionId,p_title:title,p_number:songNumber,p_default_key:readNullableString(formData,"default_key"),p_bpm:bpm,p_structure:readNullableString(formData,"structure"),p_notes:readNullableString(formData,"notes")});
     if(error||!createdSongId)throw new Error(error?.message||"Cântarea nu a putut fi adăugată.");
+    await assignInitialCategory(String(createdSongId), formData);
     revalidatePath("/dashboard");revalidatePath("/songs");revalidatePath("/collections");refresh();redirect(`/songs/${createdSongId}`);
   }
   const parsed: ParsedImport = {
@@ -948,6 +949,7 @@ export async function importTextSongAction(formData: FormData) {
     storagePath: null
   };
   const createdSongId = await createSongFromParsedImport(parsed, collectionId, formData, { title, songNumber });
+  await assignInitialCategory(String(createdSongId), formData);
 
   revalidatePath("/dashboard");
   revalidatePath("/songs");
@@ -955,6 +957,15 @@ export async function importTextSongAction(formData: FormData) {
   revalidatePath("/collections");
   refresh();
   redirect(`/songs/${createdSongId}/lyrics`);
+}
+
+async function assignInitialCategory(songId: string, formData: FormData) {
+  const categoryId = readString(formData, "category_id");
+  if (!categoryId) return;
+  if (!/^[0-9a-f-]{36}$/i.test(categoryId)) throw new Error("Categoria selectată nu este validă.");
+  const { supabase } = await requireProfile("editor");
+  const { error } = await supabase.rpc("assign_song_category_v62", { p_song_id: songId, p_category_id: categoryId });
+  if (error) throw new Error(error.message);
 }
 
 export async function importFreeShowAction(formData: FormData) {

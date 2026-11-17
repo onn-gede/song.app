@@ -14,10 +14,11 @@ import {
   type MeetingOption
 } from "@/app/(app)/meetings/actions";
 
-export function AddSongToMeeting({ songId, songTitle, compact = false,sourceOptions=[] }: { songId: string; songTitle: string; compact?: boolean;sourceOptions?:{id:string;name:string;number:string|null;color?:string|null}[] }) {
+export function AddSongToMeeting({ songId, songTitle, defaultKey = "", compact = false,sourceOptions=[] }: { songId: string; songTitle: string; defaultKey?:string|null; compact?: boolean;sourceOptions?:{id:string;name:string;number:string|null;color?:string|null}[] }) {
   const receipt=useRef<{key:string;id:string}|null>(null);const requestId=useRef('');const addLock=useRef(false);const [sourceId,setSourceId]=useState(sourceOptions[0]?.id||'');
   const creationLock=useRef(false);
   const [open, setOpen] = useState(false);
+  const [selectedKey,setSelectedKey]=useState(defaultKey||"");
   const [meetings, setMeetings] = useState<MeetingOption[]>([]);
   const [createdMeetingId, setCreatedMeetingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -38,10 +39,10 @@ export function AddSongToMeeting({ songId, songTitle, compact = false,sourceOpti
   }, [open]);
 
   function addToMeeting(meetingId: string, isBackup: boolean) {
-    if(addLock.current)return;addLock.current=true;const key=[meetingId,songId,sourceId,isBackup].join(':');if(receipt.current?.key!==key)receipt.current={key,id:crypto.randomUUID()};setError(null);setMessage(null);setCreatedMeetingId(null);
+    if(addLock.current)return;addLock.current=true;const key=[meetingId,songId,sourceId,isBackup,selectedKey.trim()].join(':');if(receipt.current?.key!==key)receipt.current={key,id:crypto.randomUUID()};setError(null);setMessage(null);setCreatedMeetingId(null);
     startTransition(async () => {
       try {
-        await addProgramSong({ meetingId, songId, isBackup,sourceId:sourceId||null,requestId:receipt.current!.id });receipt.current=null;setCreatedMeetingId(meetingId);
+        await addProgramSong({ meetingId, songId, isBackup,sourceId:sourceId||null,selectedKey:selectedKey.trim()||null,requestId:receipt.current!.id });receipt.current=null;setCreatedMeetingId(meetingId);
         setMessage(isBackup ? "Cântarea a fost adăugată ca backup." : "Cântarea a fost adăugată în program.");
         /* confirmed item already returned */
       } catch (error) {
@@ -69,7 +70,7 @@ export function AddSongToMeeting({ songId, songTitle, compact = false,sourceOpti
           meetingType: meetingType || null,
           meetingDate,
           songId,sourceId:sourceId||null,
-          isBackup,requestId:requestId.current,programKind
+          isBackup,requestId:requestId.current,programKind,selectedKey:selectedKey.trim()||null
         });
 
         receipt.current=null;setCreatedMeetingId(meetingId);
@@ -84,7 +85,7 @@ export function AddSongToMeeting({ songId, songTitle, compact = false,sourceOpti
 
   return (
     <>
-      <button className={compact ? "song-add-button" : "btn secondary btn-compact"} type="button" aria-label={`Adaugă ${songTitle} în program`} onClick={() => {requestId.current=crypto.randomUUID();creationLock.current=false;setMessage(null);setError(null);setCreatedMeetingId(null);setOpen(true);}}>
+      <button className={compact ? "song-add-button" : "btn secondary btn-compact"} type="button" aria-label={`Adaugă ${songTitle} în program`} onClick={() => {requestId.current=crypto.randomUUID();creationLock.current=false;setSelectedKey(defaultKey||"");setMessage(null);setError(null);setCreatedMeetingId(null);setOpen(true);}}>
         {compact ? <Icon name="plus" size={18}/> : "Adaugă în program"}
       </button>
 
@@ -99,6 +100,10 @@ export function AddSongToMeeting({ songId, songTitle, compact = false,sourceOpti
               </div>
               <button className="btn secondary" type="button" onClick={() => setOpen(false)}>Închide</button>
             </div>
+            <label className="label add-song-key">Tonalitate pentru această apariție
+              <input className="input" value={selectedKey} onChange={event=>setSelectedKey(event.target.value)} maxLength={20} inputMode="text" placeholder="Ex.: G, Em, F#" />
+              <small>Este salvată în program; tonalitatea implicită a cântării rămâne neschimbată.</small>
+            </label>
 
             {message ? <p className="success">{message} {createdMeetingId ? <Link href={`/meetings/${createdMeetingId}`}>Deschide programul</Link> : null}</p> : null}
             {error ? <p className="error">{error}</p> : null}
@@ -107,7 +112,7 @@ export function AddSongToMeeting({ songId, songTitle, compact = false,sourceOpti
               <section className="card-soft">
                 <h3>Program existent</h3>
                 <div className="list compact-list">
-                  {meetings.length === 0 ? <p className="muted">Nu există programe încă.</p> : null}
+                  {meetings.length === 0 ? <p className="muted">Nu există programe active sau viitoare.</p> : null}
                   {meetings.map((meeting) => (
                     <div className="row compact-row" key={meeting.id}>
                       <div className="row-main">

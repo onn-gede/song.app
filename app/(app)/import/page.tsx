@@ -6,6 +6,7 @@ import { ImportWorkspace } from "@/components/ImportWorkspace";
 import { ImportFilesWizard } from "@/components/ImportFilesWizard";
 import { importTextSongAction } from "./actions";
 import { FreeShowImportWizard } from "@/components/FreeShowImportWizard";
+import { LyricsPasteField } from "@/components/LyricsPasteField";
 
 const sourceTypes = [
   ["txt", "Text simplu"],
@@ -53,13 +54,12 @@ function SongMetadataFields() {
 
 export default async function ImportPage() {
   const { supabase } = await requireProfile("editor");
-  const { data: collections, error } = await supabase
-    .from("song_collections")
-    .select("id,name,short_code,source_type")
-    .eq("is_active", true)
-    .order("name");
+  const [{ data: collections, error }, { data: categories, error: categoriesError }] = await Promise.all([
+    supabase.from("song_collections").select("id,name,short_code,source_type").eq("is_active", true).order("name"),
+    supabase.from("categories").select("id,name").order("name")
+  ]);
 
-  if (error) throw new Error("Colecțiile nu pot fi încărcate momentan.");
+  if (error || categoriesError) throw new Error("Colecțiile și categoriile nu pot fi încărcate momentan.");
 
   return (
     <>
@@ -83,8 +83,14 @@ export default async function ImportPage() {
               <input className="input" name="title" placeholder="ex: Când furtuni în viață-mi vin" required />
             </label>
 
-            <label className="label">Versuri <span className="muted small">(opțional)</span>
-              <textarea className="textarea import-lyrics" name="lyrics_text" placeholder={"Strofa 1\n...\n\nRefren\n...\n\nStrofa 2\n..."} />
+            <LyricsPasteField />
+
+            <label className="label">Categorie inițială <span className="muted small">(opțional)</span>
+              <select className="select" name="category_id" defaultValue="">
+                <option value="">Fără categorie pentru moment</option>
+                {(categories || []).map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+              </select>
+              <small>Poți adăuga ulterior aceeași cântare în mai multe categorii.</small>
             </label>
 
             <details className="import-optional-fields"><summary>Detalii opționale și colecție</summary><div className="form-grid">

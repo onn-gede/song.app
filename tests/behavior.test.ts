@@ -121,3 +121,19 @@ test('v62 arrangement preserves indexed verse order, repeats refrains and change
  assert.deepEqual(arrangeSections(sections,'S2,R,S1').map(x=>x.id),['s2','r','s1']);assert.equal(normalizePerformanceStructure('s1, r, s2'),'S1,R,S2');assert.throws(()=>normalizePerformanceStructure('invalid'));assert.deepEqual(arrangeSections(sections,'S99'),sections);
  assert.deepEqual(changedProgramIds(null,{a:'new'}),[]);assert.deepEqual(changedProgramIds({a:'old',b:'same'},{a:'new',b:'same',c:'added'}),['a','c']);
 });
+
+test('v83 musical keys are trimmed consistently and invalid long values are rejected',async()=>{
+ const {normalizeMusicalKey}=await import('../lib/musical-key.js');
+ assert.equal(normalizeMusicalKey('  F#   minor  '),'F# minor');
+ assert.equal(normalizeMusicalKey('   '),null);
+ assert.throws(()=>normalizeMusicalKey('A'.repeat(21)));
+});
+
+test('v83 YouTube links accept common formats and produce privacy embeds',async()=>{
+ const {normalizeYouTubeUrl,youtubeVideoId,youtubePrivacyEmbedUrl}=await import('../lib/youtube.js');
+ assert.equal(youtubeVideoId('https://youtu.be/dQw4w9WgXcQ?t=3'),'dQw4w9WgXcQ');
+ assert.equal(youtubeVideoId('https://www.youtube.com/shorts/dQw4w9WgXcQ'),'dQw4w9WgXcQ');
+ assert.equal(normalizeYouTubeUrl('https://music.youtube.com/watch?v=dQw4w9WgXcQ'),'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+ assert.equal(youtubePrivacyEmbedUrl('https://youtube.com/watch?v=dQw4w9WgXcQ'),'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0');
+ assert.throws(()=>normalizeYouTubeUrl('https://example.com/watch?v=dQw4w9WgXcQ'));
+});

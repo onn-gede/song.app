@@ -6,6 +6,7 @@ import { requireProfile } from "@/lib/auth";
 import { revalidatePath, refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { meetingDateISO } from "@/lib/meeting-date";
+import { normalizeMusicalKey } from "@/lib/musical-key";
 
 export type MeetingOption = {
   id: string;
@@ -60,8 +61,11 @@ export async function listMeetingsAction(): Promise<MeetingOption[]> {
   const { data, error } = await supabase
     .from("meetings")
     .select("id,title,meeting_date,status,is_template,program_kind")
-    .order("meeting_date", { ascending: false })
-    .limit(30);
+    .eq("is_template", false)
+    .neq("status", "archived")
+    .gte("meeting_date", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+    .order("meeting_date", { ascending: true })
+    .limit(50);
 
   if (error) throw new Error(error.message);
   return (data || []) as MeetingOption[];
@@ -112,10 +116,15 @@ export async function addSongToMeetingAction(input: {
   return committedMeetingSnapshot(input.meetingId);
 }
 
-export async function createMeetingAndAddSongAction(input:{title:string;meetingType?:string|null;meetingDate:string;songId:string;isBackup?:boolean;requestId:string;sourceId?:string|null;programKind?:"official"|"rehearsal"}) {
+export async function createMeetingAndAddSongAction(input:{title:string;meetingType?:string|null;meetingDate:string;songId:string;isBackup?:boolean;requestId:string;sourceId?:string|null;selectedKey?:string|null;programKind?:"official"|"rehearsal"}) {
  const {supabase}=await requireProfile("editor");
  const {data,error}=await supabase.rpc('create_meeting_v79',{p_request_id:input.requestId,p_title:input.title.trim(),p_meeting_type:input.meetingType||null,p_meeting_date:meetingDateISO(input.meetingDate),p_notes:null,p_program_kind:input.programKind||'official',p_source_id:input.sourceId||null,p_song_id:input.songId,p_is_backup:!!input.isBackup});
  if(error||!data)throw new Error(error?.message||'Nu am putut crea programul.');
+ const key=normalizeMusicalKey(input.selectedKey);
+ if(key){
+  const {data:item,error:itemError}=await supabase.from('meeting_items').update({selected_key:key}).eq('meeting_id',data).eq('song_id',input.songId).eq('is_backup',!!input.isBackup).select('id,selected_key').maybeSingle();
+  if(itemError||!item||item.selected_key!==key)throw new Error(itemError?.message||'Programul a fost creat, dar tonalitatea nu a putut fi confirmată. Deschide programul și salveaz-o din nou.');
+ }
  revalidatePath('/meetings');revalidatePath(`/meetings/${data}`);return data as string;
 }
 
@@ -388,15 +397,17 @@ export async function updateItemResponsibleAction(formData: FormData) {
   const itemId = readString(formData,"item_id");
   const name = readString(formData,"responsible_name");
   const notes = readString(formData,"notes");
-  const musicalKey=readString(formData,"selected_key");
-  if(musicalKey.length>20)throw new Error("Tonalitatea poate avea maximum 20 de caractere.");
+  const musicalKey=normalizeMusicalKey(formData.get("selected_key"));
   if (notes.length > 5000) throw new Error("Observațiile pot avea maximum 5000 de caractere.");
   if (!meetingId || !itemId || name.length > 120) throw new Error("Responsabilul poate avea maximum 120 de caractere.");
-  const {error}=await supabase.rpc('update_program_song_v62',{p_meeting_id:meetingId,p_item_id:itemId,p_data:{responsible_name:name,notes,selected_key:musicalKey,performance_structure:readString(formData,'performance_structure'),verse_count:readString(formData,'verse_count'),...(formData.has('selected_source_id')?{selected_source_id:readString(formData,'selected_source_id')}:{})}});
+  const {data,error}=await supabase.rpc('update_program_song_v62',{p_meeting_id:meetingId,p_item_id:itemId,p_data:{responsible_name:name,notes,selected_key:musicalKey||'',performance_structure:readString(formData,'performance_structure'),verse_count:readString(formData,'verse_count'),...(formData.has('selected_source_id')?{selected_source_id:readString(formData,'selected_source_id')}:{})}});
   if (error) throw new Error(error.message);
   revalidatePath(`/meetings/${meetingId}`); revalidatePath("/program", "layout");
   refresh();
-  return committedMeetingSnapshot(meetingId);
+  const snapshot=(data||await committedMeetingSnapshot(meetingId)) as MeetingSnapshot;
+  const saved=snapshot.items?.find(item=>item.id===itemId);
+  if(!saved||normalizeMusicalKey(saved.selected_key)!==musicalKey)throw new Error("Tonalitatea nu a putut fi confirmată în program. Reîncearcă salvarea.");
+  return snapshot;
 }
 
 // One browser action per search. Usage is loaded only when there are results,

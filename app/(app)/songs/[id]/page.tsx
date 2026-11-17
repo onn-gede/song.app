@@ -8,6 +8,7 @@ import { AddSongToMeeting } from "@/components/AddSongToMeeting";
 import { DeleteSongButton } from "@/components/DeleteSongButton";
 import { buildStableBibleSourceUrl } from "@/lib/freeBibleText";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
+import { YouTubePlayer } from "@/components/YouTubePlayer";
 
 type PageProps = { params: Promise<{ id: string }>; searchParams: Promise<{usage_page?: string}> };
 
@@ -80,7 +81,7 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
           {editable ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}/verses`}>Versete</Link> : null}
           <Link className="btn secondary btn-compact" href={`/songs/${song.id}/present`}>Prezentare</Link>
           <a className="btn secondary btn-compact" href={`/api/songs/${song.id}/freeshow`} download>FreeShow .show ↓</a>
-          {editable ? <AddSongToMeeting sourceOptions={(sources||[]).map((s:any)=>({id:s.id,name:(Array.isArray(s.song_collections)?s.song_collections[0]:s.song_collections)?.name||"Colecție",number:s.song_number||null,color:(Array.isArray(s.song_collections)?s.song_collections[0]:s.song_collections)?.color}))} songId={song.id} songTitle={song.title} /> : null}
+          {editable ? <AddSongToMeeting sourceOptions={(sources||[]).map((s:any)=>({id:s.id,name:(Array.isArray(s.song_collections)?s.song_collections[0]:s.song_collections)?.name||"Colecție",number:s.song_number||null,color:(Array.isArray(s.song_collections)?s.song_collections[0]:s.song_collections)?.color}))} songId={song.id} songTitle={song.title} defaultKey={song.default_key} /> : null}
         </div>
       </div>
 
@@ -104,6 +105,7 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
         </section>
 
         <aside className="grid song-side-panel">
+          {song.youtube_url ? <YouTubePlayer url={song.youtube_url} title={song.title} /> : editable ? <section className="card"><h2>Audio YouTube</h2><p className="muted small">Nu există încă un link audio asociat.</p><Link className="btn secondary btn-compact" href={`/songs/${song.id}/edit`}>Adaugă link YouTube</Link></section> : null}
           <SongUsageHistory editable={editable} songId={id} history={history as UsageHistory | null} page={usagePage} error={!!historyError} />
           <section className="card">
             <div className="inline-form" style={{ justifyContent: "space-between", alignItems: "center" }}>

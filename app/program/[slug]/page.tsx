@@ -20,8 +20,28 @@ import { PublicContributionPanel } from "@/components/PublicContributionPanel";
 import { PublicTextContributionForm } from "@/components/PublicTextContributionForm";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/format";
+import type { Metadata } from "next";
 
 type PageProps = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("get_shared_meeting_v79", { p_public_slug: slug });
+  const meeting = (data as any)?.meeting;
+  if (!meeting?.title) return { title: "Program partajat | SongApp BCBgiroc" };
+  const title = `${meeting.title} | SongApp BCBgiroc`;
+  const description = `Programul ${meeting.title} · ${formatDateTime(meeting.meeting_date)}`;
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+  const url = `${base}/program/${encodeURIComponent(slug)}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, siteName: "SongApp BCBgiroc", type: "website" },
+    twitter: { card: "summary", title, description }
+  };
+}
 
 type PublicMeetingItem = {
  id:string;performance_structure?:string|null;

@@ -12,7 +12,7 @@ export default async function SongEditPage({ params }: PageProps) {
   const supabase = await createClient();
 
   const [{ data: song }, { data: categories }, { data: selectedCategories }, { data: sources }] = await Promise.all([
-    supabase.from("songs").select("id,title,default_key,bpm,structure,notes").eq("id", id).single(),
+    supabase.from("songs").select("id,title,default_key,bpm,structure,notes,youtube_url").eq("id", id).single(),
     supabase.from("categories").select("id,name,slug").order("name"),
     supabase.from("song_categories").select("category_id").eq("song_id", id),
     supabase.from("song_sources").select("id,collection_id,song_number,source_title,song_collections(name,short_code)").eq("song_id", id)
@@ -59,6 +59,10 @@ export default async function SongEditPage({ params }: PageProps) {
           </div>
           <label className="label">Structură
             <input className="input" name="structure" defaultValue={song.structure || ""} placeholder="ex: V1, R, V2, R, Bridge, R" />
+          </label>
+          <label className="label">Link YouTube <span className="muted small">(opțional)</span>
+            <input className="input" name="youtube_url" type="url" inputMode="url" defaultValue={song.youtube_url || ""} placeholder="https://www.youtube.com/watch?v=..." />
+            <small>Acceptă linkuri youtube.com, youtu.be, Shorts, Live sau Embed.</small>
           </label>
           <label className="label">Note interne
             <textarea className="textarea" name="notes" defaultValue={song.notes || ""} placeholder="Observații pentru echipă, intrare, tranziție, mod de cântare" />
