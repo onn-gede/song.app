@@ -81,6 +81,27 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       assert.equal(snapshot.items.find((entry:any)=>entry.id===item).selected_key,'A#');
       await db.query('delete from meetings where id=$1',[meeting]);await db.query('delete from songs where id=$1',[song]);
     });
+    await t.test('v84 playlists stay outside statistics, public media is scoped and active meetings are editable',async()=>{
+      await asUser(ADMIN);
+      const first=await scalar("insert into songs(title,youtube_url) values('v84 prima','https://youtu.be/dQw4w9WgXcQ') returning id");
+      const second=await scalar("insert into songs(title) values('v84 a doua') returning id");
+      const playlist=await scalar("select create_rehearsal_playlist_v84('Idei v84','Pentru repetiție')");
+      await db.exec('reset role');assert.ok((await scalar('select backup_tables_v64()')).includes('rehearsal_playlist_items_v84'));await asUser(ADMIN);
+      await scalar('select add_rehearsal_playlist_song_v84($1,$2,null)',[playlist,first]);
+      await scalar("select add_rehearsal_playlist_song_v84($1,$2,'De repetat refrenul')",[playlist,second]);
+      await scalar('select add_rehearsal_playlist_song_v84($1,$2,null)',[playlist,first]);
+      assert.equal((await scalar('select get_rehearsal_playlist_v84($1)',[playlist])).items.length,2);
+      assert.equal(Number(await scalar('select count(*) from song_performance_occurrences_v46 where song_id=any($1::uuid[])',[[first,second]])),0);
+      const payload=await scalar('select get_rehearsal_playlist_v84($1)',[playlist]);assert.equal(payload.items[0].song.youtube_url,'https://youtu.be/dQw4w9WgXcQ');
+      await scalar("select move_rehearsal_playlist_song_v84($1,$2,'up')",[playlist,payload.items[1].id]);assert.equal((await scalar('select get_rehearsal_playlist_v84($1)',[playlist])).items[0].song.id,second);
+      const future=await scalar("select create_meeting('v84 viitor',null,now()+interval '1 day',null)");
+      await scalar("select update_future_meeting_v84($1,'v84 editat','tineret',now()+interval '2 days','Observație','rehearsal')",[future]);assert.equal(await scalar('select program_kind from meetings where id=$1',[future]),'rehearsal');
+      const item=await scalar('select add_song_to_meeting($1,$2,false,null,null)',[future,first]);const slug=await scalar("select create_meeting_share_link_v66($1,'v84-youtube',false)",[future]);
+      await asUser('','anon');const shared=await scalar('select get_shared_meeting_v79($1)',[slug]);assert.equal(shared.items.find((row:any)=>row.id===item).song.youtube_url,'https://youtu.be/dQw4w9WgXcQ');await assert.rejects(()=>scalar('select * from list_rehearsal_playlists_v84()'));
+      await asUser(VIEWER);assert.equal(Number(await scalar('select count(*) from list_rehearsal_playlists_v84()')),1);await assert.rejects(()=>scalar("select create_rehearsal_playlist_v84('Interzis')"));
+      await asUser(ADMIN);const past=await scalar("select create_meeting('v84 trecut',null,now()-interval '3 hours',null)");await assert.rejects(()=>scalar("select update_future_meeting_v84($1,'Nu','',now(),null,'official')",[past]),/finalizat/);
+      await db.query('delete from meetings where id=any($1::uuid[])',[[future,past]]);await scalar('select delete_rehearsal_playlist_v84($1)',[playlist]);await db.query('delete from songs where id=any($1::uuid[])',[[first,second]]);
+    });
     await t.test('v80 applies one Moments style and suggests the next collection number',async()=>{
       await asUser(ADMIN);
       const collection=await scalar("insert into song_collections(name,short_code,source_type) values('v80 Numere','V80','manual') returning id");

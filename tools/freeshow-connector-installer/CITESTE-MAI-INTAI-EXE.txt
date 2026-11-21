@@ -1,0 +1,15 @@
+SONGAPP FREESHOW CONNECTOR
+==========================
+
+Conectorul este instalat pentru utilizatorul Windows curent.
+
+Comenzile Porneste, Opreste si Dezinstaleaza sunt disponibile in meniul Start,
+in folderul SongApp FreeShow.
+
+Adresa folosita in SongApp:
+http://127.0.0.1:5510/freeshow
+
+FreeShow trebuie pornit, iar Settings -> Connections -> API trebuie activat.
+
+Node.js LTS este necesar:
+https://nodejs.org/en/download/

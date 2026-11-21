@@ -3,7 +3,7 @@ import { requireProfile } from "@/lib/auth";
 import { buildProgramSlides, type PresentationItem } from "@/lib/presentation";
 import { SongPresentation } from "@/components/SongPresentation";
 export default async function ProgramPresentation({ params, searchParams }: {
-  params: Promise<{ id: string }>; searchParams: Promise<{ backup?: string }>;
+  params: Promise<{ id: string }>; searchParams: Promise<{ backup?: string;projection?:string;channel?:string }>;
 }) {
   const [{ id }, query, { supabase }] = await Promise.all([params, searchParams, requireProfile()]);
   const [{ data: meeting, error: meetingError }, { data: items, error },{data:snapshot,error:snapshotError}] = await Promise.all([
@@ -13,5 +13,6 @@ export default async function ProgramPresentation({ params, searchParams }: {
   ]);
   if (error || meetingError || snapshotError) throw new Error("Programul nu poate fi încărcat momentan.");
   if (!meeting) notFound();
-  return <SongPresentation songId={id} title={meeting.title} programKind={meeting.program_kind} slides={buildProgramSlides((items || []).map((item:any)=>({...item,...Object.fromEntries(Object.entries((snapshot?.items||[]).find((s:any)=>s.id===item.id)||{}).filter(([k])=>["sources","selected_source_id","is_congregational","moment_color","moment_opacity"].includes(k)))})) as unknown as PresentationItem[], query.backup === "1")} live returnHref={`/meetings/${id}`} />;
+  const channel=/^[a-z0-9-]{1,100}$/i.test(query.channel||"")?query.channel:undefined;
+  return <SongPresentation songId={id} title={meeting.title} programKind={meeting.program_kind} slides={buildProgramSlides((items || []).map((item:any)=>({...item,...Object.fromEntries(Object.entries((snapshot?.items||[]).find((s:any)=>s.id===item.id)||{}).filter(([k])=>["sources","selected_source_id","is_congregational","moment_color","moment_opacity"].includes(k)))})) as unknown as PresentationItem[], query.backup === "1")} live returnHref={`/meetings/${id}`} projectionMode={query.projection==="1"&&!!channel} controlChannel={channel}/>;
 }

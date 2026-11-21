@@ -1,0 +1,74 @@
+SONGAPP - CONECTOR FREESHOW PENTRU WINDOWS
+==========================================
+
+Conectorul ruleaza independent de proiectul SongApp local si permite aplicatiei
+SongApp LIVE sa comunice cu FreeShow de pe acelasi PC.
+
+INSTALARE CU WIZARDUL WINDOWS
+-----------------------------
+1. Extrage complet arhiva ZIP intr-un folder.
+2. Dublu-click pe SETUP-CONNECTOR.cmd.
+3. Apasa Urmatorul si alege optiunile dorite:
+   - pornire automata odata cu Windows;
+   - pornire imediata dupa instalare;
+   - scurtatura optionala pe Desktop.
+4. Apasa Instaleaza, apoi Inchide.
+
+Nu sunt necesare drepturi de administrator. Este necesar Node.js LTS.
+Wizardul iti ofera linkul oficial daca Node.js nu este instalat.
+
+PORNIRE, OPRIRE SI DEZINSTALARE
+-------------------------------
+In meniul Start -> SongApp FreeShow vei gasi:
+- Porneste conectorul;
+- Opreste conectorul;
+- Dezinstaleaza conectorul.
+
+Conectorul ruleaza ascuns in fundal. Fisierele connector.log si
+connector-error.log se afla in folderul de instalare.
+
+UTILIZARE LIVE
+--------------
+1. Porneste FreeShow.
+2. In FreeShow activeaza Settings -> Connections -> API.
+3. Asigura-te ca este pornit conectorul SongApp.
+4. Deschide https://songappbcb.netlify.app in browser.
+5. In program, deschide FreeShow local.
+6. Adresa este: http://127.0.0.1:5510/freeshow
+7. Cheia ramane goala daca nu ai configurat una in FreeShow.
+8. Apasa Trimite programul.
+
+SongApp verifica biblioteca FreeShow inainte de import. Cantarea existenta este
+reutilizata, iar una noua este creata numai daca nu exista. Apoi creeaza sau
+actualizeaza un Project FreeShow distinct, denumit cu titlul si data programului.
+
+PORNIRE AUTOMATA
+----------------
+Optiunea se alege in timpul instalarii. Pentru a o schimba ulterior, ruleaza
+din nou SETUP-CONNECTOR.cmd si alege configuratia dorita.
+
+LINKURI OFICIALE
+----------------
+SongApp LIVE:
+https://songappbcb.netlify.app
+
+FreeShow:
+https://freeshow.app/downloads
+
+Node.js LTS (alege Windows Installer .msi):
+https://nodejs.org/en/download/
+
+Documentatia API FreeShow:
+https://freeshow.app/api
+
+SECURITATE
+----------
+Conectorul asculta numai pe acest calculator (127.0.0.1). Nu expune FreeShow
+in internet si accepta comenzi numai de la SongApp LIVE sau SongApp local.
+
+DIAGNOSTIC
+----------
+In PowerShell:
+Test-NetConnection 127.0.0.1 -Port 5510
+
+Rezultatul corect este TcpTestSucceeded : True.

@@ -18,7 +18,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { PrintButton } from "@/components/PrintButton";
 import { PublicContributionPanel } from "@/components/PublicContributionPanel";
 import { PublicTextContributionForm } from "@/components/PublicTextContributionForm";
-import { createClient } from "@/lib/supabase/server";
+import {loadPublicProgram} from "@/lib/public-program-data";
 import { formatDateTime } from "@/lib/format";
 import type { Metadata } from "next";
 
@@ -26,8 +26,7 @@ type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data } = await supabase.rpc("get_shared_meeting_v79", { p_public_slug: slug });
+  const { data } = await loadPublicProgram(slug);
   const meeting = (data as any)?.meeting;
   if (!meeting?.title) return { title: "Program partajat | SongApp BCBgiroc" };
   const title = `${meeting.title} | SongApp BCBgiroc`;
@@ -62,7 +61,7 @@ type PublicMeetingItem = {
     default_key: string | null;
     bpm: number | null;
     structure: string | null;verse_count?:number|null;
-    source_summary?: string | null;
+    source_summary?: string | null;youtube_url?:string|null;
   };
 };
 
@@ -85,7 +84,7 @@ type PublicContribution = {
     default_key: string | null;
     bpm: number | null;
     structure: string | null;verse_count?:number|null;
-    source_summary?: string | null;
+    source_summary?: string | null;youtube_url?:string|null;
   };
 };
 
@@ -171,8 +170,7 @@ function buildPositionOptions(items: PublicMeetingItem[]) {
 
 export default async function PublicProgramPage({ params }: PageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_shared_meeting_v79", { p_public_slug: slug });
+  const { data, error } = await loadPublicProgram(slug);
 
   if (error || !data) notFound();
 
@@ -191,7 +189,7 @@ export default async function PublicProgramPage({ params }: PageProps) {
   const context=await requireProfile().catch(()=>null);
   if(context&&canEdit(context.profile.role)&&meeting.id){
    const {data:snapshot,error:snapshotError}=await context.supabase.rpc('get_meeting_snapshot_v46',{p_meeting_id:meeting.id});
-   if(!snapshotError&&snapshot)return <ProgramChangeTracker items={snapshot.items||[]} persistent storageKey={slug}><main className="public-page public-page-v10 public-v48"><PublicProgramLive slug={slug} version={publicProgramVersion(data)}/><header className="public-header"><h1>{meeting.title}</h1><p>{formatDateTime(meeting.meeting_date)}</p></header><SharedProgramEditor meetingId={meeting.id} initial={snapshot} title={meeting.title} date={meeting.meeting_date} programKind={meeting.program_kind}/></main></ProgramChangeTracker>;
+   if(!snapshotError&&snapshot)return <ProgramChangeTracker items={snapshot.items||[]} persistent storageKey={slug}><main className="public-page public-page-v10 public-v48"><PublicProgramLive slug={slug} version={publicProgramVersion(data)}/><header className="public-header"><h1>{meeting.title}</h1><p>{formatDateTime(meeting.meeting_date)}</p></header><SharedProgramEditor meetingId={meeting.id} initial={snapshot} title={meeting.title} date={meeting.meeting_date} programKind={meeting.program_kind} publicSlug={slug}/></main></ProgramChangeTracker>;
   }
   return (
     <ProgramChangeTracker items={items} persistent storageKey={slug}><main className="public-page public-page-v10 public-v48">

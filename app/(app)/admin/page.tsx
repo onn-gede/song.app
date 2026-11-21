@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { deleteAllAppDataAction, deleteProgramsOnlyAction } from "./actions";
+import {Icon} from "@/components/Icon";
+import { FREESHOW_CONNECTOR_EXE_URL } from "@/lib/freeshow-local";
 
 export default async function AdminPage() {
   const {supabase,profile}=await requireProfile("admin");
@@ -17,15 +19,24 @@ export default async function AdminPage() {
 
   return (
     <>
-      <div className="top-row">
+      <div className="top-row admin-page-heading">
         <div>
           <div className="eyebrow">Administrare</div>
-          <h1>Administrare</h1><Link className="btn secondary" href="/admin/lyrics-repair">Repară primul vers · Tineri</Link><Link className="btn" href="/admin/backup">Backup și restaurare</Link>
-          <div className="inline-form"><Link className="btn" href="/admin/users">Conturi și aprobări</Link><Link className="btn secondary" href="/admin/activity">Jurnal de activitate</Link></div>
+          <h1>Administrare</h1><p>Conturi, siguranța datelor și instrumentele de întreținere ale aplicației.</p>
         </div>
       </div>
 
-      <div className="grid grid-4">
+      <nav className="admin-tool-grid" aria-label="Instrumente de administrare">
+        <Link href="/admin/users" className="admin-tool-card admin-tool-primary"><span className="admin-tool-icon"><Icon name="users"/></span><span><strong>Conturi și aprobări</strong><small>Aprobă utilizatori, schimbă numele și rolurile.</small></span><Icon name="chevron" size={18}/></Link>
+        <Link href="/admin/backup" className="admin-tool-card"><span className="admin-tool-icon"><Icon name="copy"/></span><span><strong>Backup și restaurare</strong><small>Export complet și restaurare cu previzualizare.</small></span><Icon name="chevron" size={18}/></Link>
+        <Link href="/admin/activity" className="admin-tool-card"><span className="admin-tool-icon"><Icon name="clock"/></span><span><strong>Jurnal de activitate</strong><small>Vezi cine a modificat conținutul aplicației.</small></span><Icon name="chevron" size={18}/></Link>
+        <Link href="/admin/lyrics-repair" className="admin-tool-card"><span className="admin-tool-icon"><Icon name="music"/></span><span><strong>Repară versurile · Tineri</strong><small>Corectează primul vers lipsă din colecția Tineri.</small></span><Icon name="chevron" size={18}/></Link>
+        <a href={FREESHOW_CONNECTOR_EXE_URL} className="admin-tool-card admin-tool-primary"><span className="admin-tool-icon"><Icon name="upload"/></span><span><strong>Instalator FreeShow · Windows (.exe)</strong><small>Un singur fișier, cu pornire automată, Start, Stop și dezinstalare.</small></span><Icon name="chevron" size={18}/></a>
+        <a href="/downloads/SongApp-FreeShow-Connector-Setup-Windows.zip" download className="admin-tool-card"><span className="admin-tool-icon"><Icon name="copy"/></span><span><strong>Conector FreeShow · rezervă ZIP</strong><small>Varianta cu SETUP-CONNECTOR.cmd, pentru instalare manuală.</small></span><Icon name="chevron" size={18}/></a>
+        <a href="/downloads/README-Conector-FreeShow.txt" target="_blank" rel="noreferrer" className="admin-tool-card"><span className="admin-tool-icon"><Icon name="copy"/></span><span><strong>Instrucțiuni FreeShow</strong><small>Instalare, diagnostic și toate linkurile oficiale necesare.</small></span><Icon name="chevron" size={18}/></a>
+      </nav>
+
+      <div className="grid grid-4 admin-stat-grid">
         <div className="stat"><strong>{songs.count || 0}</strong><span>Cântări</span></div>
         <div className="stat"><strong>{meetings.count || 0}</strong><span>Programe</span></div>
         <div className="stat"><strong>{collections.count || 0}</strong><span>Colecții</span></div>

@@ -16,6 +16,8 @@ import { MeetingProgramBoard, type MeetingProgramItem } from "@/components/Meeti
 import { ExportPackageButton } from "@/components/BackupTools";
 import { PrintButton } from "@/components/PrintButton";
 import { PresentationLaunchButton } from "@/components/PresentationLaunchButton";
+import { EditMeetingModal } from "@/components/EditMeetingModal";
+import { FreeShowLocalPanel } from "@/components/FreeShowLocalPanel";
 import {
   setMeetingTemplateAction,
   setMeetingProgramKindAction,
@@ -150,9 +152,10 @@ export default async function MeetingDetailPage({ params }: PageProps) {
         </div>
         <div className="inline-form">
           {editable?<ProgramNotificationsButton/>:null}
+          {editable&&new Date(meeting.meeting_date).getTime()+7200000>Date.now()&&meeting.status!=="archived"?<EditMeetingModal meeting={meeting}/>:null}
           {activeLink ? <a className="btn public-highlight" href={`/program/${activeLink.public_slug}`} target="_blank" rel="noreferrer">Vezi public ↗</a> : null}
           <details className="program-page-tools"><summary title="Acțiuni program" aria-label="Acțiuni program">•••</summary><div className="program-tools-menu">
-            <PresentationLaunchButton href={`/meetings/${id}/present`} label="Prezintă programul"/><PrintButton /><a className="btn secondary" href={`/api/meetings/${id}/freeshow`} download>FreeShow .show ↓</a><ExportPackageButton meetingId={id} /><Link className="btn secondary" href="/meetings">Înapoi la programe</Link>
+            <PresentationLaunchButton href={`/meetings/${id}/present`} label="Prezintă programul"/><FreeShowLocalPanel meetingId={id}/><PrintButton /><a className="btn secondary" href={`/api/meetings/${id}/freeshow`} download>FreeShow pachet ↓</a><ExportPackageButton meetingId={id} /><Link className="btn secondary" href="/meetings">Înapoi la programe</Link>
           </div></details>
         </div>
       </div>

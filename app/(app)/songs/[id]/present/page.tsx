@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SongPresentation } from "@/components/SongPresentation";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
-type PageProps = { params: Promise<{ id: string }>; searchParams: Promise<{returnTo?:string}> };
+type PageProps = { params: Promise<{ id: string }>; searchParams: Promise<{returnTo?:string;projection?:string;channel?:string}> };
 
 function labelForSection(section: any, index: number) {
   if (section.section_label) return section.section_label;
@@ -19,7 +19,7 @@ function labelForSection(section: any, index: number) {
 
 export default async function SongPresentationPage({ params,searchParams }: PageProps) {
   const { id } = await params;
-  const {returnTo}=await searchParams;
+  const {returnTo,projection,channel:rawChannel}=await searchParams;
   const supabase = await createClient();
 
   const [{ data: song }, { data: sections }] = await Promise.all([
@@ -41,5 +41,6 @@ export default async function SongPresentationPage({ params,searchParams }: Page
   }));
 
   const safeReturn=/^\/meetings\/[0-9a-f-]+$/i.test(returnTo||"")?returnTo:undefined;
-  return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} defaultKey={song.default_key} lyricsOnly returnHref={safeReturn} />;
+  const channel=/^[a-z0-9-]{1,100}$/i.test(rawChannel||"")?rawChannel:undefined;
+  return <SongPresentation songId={song.id} title={song.title} slides={slides} fallbackLyrics={song.lyrics_text} defaultKey={song.default_key} lyricsOnly returnHref={safeReturn} projectionMode={projection==="1"&&!!channel} controlChannel={channel}/>;
 }

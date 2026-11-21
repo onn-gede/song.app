@@ -55,6 +55,13 @@ export async function createMeetingAction(formData: FormData):Promise<string> {
   revalidatePath("/meetings");return data as string;
 }
 
+export async function updateMeetingDetailsAction(formData:FormData){
+ const {supabase}=await requireProfile("editor");const meetingId=readString(formData,"meeting_id"),title=readString(formData,"title");
+ if(!meetingId||!title||title.length>200)throw new Error("Titlul întâlnirii este obligatoriu.");
+ const {error}=await supabase.rpc("update_future_meeting_v84",{p_meeting:meetingId,p_title:title,p_meeting_type:readString(formData,"meeting_type")||null,p_meeting_date:meetingDateISO(readString(formData,"meeting_date")),p_notes:readString(formData,"notes")||null,p_program_kind:readString(formData,"program_kind")==="rehearsal"?"rehearsal":"official"});
+ if(error)throw new Error(error.message);revalidatePath(`/meetings/${meetingId}`);revalidatePath("/meetings");revalidatePath("/dashboard");refresh();
+}
+
 export async function listMeetingsAction(): Promise<MeetingOption[]> {
   await requireProfile("read");
   const supabase = (await requireProfile("read")).supabase;

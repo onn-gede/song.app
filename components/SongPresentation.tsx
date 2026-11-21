@@ -47,14 +47,14 @@ export function SongPresentation({
   fallbackLyrics,
   returnHref,
   defaultKey,live=false,
-  programKind,lyricsOnly=false,
+  programKind,lyricsOnly=false,projectionMode=false,controlChannel,
 }: {
   songId: string;
   title: string;
   slides: PresentationSlide[];
   fallbackLyrics?: string | null;
   returnHref?: string;
-  defaultKey?:string|null;live?:boolean;programKind?:string;lyricsOnly?:boolean;
+  defaultKey?:string|null;live?:boolean;programKind?:string;lyricsOnly?:boolean;projectionMode?:boolean;controlChannel?:string;
 }) {
   const router = useRouter();
   const shell=useRef<HTMLDivElement>(null);
@@ -74,6 +74,7 @@ export function SongPresentation({
   const [fontScale, setFontScale] = useState(105);
   const [controlsVisible,setControlsVisible]=useState(false);
   const [flash,setFlash]=useState(false);const previousSlides=useRef<string|null>(null);
+  const projectionChannel=useRef<BroadcastChannel|null>(null);
   const contentVersion=JSON.stringify(allSlides);
   useEffect(()=>{if(previousSlides.current!==null&&previousSlides.current!==contentVersion)setFlash(true);previousSlides.current=contentVersion;},[contentVersion]);
   useEffect(()=>{if(!live)return;const update=()=>{if(!document.hidden)router.refresh();};const timer=setInterval(update,15000);window.addEventListener('focus',update);return()=>{clearInterval(timer);window.removeEventListener('focus',update);};},[live,router]);
@@ -84,6 +85,35 @@ export function SongPresentation({
   const combinedScale = autoScale * (fontScale / 100);
   const canGoPrev = index > 0;
   const canGoNext = index < allSlides.length - 1;
+
+  useEffect(()=>{
+    if(!projectionMode||!controlChannel)return;
+    const handle=(message:any)=>{
+      if(!message||message.channel!==controlChannel)return;
+      if(message.type==="previous")setIndex(value=>clamp(value-1,0,Math.max(0,allSlides.length-1)));
+      if(message.type==="next")setIndex(value=>clamp(value+1,0,Math.max(0,allSlides.length-1)));
+      if(message.type==="first")setIndex(0);
+      if(message.type==="last")setIndex(Math.max(0,allSlides.length-1));
+      if(message.type==="smaller")setFontScale(value=>clamp(value-5,70,135));
+      if(message.type==="larger")setFontScale(value=>clamp(value+5,70,135));
+      if(message.type==="ack")setFlash(false);
+      if(message.type==="close")window.close();
+    };
+    const broadcast=typeof BroadcastChannel!=="undefined"?new BroadcastChannel(`songapp-projection-${controlChannel}`):null;
+    if(broadcast)broadcast.onmessage=event=>handle(event.data);
+    projectionChannel.current=broadcast;
+    const onMessage=(event:MessageEvent)=>{if(event.origin===window.location.origin&&event.data?.source==="songapp-projection")handle(event.data);};
+    const onUnload=()=>{const message={source:"songapp-projection",channel:controlChannel,type:"closed"};broadcast?.postMessage(message);try{window.opener?.postMessage(message,window.location.origin);}catch{}};
+    window.addEventListener("message",onMessage);window.addEventListener("beforeunload",onUnload);
+    return()=>{window.removeEventListener("message",onMessage);window.removeEventListener("beforeunload",onUnload);broadcast?.close();if(projectionChannel.current===broadcast)projectionChannel.current=null;};
+  },[projectionMode,controlChannel,allSlides.length]);
+
+  useEffect(()=>{
+    if(!projectionMode||!controlChannel)return;
+    const message={source:"songapp-projection",channel:controlChannel,type:"state",index,total:allSlides.length,flash};
+    projectionChannel.current?.postMessage(message);
+    try{window.opener?.postMessage(message,window.location.origin);}catch{}
+  },[projectionMode,controlChannel,index,allSlides.length,flash]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("songapp:presentation-font-scale-v83");
@@ -98,6 +128,7 @@ export function SongPresentation({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        if(projectionMode){const message={source:"songapp-projection",channel:controlChannel,type:"closed"};projectionChannel.current?.postMessage(message);try{window.opener?.postMessage(message,window.location.origin);}catch{}window.close();return;}
         router.push(exitHref);
         return;
       }
@@ -123,7 +154,7 @@ export function SongPresentation({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [allSlides.length, router, exitHref]);
+  }, [allSlides.length, router, exitHref,projectionMode,controlChannel]);
 
   if (allSlides.length === 0) {
     return (
@@ -131,15 +162,15 @@ export function SongPresentation({
         <div className="presentation-empty">
           <h1>{title}</h1>
           <p>Nu există elemente pentru prezentare.</p>
-          <Link className="presentation-link" href={exitHref}>Înapoi</Link>
+          {!projectionMode?<Link className="presentation-link" href={exitHref}>Înapoi</Link>:null}
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`presentation-shell${lyricsOnly?" presentation-song-mode":""}${controlsVisible?" presentation-controls-visible":""}`} ref={shell}>
-      <button className="presentation-fullscreen-reveal" type="button" aria-label="Arată comenzile prezentării" onClick={()=>setControlsVisible(value=>!value)} />
+    <div className={`presentation-shell${lyricsOnly?" presentation-song-mode":""}${controlsVisible?" presentation-controls-visible":""}${projectionMode?" presentation-projection-output":""}`} ref={shell}>
+      {!projectionMode?<><button className="presentation-fullscreen-reveal" type="button" aria-label="Arată comenzile prezentării" onClick={()=>setControlsVisible(value=>!value)} />
       <header className="presentation-topbar">
         <div>
           <div className="presentation-eyebrow">{programKind==='rehearsal'?'Repetiție · prezentare':'Prezentare'}</div>
@@ -155,7 +186,7 @@ export function SongPresentation({
           <button className="presentation-mini-button" type="button" onClick={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void shell.current?.requestFullscreen?.();}}>Ecran complet</button>
           <Link className="presentation-link" href={exitHref}>Ieșire</Link>
         </div>
-      </header>
+      </header></>:null}
 
       <main className={"presentation-slide"+(flash?" recent-program-change":"")} onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}>
         {!current.lyricsOnly?<div className="presentation-slide-heading" style={current.source?collectionStyle(current.source):{color:current.momentColor||undefined}}><div className="presentation-label" style={{color:current.source?"var(--collection-ink)":current.momentColor||undefined}}>{current.label}</div>{current.source?<SourceTags source={current.source}/>:null}{current.isCongregational?<span className="badge congregational-tag">Cântare în comun</span>:null}{current.verseCount!==undefined?<span className="badge">Strofe: {current.verseCount??"—"}</span>:null}{current.structure?<span className="badge">Structură: {current.structure}</span>:null}{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>:null}
@@ -172,7 +203,7 @@ export function SongPresentation({
         </div>
       </main>
 
-      <footer className="presentation-footer">
+      {!projectionMode?<footer className="presentation-footer">
         <button type="button" onClick={() => setIndex((value) => clamp(value - 1, 0, allSlides.length - 1))} disabled={!canGoPrev}>
           ← Înapoi
         </button>
@@ -191,7 +222,7 @@ export function SongPresentation({
           Înainte →
         </button>
         <span className="presentation-hint">ESC ieșire · Ctrl +/- mărime text</span>
-      </footer>
+      </footer>:null}
     </div>
   );
 }

@@ -1,0 +1,55 @@
+name: Build FreeShow connector EXE
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/freeshow-connector/**"
+      - "tools/freeshow-connector-installer/**"
+      - ".github/workflows/build-freeshow-connector-exe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Locate or install Inno Setup
+        shell: powershell
+        run: |
+          $Compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $Compiler)) {
+            choco install innosetup --yes --no-progress
+          }
+
+      - name: Build installer
+        shell: powershell
+        run: |
+          $Compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          & $Compiler 'tools\freeshow-connector-installer\SongApp-FreeShow-Connector.iss'
+          if ($LASTEXITCODE -ne 0) { throw 'Compilarea installerului a eșuat.' }
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: SongApp-FreeShow-Connector-Setup-Windows
+          path: public/downloads/SongApp-FreeShow-Connector-Setup.exe
+          if-no-files-found: error
+
+      - name: Publish stable installer link
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $Tag = 'connector-latest'
+          $File = 'public/downloads/SongApp-FreeShow-Connector-Setup.exe'
+          gh release view $Tag --repo '${{ github.repository }}' 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $Tag --repo '${{ github.repository }}' --title 'SongApp FreeShow Connector' --notes 'Instalatorul Windows curent pentru conectorul local SongApp–FreeShow.'
+          }
+          gh release upload $Tag $File --repo '${{ github.repository }}' --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Publicarea installerului .exe a eșuat.' }

@@ -3,11 +3,12 @@ import Link from 'next/link';
 import {useEffect,useRef,useState} from 'react';
 import {bucharestDay} from '@/lib/meeting-state';
 import {eventDateTime,scheduleEventLabel,type SongScheduleMonth} from '@/lib/song-schedule';
-export function SongScheduleModal({songId,title,meetingId,initialMonth,onClose}:{songId:string;title:string;meetingId:string;initialMonth:string;onClose:()=>void}){
+export function SongScheduleModal({songId,title,meetingId,initialMonth,onClose}:{songId:string;title:string;meetingId?:string;initialMonth:string;onClose:()=>void}){
  const dialog=useRef<HTMLDialogElement>(null);const [month,setMonth]=useState(initialMonth),[data,setData]=useState<SongScheduleMonth|null>(null),[day,setDay]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  useEffect(()=>{const el=dialog.current;el?.showModal();return()=>el?.close();},[]);
  useEffect(()=>{const controller=new AbortController();setLoading(true);setError('');setData(null);setDay('');
- fetch(`/api/songs/${songId}/schedule?month=${month}&exclude=${meetingId}`,{signal:controller.signal,cache:'no-store'}).then(async response=>{const result=await response.json();if(!response.ok)throw new Error(result.error);if(!controller.signal.aborted)setData(result);}).catch(error=>{if(!controller.signal.aborted)setError(error.message||'Calendarul nu poate fi încărcat.');}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();
+ const params=new URLSearchParams({month});if(meetingId)params.set('exclude',meetingId);
+ fetch(`/api/songs/${songId}/schedule?${params}`,{signal:controller.signal,cache:'no-store'}).then(async response=>{const result=await response.json();if(!response.ok)throw new Error(result.error);if(!controller.signal.aborted)setData(result);}).catch(error=>{if(!controller.signal.aborted)setError(error.message||'Calendarul nu poate fi încărcat.');}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();
  },[month,songId,meetingId]);
  function shift(n:number){const d=new Date(month+'-01T12:00Z');d.setUTCMonth(d.getUTCMonth()+n);const value=d.toISOString().slice(0,7);if(value>='1900-01'&&value<='2200-12')setMonth(value);}
  const date=new Date(month+'-01T12:00Z'),offset=(date.getUTCDay()+6)%7,count=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,0)).getUTCDate();

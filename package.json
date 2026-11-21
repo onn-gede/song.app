@@ -1,6 +1,6 @@
 {
   "name": "songapp-next-mvp",
-  "version": "0.18.0",
+  "version": "0.25.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,6 +12,8 @@
     "test": "npm run worker:build && node --test dist-worker/tests/*.test.js && node --test tests/red-book-import.test.mjs && node --test tests/black-ppt.test.mjs && node --test tests/local-build.test.mjs",
     "sql:package": "node scripts/build-install-sql.mjs",
     "local": "node scripts/start-local.mjs",
+    "freeshow:bridge": "node scripts/freeshow-bridge.mjs",
+    "freeshow:installer": "node scripts/build-freeshow-installer.mjs",
     "build:netlify": "node scripts/netlify-preflight.mjs && next build",
     "import:red-book": "node --env-file=.env.local scripts/import-books.mjs --book=cr",
     "import:black-book": "node --env-file-if-exists=.env.local scripts/import-black-ppt.mjs",

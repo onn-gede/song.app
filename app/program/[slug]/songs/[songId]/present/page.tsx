@@ -3,10 +3,11 @@ import { SongPresentation } from "@/components/SongPresentation";
 import { createClient } from "@/lib/supabase/server";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
-type PageProps = { params: Promise<{ slug: string; songId: string }> };
+type PageProps = { params: Promise<{ slug: string; songId: string }>;searchParams:Promise<{projection?:string;channel?:string}> };
 
-export default async function PublicSongPresentationPage({ params }: PageProps) {
+export default async function PublicSongPresentationPage({ params,searchParams }: PageProps) {
   const { slug, songId } = await params;
+  const {projection,channel:rawChannel}=await searchParams;
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("get_shared_meeting_v79", { p_public_slug: slug });
   if (error || !data) notFound();
@@ -22,5 +23,6 @@ export default async function PublicSongPresentationPage({ params }: PageProps) 
     lyricsOnly: true,
   })).filter((slide: { content: string }) => slide.content.length > 0);
 
-  return <SongPresentation songId={songId} title={item.song.title} slides={slides} fallbackLyrics={lyrics} defaultKey={item.selected_key || item.song.default_key} lyricsOnly returnHref={`/program/${slug}`}/>;
+  const channel=/^[a-z0-9-]{1,100}$/i.test(rawChannel||"")?rawChannel:undefined;
+  return <SongPresentation songId={songId} title={item.song.title} slides={slides} fallbackLyrics={lyrics} defaultKey={item.selected_key || item.song.default_key} lyricsOnly returnHref={`/program/${slug}`} projectionMode={projection==="1"&&!!channel} controlChannel={channel}/>;
 }

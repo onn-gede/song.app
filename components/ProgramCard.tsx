@@ -12,6 +12,7 @@ import {SongLyricsTooltip} from "./SongLyricsTooltip";
 import {ProgramSongTags} from './ProgramSongTags';
 import {updateItemResponsibleAction,removeMeetingItemAction,updateMeetingTextItemAction,type RecentUsage} from '@/app/(app)/meetings/actions';
 import {getRecentUsageTooltip,RecentUsageIcon} from './RecentUsageIcon';
+import {YouTubePlayButton} from './YouTubePlayButton';
 import type {ProgramItem as MeetingProgramItem} from '@/lib/meeting-state';
 function itemLabel(item:MeetingProgramItem){return item.songs?.title || item.custom_title || itemTypeLabels[item.moment_kind||item.item_type] || 'Element text';}
 
@@ -91,7 +92,7 @@ export function ProgramCard({
             <div className="badges compact-badges">
               {!song && item.custom_title ? <span className="badge muted-badge">{itemTypeLabels[item.moment_kind||item.item_type] || "Element"}</span> : null}
               {item.is_backup ? <span className="badge backup">backup</span> : null}
-              {song ? <ProgramSongTags metadata={metadata} onEditStructure={canManage?()=>setInfoEditing(true):undefined} commonControl={song && canManage ? <button type="button" className={"badge congregational-toggle"+(commonValue?" is-selected":"")} aria-pressed={commonValue} aria-busy={commonPending} disabled={commonPending} title={commonValue?"Elimină marcajul de cântare în comun":"Marchează drept cântare în comun"} onClick={async()=>{
+              {song ? <ProgramSongTags metadata={metadata} onEditStructure={canManage&&!publicSlug?()=>setInfoEditing(true):undefined} commonControl={song && canManage && !publicSlug ? <button type="button" className={"badge congregational-toggle"+(commonValue?" is-selected":"")} aria-pressed={commonValue} aria-busy={commonPending} disabled={commonPending} title={commonValue?"Elimină marcajul de cântare în comun":"Marchează drept cântare în comun"} onClick={async()=>{
                 if(commonSaving.current)return;commonSaving.current=true;const enabled=!commonValue;setCommonOverride(enabled);setCommonPending(true);setCommonError("");
                 try{const data=await requestJson<{snapshot:MeetingSnapshot}>(`/api/meetings/${meetingId}/live`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'common',itemId:item.id,enabled})});state?.apply(data.snapshot);}
                 catch(e){setCommonError(e instanceof Error?e.message:"Salvarea a eșuat.");}
@@ -99,6 +100,7 @@ export function ProgramCard({
               }}>{commonValue?"Cântare în comun":"Cântare comun"}</button>:song&&item.is_congregational?<span className="badge congregational-tag">Cântare în comun</span>:null}/> : null}
 
               {song?<SongLyricsTooltip songId={song.id} title={song.title}/>:null}
+              {song?.youtube_url?<YouTubePlayButton url={song.youtube_url} title={song.title}/>:null}
               {song && (canManage || publicSlug) ? <Link className="btn secondary btn-compact program-song-present" href={presentationHref} title={`Prezintă ${song.title}`}>Prezintă</Link> : null}
               {recentLabel ? <RecentUsageIcon usage={recentUsage} /> : null}
             </div>

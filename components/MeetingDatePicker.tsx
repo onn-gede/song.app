@@ -1,9 +1,9 @@
 "use client";
 import {useEffect,useId,useState} from 'react';
 import {bucharestInput} from '@/lib/meeting-date';
-export function MeetingDatePicker({name='meeting_date',disabled=false}:{name?:string;disabled?:boolean}){
+export function MeetingDatePicker({name='meeting_date',disabled=false,initialValue}:{name?:string;disabled?:boolean;initialValue?:string}){
  const id=useId();const [day,setDay]=useState(''),[time,setTime]=useState('10:00'),[month,setMonth]=useState(''),[open,setOpen]=useState(false);
- useEffect(()=>{const current=bucharestInput();setDay(current.slice(0,10));setMonth(current.slice(0,7));setTime(current.slice(11,14)+String(Math.floor(Number(current.slice(14))/15)*15).padStart(2,'0'));},[]);
+ useEffect(()=>{const current=initialValue?bucharestInput(new Date(initialValue)):bucharestInput();setDay(current.slice(0,10));setMonth(current.slice(0,7));setTime(current.slice(11,14)+String(Math.floor(Number(current.slice(14))/15)*15).padStart(2,'0'));},[initialValue]);
  const date=new Date((month||'2026-01')+'-01T12:00:00Z');const offset=(date.getUTCDay()+6)%7;const count=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,0)).getUTCDate();
  function shift(delta:number){date.setUTCMonth(date.getUTCMonth()+delta);setMonth(date.toISOString().slice(0,7));}
  function select(value:string){setDay(value);setMonth(value.slice(0,7));setOpen(false);}
