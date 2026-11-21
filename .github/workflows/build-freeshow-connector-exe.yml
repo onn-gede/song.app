@@ -47,7 +47,7 @@ jobs:
         run: |
           $Tag = 'connector-latest'
           $File = 'public/downloads/SongApp-FreeShow-Connector-Setup.exe'
-          gh release view $Tag --repo '${{ github.repository }}' 2>$null
+          cmd.exe /d /c "gh release view connector-latest --repo '${{ github.repository }}' >nul 2>nul"
           if ($LASTEXITCODE -ne 0) {
             gh release create $Tag --repo '${{ github.repository }}' --title 'SongApp FreeShow Connector' --notes 'Instalatorul Windows curent pentru conectorul local SongApp–FreeShow.'
           }
