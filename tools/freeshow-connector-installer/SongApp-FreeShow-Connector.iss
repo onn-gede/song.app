@@ -21,7 +21,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
 [Languages]
-Name: "romanian"; MessagesFile: "compiler:Languages\Romanian.isl"
+Name: "romanian"; MessagesFile: "Romanian.isl"
 
 [Tasks]
 Name: "autostart"; Description: "Pornește automat conectorul odată cu Windows"; GroupDescription: "Pornire automată:"; Flags: checkedonce
