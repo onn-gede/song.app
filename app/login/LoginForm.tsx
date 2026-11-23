@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState,useState } from "react";
 import { signInAction, type LoginState } from "./actions";
 
@@ -30,6 +31,7 @@ export function LoginForm({welcome=false}:{welcome?:boolean}) {
       <button className="btn" type="submit" disabled={pending}>
         {pending ? "Se verifică..." : "Intră în aplicație"}
       </button>
+      <Link className="login-forgot-link" href="/forgot-password">Ai uitat parola?</Link>
     </form>
   );
 }

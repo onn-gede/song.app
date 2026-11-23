@@ -153,7 +153,7 @@ function dedupeSections(sections: Array<{ section_type: string; section_label: s
 }
 
 function lyricsFromSections(sections: ParsedExternalSong["sections"]) {
-  return sections.map((section) => `${section.section_label || (section.section_type === "chorus" ? "Refren" : "Strofa")}\n${section.content}`).join("\n\n").trim();
+  return sections.map((section) => section.content.trim()).filter(Boolean).join("\n\n").trim();
 }
 
 

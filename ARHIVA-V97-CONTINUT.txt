@@ -1,0 +1,16 @@
+SongApp v97 · 0.26.0
+
+Conținut principal nou:
+- export PPTX pentru cântările fără prezentare PowerPoint;
+- șablon PowerPoint bazat pe fișierul de referință 335;
+- nume de fișier „numărul cântării. titlul cântării.pptx”;
+- font regular pentru strofe și refrene;
+- împărțire automată a versurilor pe slide-uri;
+- teste pentru structură, master, nume și secțiuni.
+
+Validare efectuată:
+- 104 teste automate: toate trecute;
+- build Next.js 16.4.6: trecut;
+- prezentare PPTX generată și randată: trecut.
+
+Nu este necesar SQL.

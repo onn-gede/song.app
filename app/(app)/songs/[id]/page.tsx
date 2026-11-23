@@ -9,6 +9,8 @@ import { DeleteSongButton } from "@/components/DeleteSongButton";
 import { buildStableBibleSourceUrl } from "@/lib/freeBibleText";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 import { YouTubePlayer } from "@/components/YouTubePlayer";
+import { SongPowerPointExport } from "@/components/SongPowerPointExport";
+import { canCheckStoredPowerPoint, storageObjectTarget } from "@/lib/song-files";
 
 type PageProps = { params: Promise<{ id: string }>; searchParams: Promise<{usage_page?: string}> };
 
@@ -43,7 +45,7 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
     supabase.from("song_sources").select("id,song_number,source_title,song_collections(id,name,short_code,color)").eq("song_id", id),
     supabase.from("song_bible_references").select("id,theme,reason,confidence,bible_references(version,book,chapter,verse_start,verse_end,reference_label,text_cache,source_url)").eq("song_id", id),
     supabase.from("song_categories").select("categories(id,name,slug)").eq("song_id", id),
-    supabase.from("song_files").select("id,file_name,import_status,parser_notes,created_at,presentation_only_v58,upload_complete_v58,preview_path_v58,file_type").eq("song_id", id).order("created_at", { ascending: false }),
+    supabase.from("song_files").select("id,file_name,import_status,parser_notes,created_at,presentation_only_v58,upload_complete_v58,preview_path_v58,storage_path,file_type").eq("song_id", id).order("created_at", { ascending: false }),
     supabase.rpc("get_song_history_v46", {p_song_id: id, p_page: usagePage, p_page_size: 30})
   ]);
 
@@ -53,6 +55,21 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
   const importStatus = sourceFile?.import_status;
   const importStatusLabel = sourceFile?.presentation_only_v58?"Titlu și prezentare importate":importStatus === "approved" ? "Import verificat" : importStatus === "needs_review" ? "Import de verificat" : importStatus ? `Import: ${importStatus}` : null;
   const sourceNumbers = (sources || []).map((source: any) => String(source.song_number || "")).filter(Boolean);
+  const preferredSongNumber = sourceNumbers.find((number: string) => /^\d+$/.test(number)) || sourceNumbers[0] || "";
+  let powerPointFile: any = null;
+  for (const file of (files || []).filter(canCheckStoredPowerPoint).slice(0, 10)) {
+    const target = storageObjectTarget((file as any).storage_path);
+    if (!target) continue;
+    const { data, error } = await supabase.storage.from("song-files").list(target.folder, { limit: 100, search: target.name });
+    if (!error && (data || []).some((entry) => entry.name === target.name)) {
+      powerPointFile = file;
+      break;
+    }
+  }
+  const hasPowerPointFile = !!powerPointFile;
+  const exportSections = (sections && sections.length > 0)
+    ? sections.map((section: any) => ({ section_type: section.section_type, section_label: section.section_label, content: stripRepeatedSongTitleLines(section.content || "", song.title, sourceNumbers) || section.content }))
+    : String(song.lyrics_text || "").split(/\n\s*\n/g).map((content: string, index: number) => ({ section_type: index === 1 ? "chorus" : "verse", section_label: index === 1 ? "Refren" : `Strofa ${index + 1}`, content: content.trim() })).filter((section: any) => section.content);
   const topSourceLabels = (sources || [])
     .map((source: any) => {
       const collection = source.song_collections?.short_code || source.song_collections?.name || "Sursă";
@@ -89,7 +106,12 @@ export default async function SongDetailPage({ params, searchParams }: PageProps
         <section className="card grid song-lyrics-card">
           <div className="inline-form" style={{ justifyContent: "space-between", alignItems: "center" }}>
             <h2 style={{ marginBottom: 0 }}>Versuri structurate</h2>
-            <Link className="btn secondary btn-compact" href={`/songs/${song.id}/present`}>Deschide prezentarea</Link>
+            <div className="inline-form">
+              {hasPowerPointFile
+                ? <a className="btn secondary btn-compact" href={`/api/song-files/${powerPointFile.id}/download`} download>Descarcă PPT/PPTX existent</a>
+                : <SongPowerPointExport title={song.title} number={preferredSongNumber} sections={exportSections} />}
+              <Link className="btn secondary btn-compact" href={`/songs/${song.id}/present`}>Deschide prezentarea</Link>
+            </div>
           </div>
           {(files||[]).some((f:any)=>f.presentation_only_v58)?<div className="presentation-file-list">{(files||[]).filter((f:any)=>f.presentation_only_v58).map((f:any)=><div key={f.id} className="presentation-file-row"><div><strong>{f.file_name}</strong><small>{f.upload_complete_v58?(f.preview_path_v58?'PPT original + previzualizare PDF':'Prezentare originală'):'Încărcare neconfirmată — reia importul'}</small></div>{f.upload_complete_v58?<div className="inline-form"><Link className="btn btn-compact" href={`/songs/${song.id}/files/${f.id}`}>Vezi prezentarea</Link><a className="btn secondary btn-compact" href={`/api/song-files/${f.id}/download`}>Descarcă {f.file_type.toUpperCase()}</a></div>:null}</div>)}</div>:null}
           {(sections || []).length === 0 ? <p className="lyrics">{song.lyrics_text || (sourceFile?.presentation_only_v58?"Titlul și prezentarea sunt disponibile. Versurile pot fi adăugate ulterior.":"Nu există versuri.")}</p> : null}

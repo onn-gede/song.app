@@ -17,6 +17,14 @@ export function normalizeFreeShowLocalUrl(value: string) {
   return url.toString().replace(/\/$/, "");
 }
 
+export function freeShowConnectorHealthUrl(value: string) {
+  const endpoint = normalizeFreeShowLocalUrl(value);
+  const url = new URL(endpoint);
+  url.pathname = url.pathname.replace(/\/freeshow\/?$/, "/health");
+  if (!url.pathname.endsWith("/health")) url.pathname = "/health";
+  return url.toString().replace(/\/$/, "");
+}
+
 export function freeShowResponseData(value: unknown): unknown {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const row = value as Record<string, unknown>;

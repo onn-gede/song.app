@@ -1,0 +1,8 @@
+SongApp v100 / 0.29.0
+
+- Wishlist și mutare atomică Wishlist -> program/backup
+- distribuire echilibrată a rândurilor în PPTX
+- import generic din pagini publice HTML și text simplu
+- eliminare etichete Strofa/Refren/Bridge din versurile importate
+- sugestii YouTube confirmate numai pentru colecția de tineri
+- UPDATE-V100.sql obligatoriu pentru baza existentă

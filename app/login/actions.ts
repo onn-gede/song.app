@@ -2,9 +2,35 @@
 
 import { logAuthFailure } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export type LoginState = { error?: string };
+export type LoginState = { error?: string; message?: string };
+
+function passwordResetBaseUrl(origin: string | null) {
+  if (origin) {
+    try {
+      const candidate = new URL(origin);
+      if (candidate.protocol === "http:" && ["localhost", "127.0.0.1"].includes(candidate.hostname)) {
+        return candidate.origin;
+      }
+    } catch {}
+  }
+  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+}
+
+export async function requestPasswordResetAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const generic = "Dacă adresa aparține unui cont, vei primi un email cu linkul de resetare.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320) return { message: generic };
+
+  const requestHeaders = await headers();
+  const redirectTo = `${passwordResetBaseUrl(requestHeaders.get("origin"))}/reset-password`;
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) console.warn("Password reset email unavailable");
+  return { message: generic };
+}
 
 export async function signInAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") || "").trim();

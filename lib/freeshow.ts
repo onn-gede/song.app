@@ -53,20 +53,42 @@ function textFromItem(item: unknown) {
   }).join("\n").trim();
 }
 
-function orderedSlideIds(show: Record<string, any>) {
+function freeShowObject(value: unknown): Record<string, any> {
+  const direct = object(value);
+  if (Object.keys(object(direct.slides)).length) return direct;
+
+  if (Array.isArray(value)) {
+    const tupleShow = object(value[1]);
+    if (Object.keys(object(tupleShow.slides)).length) return tupleShow;
+    for (const candidate of value) {
+      const nested = object(candidate);
+      if (Object.keys(object(nested.slides)).length) return nested;
+    }
+  }
+
+  for (const candidate of [direct.show, direct.data]) {
+    const nested = object(candidate);
+    if (Object.keys(object(nested.slides)).length) return nested;
+  }
+  return direct;
+}
+
+function orderedSlides(show: Record<string, any>) {
   const slides = object(show.slides);
   const layouts = object(show.layouts);
   const activeLayout = cleanText(object(show.settings).activeLayout);
   const layout = object(layouts[activeLayout] || Object.values(layouts)[0]);
   const refs = Array.isArray(layout.slides) ? layout.slides : [];
   const roots = refs.map((entry: unknown) => cleanText(typeof entry === "string" ? entry : object(entry).id)).filter(Boolean);
-  const result: string[] = [];
-  const append = (id: string, ancestors: Set<string>) => {
+  const result: Array<{ id: string; group: string }> = [];
+  const append = (id: string, ancestors: Set<string>, inheritedGroup = "") => {
     if (!slides[id] || ancestors.has(id)) return;
-    result.push(id);
+    const slide = object(slides[id]);
+    const group = cleanText(slide.group) || inheritedGroup;
+    result.push({ id, group });
     const next = new Set(ancestors); next.add(id);
-    const children = Array.isArray(object(slides[id]).children) ? object(slides[id]).children : [];
-    children.map(cleanText).filter(Boolean).forEach((child: string) => append(child, next));
+    const children = Array.isArray(slide.children) ? slide.children : [];
+    children.map(cleanText).filter(Boolean).forEach((child: string) => append(child, next, group));
   };
   (roots.length ? roots : Object.keys(slides)).forEach((id) => append(id, new Set()));
   return result.slice(0, 1000);
@@ -74,13 +96,13 @@ function orderedSlideIds(show: Record<string, any>) {
 
 export function parseFreeShow(raw: string | unknown): FreeShowImport {
   const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-  const show = object(parsed);
+  const show = freeShowObject(parsed);
   if (!Object.keys(object(show.slides)).length) throw new Error("Fișierul nu conține slide-uri FreeShow.");
 
-  const sections = orderedSlideIds(show).map((id, index) => {
+  const sections = orderedSlides(show).map(({ id, group }, index) => {
     const slide = object(object(show.slides)[id]);
     const candidates = (Array.isArray(slide.items) ? slide.items : []).map(textFromItem).filter(Boolean).sort((a: string, b: string) => b.length - a.length);
-    const label = cleanText(slide.group);
+    const label = group;
     const type = sectionType(label);
     return { label: label || defaultLabel(type, index), type, content: candidates[0] || "" };
   }).filter((section) => section.content).slice(0, 500);

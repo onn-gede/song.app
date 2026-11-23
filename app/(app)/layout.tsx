@@ -6,6 +6,7 @@ import { AppNavigation } from "@/components/AppNavigation";
 import { WorkspaceShell } from "@/components/WorkspaceShell";
 import { Icon } from "@/components/Icon";
 import { ProgramReturnButton } from "@/components/ProgramReturnButton";
+import { FreeShowConnectorStatus } from "@/components/FreeShowConnectorStatus";
 // Private pages depend on the current authenticated request.
 export const dynamic = 'force-dynamic';
 export default async function AppLayout({children}:{children:React.ReactNode}) {
@@ -18,6 +19,7 @@ export default async function AppLayout({children}:{children:React.ReactNode}) {
   <Link href="/dashboard" className="workspace-brand" aria-label="SongApp BCBgiroc · Acasă"><span className="workspace-brand-mark"><Icon name="music" size={25}/></span><span><strong>SongApp<span className="brand-period">.</span></strong><small>BCBgiroc</small></span></Link>
   <AppNavigation role={profile.role} showExternalSync={process.env.ENABLE_EXTERNAL_SYNC==="true"}/>
   <div className="workspace-sidebar-note"><Icon name="music" size={28}/><p>Mai puțin timp de pregătire.<br/><strong>Mai mult loc pentru muzică.</strong></p></div>
+  <FreeShowConnectorStatus/>
   <div className="workspace-user"><span className="workspace-avatar">{initials}</span><span className="workspace-user-copy"><strong><Link href="/account">{name}</Link></strong><small>{roles[profile.role]||profile.role}</small></span><form action={signOutAction}><button type="submit" aria-label="Ieșire din cont" title="Ieșire din cont" className="workspace-logout"><Icon name="logout" size={18}/></button></form></div>
  </>}>{children}<ProgramReturnButton/></WorkspaceShell>;
 }

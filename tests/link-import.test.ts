@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizeSongUrl,parseSongPage,sectionsFromLyrics,readSongUrl } from "../lib/link-import/parser";
+import { normalizeSongUrl,parseSongPage,sectionsFromLyrics,sectionsWithEditedLyrics,readSongUrl } from "../lib/link-import/parser";
 const url="https://www.resursecrestine.ro/cantece/123456/cantare-de-test";
 const html=`<html><body><nav>Nu importa meniul</nav>
 <div class="title"><div class="titleContent">Cântare de test</div><button>Copiază</button></div>
@@ -16,10 +16,12 @@ test('extracts one lyric view, DOM title/metadata and structure without HTML chr
  assert.ok(result.sections[1].content.includes('Rămâi în versuri cuvânt întreg'));
  assert.equal(result.structure,'S1, R, S2, B');
  assert.ok(!/Duplicat|Comentarii|Nu importa|Copiază|I:/.test(result.lyricsText));
+ assert.ok(!/^(?:Strofa\s*\d*|Refren|Bridge)$/im.test(result.lyricsText));
 });
-test('preview lyric output can be edited and parsed back without losing section types',()=>{
- const preview=parseSongPage(html,url);const edited=sectionsFromLyrics(preview.lyricsText);
- assert.deepEqual(edited.sections,preview.sections);
+test('label-free preview can be edited without losing detected section types',()=>{
+ const preview=parseSongPage(html,url);const edited=sectionsWithEditedLyrics(preview.sections,preview.lyricsText.replace('Prima linie','Prima linie corectată'));
+ assert.deepEqual(edited.map(section=>section.section_type),preview.sections.map(section=>section.section_type));
+ assert.equal(edited[0].content,'Prima linie corectată de test\nA doua linie de test');
 });
 test('canonical public URLs retain stable source identity and reject local addresses',()=>{
  assert.equal(normalizeSongUrl('https://resursecrestine.ro/cantece/123456/cantare-de-test?utm_source=x#text').url,url);
@@ -42,13 +44,29 @@ test('Melodia sections omit chords and duplicate views while keeping repeated re
  const html='<h1>Cântare exemplu<div class="subtitle">Alt titlu</div><div class="key-group">C D E F G</div></h1><div class="lyrics-container"><div class="verse" data-section-key="verse-1">Prima <div class="chord">G</div>linie de test<br>A doua linie de test</div><div class="chorus" data-section-key="chorus-1">Refren de test pentru aplicație</div><div class="verse hidden" data-section-key="verse-1">Duplicat ascuns</div><div class="chorus" data-section-key="chorus-2">Refren de test pentru aplicație</div></div><footer>Nu importa</footer>';
  const result=parseSongPage(html,'https://melodia.ro/cantari/Exemplu');
  assert.equal(result.title,'Cântare exemplu');assert.equal(result.sections.length,3);assert.equal(result.structure,'S1, R, R');assert.equal(result.sections[0].content,'Prima linie de test\nA doua linie de test');assert.ok(!/Duplicat|Nu importa|C D E/.test(result.lyricsText));
- assert.deepEqual(sectionsFromLyrics(result.lyricsText).sections,result.sections);
+ assert.deepEqual(sectionsWithEditedLyrics(result.sections,result.lyricsText),result.sections);
 });
 test('generic lyric containers and JSON-LD are parsed without falling back to whole page chrome',()=>{
  const a=parseSongPage('<h1>Alt exemplu</h1><nav>Meniu de evitat</nav><div class="song-lyrics">Strofa 1<br>Linie suficient de lungă pentru test<br><br>R1: Refren numerotat pentru test</div>','https://example.org/song');
- assert.deepEqual(a.sections.map(s=>s.section_type),['verse','chorus']);assert.ok(!a.lyricsText.includes('Meniu'));
+ assert.deepEqual(a.sections.map(s=>s.section_type),['verse','chorus']);assert.ok(!a.lyricsText.includes('Meniu'));assert.ok(!/Strofa 1|R1:/.test(a.lyricsText));
  const b=parseSongPage('<script type="application/ld+json">'+JSON.stringify({'@type':'MusicComposition',name:'Titlu din date',lyrics:{text:'Strofa 1\nText de test din date structurate\n\nRefren\nRefrenul de test pentru import'}})+'</script>','https://example.org/other');assert.equal(b.title,'Titlu din date');assert.equal(b.sections.length,2);
  assert.throws(()=>parseSongPage('<h1>Nu e cântare</h1><main>Articol fără bloc de versuri sau date structurate</main>','https://example.org/article'),/bloc de versuri/);
+});
+test('generic pages remove bracketed and extended section labels while preserving lyrics',()=>{
+ const result=parseSongPage('<h1>Cântare generică</h1><main><div class="lyrics-content">[Verse 1]<br>Prima linie a cântării<br>A doua linie a cântării<br><br>[Chorus]<br>Refrenul rămâne în text<br>Încă o linie de refren<br><br>Bridge:<br>Textul punții rămâne aici</div></main>','https://example.org/song/123');
+ assert.deepEqual(result.sections.map(section=>section.section_type),['verse','chorus','bridge']);
+ assert.doesNotMatch(result.lyricsText,/Verse|Chorus|Bridge/i);
+ assert.match(result.lyricsText,/Prima linie|Refrenul rămâne|Textul punții/);
+});
+test('plain text links are accepted and section labels are not stored as lyrics',async()=>{
+ const result=await readSongUrl('https://example.org/cantarea-mea.txt',{readPage:async()=>({status:200,contentType:'text/plain; charset=utf-8',html:'Strofa 1\nPrima linie suficient de lungă\nA doua linie suficient de lungă\n\nRefren\nRefrenul cântării pentru test\nA doua linie din refren'})});
+ assert.equal(result.sections.length,2);assert.doesNotMatch(result.lyricsText,/^(?:Strofa 1|Refren)$/im);
+});
+test('unlabelled repeated blocks are proposed as refrains while stanza labels stay sequential',()=>{
+ const text='Prima strofă suficient de lungă\nA doua linie din strofă\n\nAcesta este refrenul repetat\nA doua linie din refren\n\nAltă strofă suficient de lungă\nÎncă o linie din strofă\n\nAcesta este refrenul repetat\nA doua linie din refren';
+ const parsed=sectionsFromLyrics(text);
+ assert.deepEqual(parsed.sections.map(section=>section.section_type),['verse','chorus','verse','chorus']);
+ assert.deepEqual(parsed.sections.map(section=>section.section_label),['Strofa 1','Refren','Strofa 2','Refren']);
 });
 test('public URL DNS validation rejects mixed records and private/mapped/reserved networks',async()=>{
  const {isPublicAddress,resolvePublicAddress}=await import('../lib/link-import/public-page.js');

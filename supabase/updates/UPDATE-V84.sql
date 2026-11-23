@@ -1,4 +1,4 @@
--- SongApp v84 / 0.19.0. Rulează integral o singură dată în Supabase SQL Editor.
+-- Actualizare v84 peste v83. Adaugă wishlisturile și media publică.
 begin;
 
 -- Playlisturile sunt liste de idei independente de programe. Elementele lor
@@ -165,4 +165,3 @@ grant execute on function public.list_rehearsal_playlists_v84(),public.get_rehea
 grant execute on function public.get_shared_meeting_v79(text) to anon,authenticated;
 notify pgrst,'reload schema';
 commit;
-

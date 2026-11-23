@@ -1,0 +1,11 @@
+SongApp v103 · 0.32.0
+
+Arhivă completă și cumulativă.
+- casete de import fără scrollbar și redimensionabile;
+- continuarea aceleiași strofe la despărțirea prin rând liber;
+- wishlist public/privat;
+- link public și propuneri moderate;
+- include UPDATE-V103.sql;
+- nu include .env, node_modules, .next sau dist-worker.
+
+Instrucțiuni: CITESTE-MAI-INTAI-V103.md

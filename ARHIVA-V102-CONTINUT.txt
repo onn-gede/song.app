@@ -1,0 +1,10 @@
+SongApp v102 · 0.31.0
+
+Arhivă completă și cumulativă.
+- include v100 și v101;
+- editor structural în import;
+- detectare și corectare secțiuni;
+- sugestii YouTube direct în import;
+- nu include .env, node_modules, .next sau dist-worker.
+
+Instrucțiuni: CITESTE-MAI-INTAI-V102.md

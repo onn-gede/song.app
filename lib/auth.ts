@@ -6,7 +6,15 @@ export { canEdit } from "./permissions";
 
 const getActiveContext = cache(async () => {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  let user: any = null;
+  let authError: unknown = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+    authError = result.error;
+  } catch (error) {
+    authError = error;
+  }
   if (authError || !user) throw new Error("Trebuie să te autentifici.");
   const { data: profile, error } = await supabase.from("profiles")
     .select("id,full_name,email,role,is_active").eq("id", user.id).single();

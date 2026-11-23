@@ -18,6 +18,9 @@
     "lib/external-sync/**/*.ts",
     "lib/library.ts",
     "lib/presentation.ts",
-    "lib/songTextCleanup.ts"
+    "lib/song-pptx.ts",
+    "lib/youtube-suggestions.ts",
+    "lib/songTextCleanup.ts",
+    "lib/section-editor.ts"
   ]
 }

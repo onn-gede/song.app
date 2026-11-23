@@ -54,7 +54,12 @@ const server=http.createServer(async(request,response)=>{
   }
   if(!allowed){reply(response,403,{error:"Originea SongApp nu este permisă."});return;}
   if(request.method==="GET"&&request.url==="/health"){
-    reply(response,200,{ok:true,freeshow:FREESHOW_URL});
+    let freeshowConnected=false;
+    try{
+      const health=await fetch(FREESHOW_URL,{method:"POST",headers:{"Content-Type":"application/json;charset=UTF-8"},body:JSON.stringify({action:"get_shows",returnId:"songapp-health"}),signal:AbortSignal.timeout(1800)});
+      freeshowConnected=health.ok;
+    }catch{}
+    reply(response,200,{ok:true,freeshowConnected,freeshow:FREESHOW_URL});
     return;
   }
   if(request.method!=="POST"||request.url!=="/freeshow"){

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildFreeShow, parseFreeShow, safeFreeShowFileName } from "../lib/freeshow";
-import {buildFreeShowCreateData,createdFreeShowId,findFreeShowByName,findFreeShowMatches,findFreeShowProject,freeShowProjectItemCount,normalizeFreeShowLocalUrl} from "../lib/freeshow-local";
+import {buildFreeShowCreateData,createdFreeShowId,findFreeShowByName,findFreeShowMatches,findFreeShowProject,freeShowConnectorHealthUrl,freeShowProjectItemCount,normalizeFreeShowLocalUrl} from "../lib/freeshow-local";
 import {buildFreeShowProgramPayload,formatFreeShowProgramDate} from "../lib/freeshow-program";
 
 test("FreeShow export preserves title, order, groups and lyrics", () => {
@@ -18,9 +18,21 @@ test("FreeShow export preserves title, order, groups and lyrics", () => {
 test("FreeShow import follows active layout and child slide order", () => {
   const show:any=buildFreeShow("Test",[{label:"Verse 1",content:"A"},{label:"Chorus",content:"B"}]);
   show.slides["songapp-slide-1"].children=["songapp-slide-2"];
+  show.slides["songapp-slide-2"].group="";
   show.layouts["songapp-layout"].slides=[{id:"songapp-slide-1"}];
   const parsed=parseFreeShow(JSON.stringify(show));
   assert.deepEqual(parsed.sections.map(section=>section.content),["A","B"]);
+  assert.deepEqual(parsed.sections.map(section=>section.label),["Verse 1","Verse 1"]);
+});
+
+test("FreeShow import accepts a native exported .show tuple", () => {
+  const show=buildFreeShow("Export nativ",[{label:"Verse 1",content:"Prima strofă"},{label:"Chorus",content:"Refrenul"}],{number:"510",key:"F"});
+  const parsed=parseFreeShow(JSON.stringify(["native-show-id",show]));
+  assert.equal(parsed.title,"Export nativ");
+  assert.equal(parsed.songNumber,"510");
+  assert.equal(parsed.defaultKey,"F");
+  assert.deepEqual(parsed.sections.map(section=>section.type),["verse","chorus"]);
+  assert.deepEqual(parsed.sections.map(section=>section.content),["Prima strofă","Refrenul"]);
 });
 
 test("FreeShow rejects empty shows and creates safe filenames", () => {
@@ -32,6 +44,7 @@ test("FreeShow local accepts only loopback addresses and finds existing shows",(
   assert.equal(normalizeFreeShowLocalUrl("http://127.0.0.1:5510/freeshow/"),"http://127.0.0.1:5510/freeshow");
   assert.equal(normalizeFreeShowLocalUrl("http://localhost:5506/"),"http://localhost:5506");
   assert.equal(normalizeFreeShowLocalUrl("http://127.0.0.1:5506"),"http://127.0.0.1:5506");
+  assert.equal(freeShowConnectorHealthUrl("http://127.0.0.1:5510/freeshow"),"http://127.0.0.1:5510/health");
   assert.throws(()=>normalizeFreeShowLocalUrl("https://example.com"),/http:\/\//);
   assert.throws(()=>normalizeFreeShowLocalUrl("http://192.168.1.10:5506"),/acest calculator/);
   assert.deepEqual(findFreeShowByName({data:{abc:{name:"SongApp · Joi"}}},"songapp · joi"),{id:"abc",name:"SongApp · Joi"});

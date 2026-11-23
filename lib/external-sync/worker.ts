@@ -39,7 +39,7 @@ export async function processNextSyncUnit(client: SupabaseClient, network: Netwo
         const sections = parsed.sections.map((section, index) => ({ ...section, position: index + 1,
           content: stripRepeatedSongTitleLines(section.content, parsed.title)
         })).filter((section) => section.content.length > 0);
-        const lyrics = sections.length ? sections.map((section) => `${section.section_label || "Strofă"}\n${section.content}`).join("\n\n") : stripRepeatedSongTitleLines(parsed.lyrics, parsed.title);
+        const lyrics = sections.length ? sections.map((section) => section.content.trim()).filter(Boolean).join("\n\n") : stripRepeatedSongTitleLines(parsed.lyrics, parsed.title);
         song = { title: parsed.title, lyrics, sections, hash: crypto.createHash("sha256").update(parsed.title + "\n" + lyrics).digest("hex") };
       } catch (error) {
         failure = error instanceof Error ? error.message : "Eroare la citirea cântării.";

@@ -7,6 +7,8 @@ import { ImportFilesWizard } from "@/components/ImportFilesWizard";
 import { importTextSongAction } from "./actions";
 import { FreeShowImportWizard } from "@/components/FreeShowImportWizard";
 import { LyricsPasteField } from "@/components/LyricsPasteField";
+import { ManualYouTubeSuggestion } from "@/components/ManualYouTubeSuggestion";
+import { isYouthCollection } from "@/lib/youtube-suggestions";
 
 const sourceTypes = [
   ["txt", "Text simplu"],
@@ -60,6 +62,7 @@ export default async function ImportPage() {
   ]);
 
   if (error || categoriesError) throw new Error("Colecțiile și categoriile nu pot fi încărcate momentan.");
+  const youthCollectionIds=(collections||[]).filter(isYouthCollection).map(collection=>collection.id);
 
   return (
     <>
@@ -108,6 +111,8 @@ export default async function ImportPage() {
             </div>
 
             <SongMetadataFields />
+
+            <ManualYouTubeSuggestion youthCollectionIds={youthCollectionIds}/>
 
             <label className="label">Note interne
               <textarea className="textarea" name="notes" placeholder="Observații despre cântare, sursă, adaptări, variante etc." />

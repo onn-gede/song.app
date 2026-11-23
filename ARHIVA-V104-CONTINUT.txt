@@ -1,0 +1,11 @@
+SongApp v104 · 0.33.0
+
+Arhivă completă și cumulativă.
+- wishlist public colaborativ;
+- adăugare directă, fără aprobare;
+- protecție contra dublurilor și excesului;
+- eliminare vizibilă de către echipă, fără justificare;
+- include UPDATE-V104.sql;
+- nu include .env, node_modules, .next sau dist-worker.
+
+Instrucțiuni: CITESTE-MAI-INTAI-V104.md

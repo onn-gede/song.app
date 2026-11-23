@@ -1,0 +1,10 @@
+SongApp v98 / 0.27.0
+
+- PPTX vizibil și descărcare PPT/PPTX existent
+- verificare reală în Storage; colecțiile importate doar ca text primesc export PPTX nou
+- import direct din export FreeShow nativ
+- import web fără etichete în textul versurilor
+- FreeShow Sync
+- curățare automată a sesiunilor expirate
+
+Nu necesită SQL nou.

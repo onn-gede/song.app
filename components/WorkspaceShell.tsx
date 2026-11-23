@@ -3,7 +3,7 @@ import { useEffect,useRef,useState,type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "./Icon";
-const labels:Record<string,string>={dashboard:"Acasă",songs:"Cântări",meetings:"Programe",playlists:"Playlisturi",collections:"Colecții",categories:"Categorii",import:"Import",review:"De verificat",duplicates:"Duplicate",admin:"Administrare",users:"Utilizatori",activity:"Activitate",edit:"Editare",lyrics:"Versuri",verses:"Versete",present:"Prezentare","youth-keys":"Game Tineri"};
+const labels:Record<string,string>={dashboard:"Acasă",songs:"Cântări",meetings:"Programe",playlists:"Wishlist",collections:"Colecții",categories:"Categorii",import:"Import",review:"De verificat",duplicates:"Duplicate",admin:"Administrare",users:"Utilizatori",activity:"Activitate",edit:"Editare",lyrics:"Versuri",verses:"Versete",present:"Prezentare","youth-keys":"Game Tineri"};
 function segmentLabel(parts:string[],part:string,index:number){if(labels[part])return labels[part];if(index===1&&parts[0]==="songs")return "Cântare";if(index===1&&parts[0]==="meetings")return "Program";return index===parts.length-1?"Detalii":"Secțiune";}
 export function WorkspaceShell({sidebar,children}:{sidebar:ReactNode;children:ReactNode}) {
  const [open,setOpen]=useState(false);const [mobile,setMobile]=useState(false);const path=usePathname();const drawer=useRef<HTMLElement>(null);const toggle=useRef<HTMLButtonElement>(null);

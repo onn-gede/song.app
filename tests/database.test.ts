@@ -96,11 +96,35 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       await scalar("select move_rehearsal_playlist_song_v84($1,$2,'up')",[playlist,payload.items[1].id]);assert.equal((await scalar('select get_rehearsal_playlist_v84($1)',[playlist])).items[0].song.id,second);
       const future=await scalar("select create_meeting('v84 viitor',null,now()+interval '1 day',null)");
       await scalar("select update_future_meeting_v84($1,'v84 editat','tineret',now()+interval '2 days','Observație','rehearsal')",[future]);assert.equal(await scalar('select program_kind from meetings where id=$1',[future]),'rehearsal');
+      const beforeMove=await scalar('select get_rehearsal_playlist_v84($1)',[playlist]);
+      const afterMove=await scalar('select move_wishlist_song_to_meeting_v100($1,$2,$3,false,null)',[playlist,beforeMove.items[0].id,future]);
+      assert.equal(afterMove.items.length,1);assert.equal(afterMove.items[0].position,1);assert.equal(await scalar('select song_id from meeting_items where meeting_id=$1 and song_id=$2',[future,second]),second);
       const item=await scalar('select add_song_to_meeting($1,$2,false,null,null)',[future,first]);const slug=await scalar("select create_meeting_share_link_v66($1,'v84-youtube',false)",[future]);
       await asUser('','anon');const shared=await scalar('select get_shared_meeting_v79($1)',[slug]);assert.equal(shared.items.find((row:any)=>row.id===item).song.youtube_url,'https://youtu.be/dQw4w9WgXcQ');await assert.rejects(()=>scalar('select * from list_rehearsal_playlists_v84()'));
       await asUser(VIEWER);assert.equal(Number(await scalar('select count(*) from list_rehearsal_playlists_v84()')),1);await assert.rejects(()=>scalar("select create_rehearsal_playlist_v84('Interzis')"));
       await asUser(ADMIN);const past=await scalar("select create_meeting('v84 trecut',null,now()-interval '3 hours',null)");await assert.rejects(()=>scalar("select update_future_meeting_v84($1,'Nu','',now(),null,'official')",[past]),/finalizat/);
       await db.query('delete from meetings where id=any($1::uuid[])',[[future,past]]);await scalar('select delete_rehearsal_playlist_v84($1)',[playlist]);await db.query('delete from songs where id=any($1::uuid[])',[[first,second]]);
+    });
+    await t.test('v104 public wishlist stays private by default, accepts direct additions and allows removal',async()=>{
+      await asUser(ADMIN);
+      const first=await scalar("insert into songs(title,lyrics_text) values('v103 existentă','Text existent') returning id");
+      const proposed=await scalar("insert into songs(title,lyrics_text) values('v103 propusă','Text propus') returning id");
+      const playlist=await scalar("select create_rehearsal_playlist_v84('Wishlist v103','Public controlat')");
+      await scalar('select add_rehearsal_playlist_song_v84($1,$2,null)',[playlist,first]);
+      let payload=await scalar('select get_rehearsal_playlist_v84($1)',[playlist]);assert.equal(payload.is_public,false);assert.equal(payload.pending.length,0);
+      await asUser('','anon');assert.equal(await scalar("select get_public_wishlist_v103('inexistent')"),null);
+      await asUser(ADMIN);payload=await scalar('select set_rehearsal_playlist_visibility_v103($1,true)',[playlist]);assert.equal(payload.is_public,true);assert.ok(payload.public_slug.startsWith('wishlist-'));
+      const slug=payload.public_slug;
+      await asUser('','anon');const publicPayload=await scalar('select get_public_wishlist_v103($1)',[slug]);assert.equal(publicPayload.items.length,1);
+      assert.ok((await db.query('select * from search_public_wishlist_songs_v103($1,$2,20)',[slug,'v103 propusă'])).rows.some((row:any)=>row.song_id===proposed));
+      const addedItem=await scalar("select add_public_wishlist_contribution_v103($1,$2,'Filip','Pentru repetiție')",[slug,proposed]);
+      assert.equal(await scalar("select add_public_wishlist_contribution_v103($1,$2,'Filip','Dublură')",[slug,proposed]),addedItem);
+      assert.equal((await scalar('select get_public_wishlist_v103($1)',[slug])).items.length,2);
+      await asUser(ADMIN);payload=await scalar('select get_rehearsal_playlist_v84($1)',[playlist]);assert.equal(payload.pending.length,0);assert.equal(payload.items.length,2);
+      payload=await scalar('select remove_rehearsal_playlist_song_v84($1,$2)',[playlist,addedItem]);assert.equal(payload.items.length,1);
+      payload=await scalar('select set_rehearsal_playlist_visibility_v103($1,false)',[playlist]);assert.equal(payload.is_public,false);
+      await asUser('','anon');assert.equal(await scalar('select get_public_wishlist_v103($1)',[slug]),null);await assert.rejects(()=>scalar('select add_public_wishlist_contribution_v103($1,$2,null,null)',[slug,first]));
+      await asUser(ADMIN);await scalar('select delete_rehearsal_playlist_v84($1)',[playlist]);await db.query('delete from songs where id=any($1::uuid[])',[[first,proposed]]);
     });
     await t.test('v80 applies one Moments style and suggests the next collection number',async()=>{
       await asUser(ADMIN);

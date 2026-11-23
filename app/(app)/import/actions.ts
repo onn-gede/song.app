@@ -12,6 +12,8 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { parseFreeShow } from "@/lib/freeshow";
+import {normalizeYouTubeUrl} from "@/lib/youtube";
+import {isYouthCollection} from "@/lib/youtube-suggestions";
 
 const allowedSourceTypes = new Set(["manual", "pptx", "ppt", "pdf", "txt", "docx", "other"]);
 const supportedFileExtensions = new Set(["txt", "md", "pptx", "ppt", "pdf", "zip"]);
@@ -937,6 +939,7 @@ export async function importTextSongAction(formData: FormData) {
     const {data:createdSongId,error}=await supabase.rpc("create_title_only_song_v79",{p_collection:collectionId,p_title:title,p_number:songNumber,p_default_key:readNullableString(formData,"default_key"),p_bpm:bpm,p_structure:readNullableString(formData,"structure"),p_notes:readNullableString(formData,"notes")});
     if(error||!createdSongId)throw new Error(error?.message||"Cântarea nu a putut fi adăugată.");
     await assignInitialCategory(String(createdSongId), formData);
+    await saveYouthYouTubeLink(String(createdSongId),collectionId,formData);
     revalidatePath("/dashboard");revalidatePath("/songs");revalidatePath("/collections");refresh();redirect(`/songs/${createdSongId}`);
   }
   const parsed: ParsedImport = {
@@ -950,6 +953,7 @@ export async function importTextSongAction(formData: FormData) {
   };
   const createdSongId = await createSongFromParsedImport(parsed, collectionId, formData, { title, songNumber });
   await assignInitialCategory(String(createdSongId), formData);
+  await saveYouthYouTubeLink(String(createdSongId),collectionId,formData);
 
   revalidatePath("/dashboard");
   revalidatePath("/songs");
@@ -957,6 +961,13 @@ export async function importTextSongAction(formData: FormData) {
   revalidatePath("/collections");
   refresh();
   redirect(`/songs/${createdSongId}/lyrics`);
+}
+
+async function saveYouthYouTubeLink(songId:string,collectionId:string,formData:FormData){
+ const raw=readString(formData,"youtube_url");if(!raw)return;
+ const {supabase}=await requireProfile("editor");const {data:collection}=await supabase.from("song_collections").select("name,short_code").eq("id",collectionId).maybeSingle();
+ if(!isYouthCollection(collection))throw new Error("Sugestia YouTube poate fi salvată la import doar pentru colecția de tineri.");
+ const {error}=await supabase.from("songs").update({youtube_url:normalizeYouTubeUrl(raw)}).eq("id",songId);if(error)throw new Error(error.message);
 }
 
 async function assignInitialCategory(songId: string, formData: FormData) {

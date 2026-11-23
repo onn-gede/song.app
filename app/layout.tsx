@@ -9,7 +9,7 @@ import "./mobile-polish.css";
 
 export const metadata: Metadata = {
   title: "SongApp BCBgiroc",
-  description: "Cântări, programe și playlisturi pentru întâlnirile bisericii",
+  description: "Cântări, programe și wishlisturi pentru întâlnirile bisericii",
   applicationName: "SongApp BCBgiroc",
   appleWebApp: {capable: true, title: "SongApp", statusBarStyle: "default"},
   icons: {apple: [{url: "/icons/songapp-apple-180.png", sizes: "180x180", type: "image/png"}]}

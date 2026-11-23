@@ -27,3 +27,17 @@ export async function updateManagedUserAction(id:string,name:string,role:string,
 export async function moderateManagedUserAction(id:string,remove:boolean){
  const {supabase}=await requireProfile('admin');const {error}=await supabase.rpc('admin_moderate_user_v57',{p_id:id,p_remove:remove});if(error)throw new Error(error.message);revalidatePath('/admin/users');refresh();return users();
 }
+
+export async function resetManagedUserPasswordAction(id:string,password:string,confirmation:string){
+ const {supabase,user,profile}=await requireProfile('admin');
+ if(!/^[0-9a-f-]{36}$/i.test(id))throw new Error('Utilizator invalid.');
+ if(password.length<12||password.length>128||password!==confirmation)throw new Error('Parola temporară trebuie să aibă minimum 12 caractere și să fie confirmată identic.');
+ const {data:target,error:targetError}=await supabase.from('profiles').select('id,email,full_name').eq('id',id).maybeSingle();
+ if(targetError||!target)throw new Error('Contul nu a fost găsit.');
+ const admin=createAdminClient();
+ const {error}=await admin.auth.admin.updateUserById(id,{password});
+ if(error){await logAuthFailure('admin.password_reset_failure',target.email||id);throw new Error('Parola nu a putut fi resetată.');}
+ const {error:auditError}=await admin.from('activity_log_v48').insert({actor_id:user.id,actor_email:profile.email,event_type:'admin.password_reset',resource_type:'profiles',resource_id:id,path:'/admin/users',details:{resource_label:target.full_name||target.email||'Utilizator',self_reset:id===user.id}});
+ if(auditError)console.warn('Password reset audit unavailable');
+ return {ok:true};
+}

@@ -221,9 +221,9 @@ export function FreeShowLocalPanel({ meetingId }: { meetingId: string }) {
   }
 
   return <>
-    <button type="button" className="btn secondary" onClick={() => setOpen(true)}>FreeShow local</button>
+    <button type="button" className="btn secondary" onClick={() => setOpen(true)}>FreeShow Sync</button>
     {open ? <dialog ref={dialog} className="freeshow-local-dialog" onCancel={(event) => { event.preventDefault(); close(); }} onClick={(event) => { if (event.target === dialog.current) close(); }}>
-      <header><div><div className="eyebrow">Conexiune pe acest PC</div><h2>FreeShow local</h2><p className="muted small">Sincronizează biblioteca fără duplicate și pregătește automat proiectul acestei întâlniri.</p></div><button type="button" className="icon-btn" onClick={close} aria-label="Închide">×</button></header>
+      <header><div><div className="eyebrow">Conexiune pe acest PC</div><h2>FreeShow Sync</h2><p className="muted small">Sincronizează biblioteca fără duplicate și pregătește automat proiectul acestei întâlniri.</p></div><button type="button" className="icon-btn" onClick={close} aria-label="Închide">×</button></header>
       <div className="form-grid">
         <label className="label">Adresă conector SongApp<input className="input" value={url} onChange={(event) => setUrl(event.target.value)} inputMode="url" autoCapitalize="none" spellCheck={false}/><small>Adresa recomandată este {DEFAULT_FREESHOW_URL}. FreeShow folosește intern portul REST 5506.</small></label>
         <label className="label">Cheie API FreeShow (opțional)<input className="input" type="password" value={auth} onChange={(event) => setAuth(event.target.value)} autoComplete="off"/><small>Las-o goală dacă nu ai configurat una. Valoarea rămâne numai în acest browser.</small></label>

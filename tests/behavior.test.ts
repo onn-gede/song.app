@@ -130,10 +130,11 @@ test('v83 musical keys are trimmed consistently and invalid long values are reje
 });
 
 test('v83 YouTube links accept common formats and produce privacy embeds',async()=>{
- const {normalizeYouTubeUrl,youtubeVideoId,youtubePrivacyEmbedUrl}=await import('../lib/youtube.js');
+ const {normalizeYouTubeUrl,youtubeVideoId,youtubePrivacyEmbedUrl,youtubeThumbnailUrl}=await import('../lib/youtube.js');
  assert.equal(youtubeVideoId('https://youtu.be/dQw4w9WgXcQ?t=3'),'dQw4w9WgXcQ');
  assert.equal(youtubeVideoId('https://www.youtube.com/shorts/dQw4w9WgXcQ'),'dQw4w9WgXcQ');
  assert.equal(normalizeYouTubeUrl('https://music.youtube.com/watch?v=dQw4w9WgXcQ'),'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
  assert.equal(youtubePrivacyEmbedUrl('https://youtube.com/watch?v=dQw4w9WgXcQ'),'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0');
+ assert.equal(youtubeThumbnailUrl('https://youtu.be/dQw4w9WgXcQ'),'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg');
  assert.throws(()=>normalizeYouTubeUrl('https://example.com/watch?v=dQw4w9WgXcQ'));
 });

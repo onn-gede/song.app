@@ -32,6 +32,9 @@ test("FreeShow Windows installer contains install, start, stop and uninstall con
   assert.match(inno, /OutputBaseFilename=SongApp-FreeShow-Connector-Setup/);
   assert.match(inno, /PrivilegesRequired=lowest/);
   assert.match(inno, /Name: "autostart"/);
+  assert.match(inno, /MessagesFile: "Romanian\.isl"/);
+  assert.equal(fs.existsSync(path.join(installer, "Romanian.isl")), true, "Romanian.isl lipsește");
+  assert.doesNotMatch(inno, /compiler:Languages\\Romanian\.isl/);
 
   const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "build-freeshow-connector-exe.yml"), "utf8");
   assert.match(workflow, /runs-on: windows-latest/);

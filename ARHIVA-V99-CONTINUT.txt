@@ -1,0 +1,9 @@
+SongApp v99 / 0.28.0
+
+- status FreeShow Sync verde/roșu în bara utilizatorului
+- tooltip cu starea conectorului
+- verificare automată periodică
+- încadrare și validare preventivă a versurilor în PPTX
+- conectorul actualizat în pachetul de descărcare
+
+Nu necesită SQL nou.

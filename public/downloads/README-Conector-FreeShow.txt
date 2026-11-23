@@ -31,7 +31,7 @@ INSTALARE RAPIDA
 3. Descarca si extrage conectorul intr-un folder stabil, de exemplu C:\SongApp-FreeShow-Connector.
 4. Porneste FreeShow si activeaza Settings -> Connections -> API.
 5. Ruleaza PORNESTE-CONNECTOR.cmd si lasa fereastra deschisa sau minimizata.
-6. In SongApp deschide programul -> FreeShow local.
+6. In SongApp verifică indicatorul FreeShow Sync deasupra utilizatorului, apoi deschide programul -> FreeShow Sync.
 7. Foloseste adresa http://127.0.0.1:5510/freeshow.
 8. Apasa "Sincronizeaza si creeaza programul".
 

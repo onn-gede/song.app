@@ -1,0 +1,9 @@
+SongApp v101 · 0.30.0
+
+Arhivă completă și cumulativă.
+- include v100;
+- adaugă recuperare parolă prin email;
+- adaugă resetare parolă de către administrator;
+- nu conține fișiere .env, node_modules sau buildul .next.
+
+Instrucțiuni: CITESTE-MAI-INTAI-V101.md

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateSongMetadataAction } from "../../actions";
+import {SongYouTubeField} from "@/components/SongYouTubeField";
+import {isYouthCollection} from "@/lib/youtube-suggestions";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -23,6 +25,7 @@ export default async function SongEditPage({ params }: PageProps) {
   const numberSuggestions=Object.fromEntries((nextNumbers||[]).map((row:any)=>[row.collection_id,row.next_number]));
 
   const selected = new Set((selectedCategories || []).map((item: any) => item.category_id));
+  const isYouth=(sources||[]).some((source:any)=>isYouthCollection(Array.isArray(source.song_collections)?source.song_collections[0]:source.song_collections));
 
   return (
     <>
@@ -60,10 +63,7 @@ export default async function SongEditPage({ params }: PageProps) {
           <label className="label">Structură
             <input className="input" name="structure" defaultValue={song.structure || ""} placeholder="ex: V1, R, V2, R, Bridge, R" />
           </label>
-          <label className="label">Link YouTube <span className="muted small">(opțional)</span>
-            <input className="input" name="youtube_url" type="url" inputMode="url" defaultValue={song.youtube_url || ""} placeholder="https://www.youtube.com/watch?v=..." />
-            <small>Acceptă linkuri youtube.com, youtu.be, Shorts, Live sau Embed.</small>
-          </label>
+          <SongYouTubeField songId={song.id} title={song.title} initialUrl={song.youtube_url||""} isYouth={isYouth}/>
           <label className="label">Note interne
             <textarea className="textarea" name="notes" defaultValue={song.notes || ""} placeholder="Observații pentru echipă, intrare, tranziție, mod de cântare" />
           </label>

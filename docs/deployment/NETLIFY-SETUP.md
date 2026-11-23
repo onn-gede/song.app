@@ -66,6 +66,7 @@ nu trebuie pusă la dispoziția unor Deploy Previews din contribuții neîncrede
 | NEXT_PUBLIC_SUPABASE_URL | URL-ul proiectului Supabase existent |
 | NEXT_PUBLIC_SUPABASE_ANON_KEY | cheia anon / publishable a aceluiași proiect |
 | SUPABASE_SERVICE_ROLE_KEY | cheia privată service_role / secret, numai pe server |
+| YOUTUBE_DATA_API_KEY | opțional: cheia YouTube Data API v3, numai pe server, pentru sugestii în colecția de tineri |
 | NEXT_PUBLIC_SITE_URL | URL-ul HTTPS al proiectului, de exemplu https://songapp-bcbgiroc.netlify.app |
 
 Preflight-ul oprește build-ul dacă lipsesc variabilele sau URL-ul public indică

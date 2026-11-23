@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { canEdit } from "@/lib/permissions";
 import { Icon } from "./Icon";
 const groups=[
- {label:"Spațiul de lucru",items:[{href:"/dashboard",title:"Acasă",icon:"home",access:"read"},{href:"/songs",title:"Cântări",icon:"music",access:"read"},{href:"/meetings",title:"Programe",icon:"calendar",access:"read"},{href:"/playlists",title:"Playlisturi",icon:"list",access:"read"}]},
+ {label:"Spațiul de lucru",items:[{href:"/dashboard",title:"Acasă",icon:"home",access:"read"},{href:"/songs",title:"Cântări",icon:"music",access:"read"},{href:"/meetings",title:"Programe",icon:"calendar",access:"read"},{href:"/playlists",title:"Wishlist",icon:"list",access:"read"}]},
  {label:"Organizare",items:[{href:"/collections",title:"Colecții",icon:"folder",access:"read"},{href:"/collections/youth-keys",title:"Game Tineri",icon:"music",access:"read"},{href:"/categories",title:"Categorii",icon:"tag",access:"read"},{href:"/review",title:"De verificat",icon:"check",access:"editor"},{href:"/duplicates",title:"Duplicate",icon:"copy",access:"editor"}]},
  {label:"Administrare",items:[{href:"/external-sources",title:"Surse externe",icon:"upload",access:"editor"},{href:"/admin/users",title:"Utilizatori",icon:"users",access:"admin"},{href:"/admin/activity",title:"Activitate",icon:"clock",access:"admin"},{href:"/admin",title:"Setări",icon:"settings",access:"admin"}]}
 ];
