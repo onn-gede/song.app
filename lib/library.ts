@@ -1,7 +1,14 @@
 export const PAGE_SIZE = 50;
 export type LibraryFilters = {
-  q?: string; collection?: string; category?: string; number?: string; status?: string;
-  key?: string; sort?: string; page?: string; deleted?: string;
+  q?: string;
+  collection?: string;
+  category?: string;
+  number?: string;
+  status?: string;
+  key?: string;
+  sort?: string;
+  page?: string;
+  deleted?: string;
 };
 export function libraryPage(value?: string) {
   const parsed = Number(value || 1);

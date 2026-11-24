@@ -16,8 +16,11 @@ const getActiveContext = cache(async () => {
     authError = error;
   }
   if (authError || !user) throw new Error("Trebuie să te autentifici.");
-  const { data: profile, error } = await supabase.from("profiles")
-    .select("id,full_name,email,role,is_active").eq("id", user.id).single();
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("id,full_name,email,role,is_active")
+    .eq("id", user.id)
+    .single();
   if (error || !profile?.is_active) throw new Error("Contul nu are acces activ.");
   return { supabase, user, profile };
 });

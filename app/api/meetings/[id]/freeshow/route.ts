@@ -9,7 +9,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { supabase } = await requireProfile();
   const [{ data: meeting, error: meetingError }, { data: items, error: itemsError }] = await Promise.all([
     supabase.from("meetings").select("id,title,meeting_date").eq("id", id).single(),
-    supabase.from("meeting_items").select("id,position,is_backup,custom_title,custom_text,notes,songs(id,title,lyrics_text,default_key,song_sections(section_label,section_type,position,content))").eq("meeting_id", id).or("is_backup.eq.false,is_backup.is.null").order("position"),
+    supabase
+      .from("meeting_items")
+      .select(
+        "id,position,is_backup,custom_title,custom_text,notes,songs(id,title,lyrics_text,default_key,song_sections(section_label,section_type,position,content))",
+      )
+      .eq("meeting_id", id)
+      .or("is_backup.eq.false,is_backup.is.null")
+      .order("position"),
   ]);
   if (meetingError) {
     console.error("FreeShow meeting query failed", meetingError);
@@ -17,7 +24,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
   if (itemsError) {
     console.error("FreeShow program items query failed", itemsError);
-    return NextResponse.json({ error: "Elementele programului nu au putut fi citite pentru export." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Elementele programului nu au putut fi citite pentru export." },
+      { status: 500 },
+    );
   }
   if (!meeting) return NextResponse.json({ error: "Programul nu există." }, { status: 404 });
 
@@ -55,7 +65,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const show = buildFreeShow(item.name, item.slides, { title: item.name });
     zip.file(`${order} - ${safeFreeShowFileName(item.name)}`, JSON.stringify(show, null, 2));
   });
-  const archive = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 6 } });
+  const archive = await zip.generateAsync({
+    type: "uint8array",
+    compression: "DEFLATE",
+    compressionOptions: { level: 6 },
+  });
   const fileName = safeFreeShowFileName(`Program - ${meeting.title}`).replace(/\.show$/i, ".zip");
   return new NextResponse(Buffer.from(archive), {
     headers: {

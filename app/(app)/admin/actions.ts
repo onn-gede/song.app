@@ -9,7 +9,9 @@ function readString(formData: FormData, key: string) {
 
 async function requireAdmin() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error("Trebuie să fii autentificat.");
 
   const { data: profile, error } = await supabase
@@ -35,18 +37,48 @@ export async function deleteAllAppDataAction(formData: FormData) {
   const supabase = await requireAdmin();
 
   const steps: Array<[string, () => PromiseLike<{ error: { message: string } | null }>]> = [
-    ["meeting_share_links", () => supabase.from("meeting_share_links").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
-    ["meeting_items", () => supabase.from("meeting_items").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
+    [
+      "meeting_share_links",
+      () => supabase.from("meeting_share_links").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
+    [
+      "meeting_items",
+      () => supabase.from("meeting_items").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
     ["meetings", () => supabase.from("meetings").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
-    ["song_bible_references", () => supabase.from("song_bible_references").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
-    ["bible_references", () => supabase.from("bible_references").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
-    ["song_categories", () => supabase.from("song_categories").delete().neq("song_id", "00000000-0000-0000-0000-000000000000")],
-    ["song_files", () => supabase.from("song_files").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
-    ["song_sections", () => supabase.from("song_sections").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
-    ["song_sources", () => supabase.from("song_sources").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
+    [
+      "song_bible_references",
+      () => supabase.from("song_bible_references").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
+    [
+      "bible_references",
+      () => supabase.from("bible_references").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
+    [
+      "song_categories",
+      () => supabase.from("song_categories").delete().neq("song_id", "00000000-0000-0000-0000-000000000000"),
+    ],
+    [
+      "song_files",
+      () => supabase.from("song_files").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
+    [
+      "song_sections",
+      () => supabase.from("song_sections").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
+    [
+      "song_sources",
+      () => supabase.from("song_sources").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
     ["songs", () => supabase.from("songs").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
-    ["categories", () => supabase.from("categories").delete().neq("id", "00000000-0000-0000-0000-000000000000")],
-    ["song_collections", () => supabase.from("song_collections").delete().neq("id", "00000000-0000-0000-0000-000000000000")]
+    [
+      "categories",
+      () => supabase.from("categories").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
+    [
+      "song_collections",
+      () => supabase.from("song_collections").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    ],
   ];
 
   for (const [label, run] of steps) {

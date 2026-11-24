@@ -1,26 +1,328 @@
 "use client";
-import { useState,useTransition } from "react";
-import { createManagedUserAction,updateManagedUserAction,moderateManagedUserAction,resetManagedUserPasswordAction,type ManagedUser } from "@/app/(app)/admin/users/actions";
-const roles=[['viewer','Vizualizare'],['worship_leader','Coordonator'],['editor','Editor'],['admin','Administrator']];
-export function AdminUserManager({initial,currentId,canCreate}:{initial:ManagedUser[];currentId:string;canCreate:boolean}){
- const [users,setUsers]=useState(initial),[error,setError]=useState(''),[message,setMessage]=useState(''),[pending,start]=useTransition();
- const waiting=users.filter(u=>!u.is_active);
- return <div><div className="admin-user-caption"><span>{users.filter(u=>u.role==='admin'&&u.is_active).length} administratori activi</span><span>{waiting.length} conturi inactive / în așteptare</span></div>
- <details className="card user-create-panel"><summary>+ Creează cont</summary>{!canCreate?<p className="error">Configurează SUPABASE_SERVICE_ROLE_KEY în variabilele private Netlify pentru crearea conturilor.</p>:<form className="form-grid" action={data=>start(async()=>{setError('');setMessage('');try{setUsers(await createManagedUserAction(data));setMessage('Cont creat în așteptare. Aprobă-l din listă.');}catch(err){setError(err instanceof Error?err.message:'Crearea a eșuat.');}})}>
-  <div className="form-two"><label className="label">Nume<input className="input" name="full_name" maxLength={120} required/></label><label className="label">Email<input className="input" name="email" type="email" maxLength={320} required/></label></div>
-  <div className="form-two"><label className="label">Parolă inițială<input className="input" name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required/></label><label className="label">Rol<select className="select" name="role" defaultValue="viewer">{roles.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label></div>
-  <button className="btn" disabled={pending}>Creează în așteptare</button><p className="muted small">Contul are acces numai după aprobare. Utilizatorul își poate schimba parola după autentificare.</p>
- </form>}</details>
- {error?<p className="error" role="alert">{error}</p>:null}{message?<p className="success" role="status">{message}</p>:null}
- <div className="admin-user-list">{users.map(u=><form key={`${u.id}:${u.full_name}:${u.role}:${u.is_active}`} className="card admin-user-row" action={data=>start(async()=>{setError('');setMessage('');try{setUsers(await updateManagedUserAction(u.id,String(data.get('full_name')||''),String(data.get('role')||u.role),String(data.get('active'))==='true'));setMessage('Cont actualizat.');}catch(err){setError(err instanceof Error?err.message:'Actualizarea a eșuat.');}})}>
-   <label className="admin-user-name label">Nume afișat<input className="input" name="full_name" defaultValue={u.full_name||''} maxLength={120} required/><small>{u.email}</small></label><span className={`badge ${u.is_active?'':'warning'}`}>{u.is_active?'Activ':u.moderation_state==='rejected'?'Respins':'În așteptare / inactiv'}</span>
-   <label className="sr-only" htmlFor={`role-${u.id}`}>Rol pentru {u.email}</label><select id={`role-${u.id}`} className="select" name="role" defaultValue={u.role} disabled={pending||u.id===currentId}>{roles.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
-   {u.id===currentId?<div className="inline-form"><span className="muted small">Contul tău</span><button className="btn secondary" name="active" value={String(u.is_active)} disabled={pending}>Salvează numele</button></div>:<div className="inline-form"><button className="btn secondary" name="active" value={String(u.is_active)} disabled={pending}>Salvează</button><button className={u.is_active?'btn secondary':'btn'} name="active" value={String(!u.is_active)} disabled={pending}>{u.is_active?'Dezactivează':'Aprobă accesul'}</button>{!u.is_active?<><button type="button" className="btn secondary" disabled={pending||u.moderation_state==='rejected'} onClick={()=>start(async()=>{setError('');try{setUsers(await moderateManagedUserAction(u.id,false));setMessage('Cont respins. Accesul rămâne blocat.');}catch(e){setError(e instanceof Error?e.message:'Respingerea a eșuat.');}})}>Respinge</button><button type="button" className="btn danger" disabled={pending} onClick={()=>start(async()=>{setError('');try{setUsers(await moderateManagedUserAction(u.id,true));setMessage('Cont eliminat din listă. Istoricul activității este păstrat.');}catch(e){setError(e instanceof Error?e.message:'Eliminarea a eșuat.');}})}>Elimină din listă</button></>:null}</div>}
-   <AdminPasswordReset user={u} pending={pending} run={start} report={(kind,text)=>{setError(kind==='error'?text:'');setMessage(kind==='message'?text:'');}}/>
- </form>)}</div></div>;
+import { useState, useTransition } from "react";
+import {
+  createManagedUserAction,
+  updateManagedUserAction,
+  moderateManagedUserAction,
+  resetManagedUserPasswordAction,
+  type ManagedUser,
+} from "@/app/(app)/admin/users/actions";
+const roles = [
+  ["viewer", "Vizualizare"],
+  ["worship_leader", "Coordonator"],
+  ["editor", "Editor"],
+  ["admin", "Administrator"],
+];
+export function AdminUserManager({
+  initial,
+  currentId,
+  canCreate,
+}: {
+  initial: ManagedUser[];
+  currentId: string;
+  canCreate: boolean;
+}) {
+  const [users, setUsers] = useState(initial),
+    [error, setError] = useState(""),
+    [message, setMessage] = useState(""),
+    [pending, start] = useTransition();
+  const waiting = users.filter((u) => !u.is_active);
+  return (
+    <div>
+      <div className="admin-user-caption">
+        <span>{users.filter((u) => u.role === "admin" && u.is_active).length} administratori activi</span>
+        <span>{waiting.length} conturi inactive / în așteptare</span>
+      </div>
+      <details className="card user-create-panel">
+        <summary>+ Creează cont</summary>
+        {!canCreate ? (
+          <p className="error">
+            Configurează SUPABASE_SERVICE_ROLE_KEY în variabilele private Netlify pentru crearea conturilor.
+          </p>
+        ) : (
+          <form
+            className="form-grid"
+            action={(data) =>
+              start(async () => {
+                setError("");
+                setMessage("");
+                try {
+                  setUsers(await createManagedUserAction(data));
+                  setMessage("Cont creat în așteptare. Aprobă-l din listă.");
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Crearea a eșuat.");
+                }
+              })
+            }
+          >
+            <div className="form-two">
+              <label className="label">
+                Nume
+                <input className="input" name="full_name" maxLength={120} required />
+              </label>
+              <label className="label">
+                Email
+                <input className="input" name="email" type="email" maxLength={320} required />
+              </label>
+            </div>
+            <div className="form-two">
+              <label className="label">
+                Parolă inițială
+                <input
+                  className="input"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={12}
+                  maxLength={128}
+                  required
+                />
+              </label>
+              <label className="label">
+                Rol
+                <select className="select" name="role" defaultValue="viewer">
+                  {roles.map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <button className="btn" disabled={pending}>
+              Creează în așteptare
+            </button>
+            <p className="muted small">
+              Contul are acces numai după aprobare. Utilizatorul își poate schimba parola după autentificare.
+            </p>
+          </form>
+        )}
+      </details>
+      {error ? (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p className="success" role="status">
+          {message}
+        </p>
+      ) : null}
+      <div className="admin-user-list">
+        {users.map((u) => (
+          <form
+            key={`${u.id}:${u.full_name}:${u.role}:${u.is_active}`}
+            className="card admin-user-row"
+            action={(data) =>
+              start(async () => {
+                setError("");
+                setMessage("");
+                try {
+                  setUsers(
+                    await updateManagedUserAction(
+                      u.id,
+                      String(data.get("full_name") || ""),
+                      String(data.get("role") || u.role),
+                      String(data.get("active")) === "true",
+                    ),
+                  );
+                  setMessage("Cont actualizat.");
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Actualizarea a eșuat.");
+                }
+              })
+            }
+          >
+            <label className="admin-user-name label">
+              Nume afișat
+              <input
+                className="input"
+                name="full_name"
+                defaultValue={u.full_name || ""}
+                maxLength={120}
+                required
+              />
+              <small>{u.email}</small>
+            </label>
+            <span className={`badge ${u.is_active ? "" : "warning"}`}>
+              {u.is_active
+                ? "Activ"
+                : u.moderation_state === "rejected"
+                  ? "Respins"
+                  : "În așteptare / inactiv"}
+            </span>
+            <label className="sr-only" htmlFor={`role-${u.id}`}>
+              Rol pentru {u.email}
+            </label>
+            <select
+              id={`role-${u.id}`}
+              className="select"
+              name="role"
+              defaultValue={u.role}
+              disabled={pending || u.id === currentId}
+            >
+              {roles.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            {u.id === currentId ? (
+              <div className="inline-form">
+                <span className="muted small">Contul tău</span>
+                <button
+                  className="btn secondary"
+                  name="active"
+                  value={String(u.is_active)}
+                  disabled={pending}
+                >
+                  Salvează numele
+                </button>
+              </div>
+            ) : (
+              <div className="inline-form">
+                <button
+                  className="btn secondary"
+                  name="active"
+                  value={String(u.is_active)}
+                  disabled={pending}
+                >
+                  Salvează
+                </button>
+                <button
+                  className={u.is_active ? "btn secondary" : "btn"}
+                  name="active"
+                  value={String(!u.is_active)}
+                  disabled={pending}
+                >
+                  {u.is_active ? "Dezactivează" : "Aprobă accesul"}
+                </button>
+                {!u.is_active ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={pending || u.moderation_state === "rejected"}
+                      onClick={() =>
+                        start(async () => {
+                          setError("");
+                          try {
+                            setUsers(await moderateManagedUserAction(u.id, false));
+                            setMessage("Cont respins. Accesul rămâne blocat.");
+                          } catch (e) {
+                            setError(e instanceof Error ? e.message : "Respingerea a eșuat.");
+                          }
+                        })
+                      }
+                    >
+                      Respinge
+                    </button>
+                    <button
+                      type="button"
+                      className="btn danger"
+                      disabled={pending}
+                      onClick={() =>
+                        start(async () => {
+                          setError("");
+                          try {
+                            setUsers(await moderateManagedUserAction(u.id, true));
+                            setMessage("Cont eliminat din listă. Istoricul activității este păstrat.");
+                          } catch (e) {
+                            setError(e instanceof Error ? e.message : "Eliminarea a eșuat.");
+                          }
+                        })
+                      }
+                    >
+                      Elimină din listă
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            )}
+            <AdminPasswordReset
+              user={u}
+              pending={pending}
+              run={start}
+              report={(kind, text) => {
+                setError(kind === "error" ? text : "");
+                setMessage(kind === "message" ? text : "");
+              }}
+            />
+          </form>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function AdminPasswordReset({user,pending,run,report}:{user:ManagedUser;pending:boolean;run:(callback:()=>Promise<void>)=>void;report:(kind:'error'|'message',text:string)=>void}){
- const [password,setPassword]=useState(''),[confirmation,setConfirmation]=useState('');
- return <details className="admin-password-reset"><summary>Resetează parola</summary><div className="admin-password-reset-fields"><label className="label">Parolă temporară<input className="input" type="password" autoComplete="new-password" minLength={12} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)}/></label><label className="label">Confirmă parola<input className="input" type="password" autoComplete="new-password" minLength={12} maxLength={128} value={confirmation} onChange={e=>setConfirmation(e.target.value)}/></label><button className="btn secondary" type="button" disabled={pending||password.length<12||password!==confirmation} onClick={()=>run(async()=>{report('error','');try{await resetManagedUserPasswordAction(user.id,password,confirmation);setPassword('');setConfirmation('');report('message',`Parola pentru ${user.full_name||user.email||'utilizator'} a fost resetată.`);}catch(error){report('error',error instanceof Error?error.message:'Resetarea parolei a eșuat.');}})}>Salvează parola temporară</button></div><p className="muted small">Comunică parola printr-un canal sigur. Utilizatorul o poate schimba din Contul meu.</p></details>;
+function AdminPasswordReset({
+  user,
+  pending,
+  run,
+  report,
+}: {
+  user: ManagedUser;
+  pending: boolean;
+  run: (callback: () => Promise<void>) => void;
+  report: (kind: "error" | "message", text: string) => void;
+}) {
+  const [password, setPassword] = useState(""),
+    [confirmation, setConfirmation] = useState("");
+  return (
+    <details className="admin-password-reset">
+      <summary>Resetează parola</summary>
+      <div className="admin-password-reset-fields">
+        <label className="label">
+          Parolă temporară
+          <input
+            className="input"
+            type="password"
+            autoComplete="new-password"
+            minLength={12}
+            maxLength={128}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+        <label className="label">
+          Confirmă parola
+          <input
+            className="input"
+            type="password"
+            autoComplete="new-password"
+            minLength={12}
+            maxLength={128}
+            value={confirmation}
+            onChange={(e) => setConfirmation(e.target.value)}
+          />
+        </label>
+        <button
+          className="btn secondary"
+          type="button"
+          disabled={pending || password.length < 12 || password !== confirmation}
+          onClick={() =>
+            run(async () => {
+              report("error", "");
+              try {
+                await resetManagedUserPasswordAction(user.id, password, confirmation);
+                setPassword("");
+                setConfirmation("");
+                report(
+                  "message",
+                  `Parola pentru ${user.full_name || user.email || "utilizator"} a fost resetată.`,
+                );
+              } catch (error) {
+                report("error", error instanceof Error ? error.message : "Resetarea parolei a eșuat.");
+              }
+            })
+          }
+        >
+          Salvează parola temporară
+        </button>
+      </div>
+      <p className="muted small">
+        Comunică parola printr-un canal sigur. Utilizatorul o poate schimba din Contul meu.
+      </p>
+    </details>
+  );
 }

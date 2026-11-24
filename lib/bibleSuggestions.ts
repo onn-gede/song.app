@@ -11,10 +11,7 @@ export type BibleVerseSuggestion = {
   matchedKeywords: string[];
 };
 
-type SuggestionTemplate = Omit<
-  BibleVerseSuggestion,
-  "id" | "confidence" | "matchedKeywords"
-> & {
+type SuggestionTemplate = Omit<BibleVerseSuggestion, "id" | "confidence" | "matchedKeywords"> & {
   keywords: string[];
   baseScore?: number;
 };
@@ -27,19 +24,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Psalmii 150:6",
     theme: "laudă și închinare",
-    reason:
-      "Se potrivește cântărilor care cheamă întreaga creație să Îl laude pe Dumnezeu.",
-    keywords: [
-      "lauda",
-      "laudati",
-      "slava",
-      "slavim",
-      "inchinare",
-      "adorare",
-      "aleluia",
-      "osana",
-      "glorie",
-    ],
+    reason: "Se potrivește cântărilor care cheamă întreaga creație să Îl laude pe Dumnezeu.",
+    keywords: ["lauda", "laudati", "slava", "slavim", "inchinare", "adorare", "aleluia", "osana", "glorie"],
     baseScore: 0.82,
   },
   {
@@ -51,14 +37,7 @@ const templates: SuggestionTemplate[] = [
     theme: "închinare cu bucurie",
     reason:
       "Este potrivit când cântarea are ton de chemare la cântare, mulțumire și bucurie înaintea Domnului.",
-    keywords: [
-      "cantati",
-      "cantare",
-      "bucurie",
-      "multumire",
-      "lauda",
-      "veselie",
-    ],
+    keywords: ["cantati", "cantare", "bucurie", "multumire", "lauda", "veselie"],
     baseScore: 0.79,
   },
   {
@@ -70,17 +49,7 @@ const templates: SuggestionTemplate[] = [
     theme: "mântuire și dragostea lui Dumnezeu",
     reason:
       "Se potrivește cântărilor despre dragostea lui Dumnezeu, darul Fiului și mântuirea prin credință.",
-    keywords: [
-      "mantuire",
-      "mantuit",
-      "dragoste",
-      "iubire",
-      "fiul",
-      "isus",
-      "hristos",
-      "lumea",
-      "credinta",
-    ],
+    keywords: ["mantuire", "mantuit", "dragoste", "iubire", "fiul", "isus", "hristos", "lumea", "credinta"],
     baseScore: 0.84,
   },
   {
@@ -92,16 +61,7 @@ const templates: SuggestionTemplate[] = [
     theme: "har și mântuire",
     reason:
       "Este potrivit pentru cântările care subliniază harul, credința și faptul că mântuirea este darul lui Dumnezeu.",
-    keywords: [
-      "har",
-      "mila",
-      "iertare",
-      "mantuire",
-      "credinta",
-      "dar",
-      "salvat",
-      "salvare",
-    ],
+    keywords: ["har", "mila", "iertare", "mantuire", "credinta", "dar", "salvat", "salvare"],
     baseScore: 0.83,
   },
   {
@@ -111,18 +71,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "1 Ioan 1:9",
     theme: "pocăință și iertare",
-    reason:
-      "Se potrivește cântărilor despre mărturisire, iertare, curățire și întoarcere la Dumnezeu.",
-    keywords: [
-      "pocainta",
-      "pacat",
-      "pacate",
-      "iertare",
-      "curatire",
-      "spalare",
-      "sange",
-      "marturisire",
-    ],
+    reason: "Se potrivește cântărilor despre mărturisire, iertare, curățire și întoarcere la Dumnezeu.",
+    keywords: ["pocainta", "pacat", "pacate", "iertare", "curatire", "spalare", "sange", "marturisire"],
     baseScore: 0.81,
   },
   {
@@ -134,16 +84,7 @@ const templates: SuggestionTemplate[] = [
     theme: "dragostea arătată la cruce",
     reason:
       "Este potrivit pentru cântările despre cruce, jertfa Domnului Isus și dragostea lui Dumnezeu pentru păcătoși.",
-    keywords: [
-      "cruce",
-      "jertfa",
-      "sange",
-      "rastignit",
-      "pacatos",
-      "dragoste",
-      "iubire",
-      "murit",
-    ],
+    keywords: ["cruce", "jertfa", "sange", "rastignit", "pacatos", "dragoste", "iubire", "murit"],
     baseScore: 0.86,
   },
   {
@@ -153,8 +94,7 @@ const templates: SuggestionTemplate[] = [
     verseEnd: 4,
     referenceLabel: "1 Corinteni 15:3-4",
     theme: "moartea și învierea Domnului Isus",
-    reason:
-      "Se potrivește cântărilor despre Evanghelie, moartea pentru păcate și învierea Domnului.",
+    reason: "Se potrivește cântărilor despre Evanghelie, moartea pentru păcate și învierea Domnului.",
     keywords: [
       "inviat",
       "inviere",
@@ -175,17 +115,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Romani 6:4",
     theme: "botez și viață nouă",
-    reason:
-      "Este potrivit pentru cântări de botez sau cântări despre viața nouă în Hristos.",
-    keywords: [
-      "botez",
-      "botezat",
-      "apa",
-      "viata noua",
-      "innoire",
-      "ingropati",
-      "inviat",
-    ],
+    reason: "Este potrivit pentru cântări de botez sau cântări despre viața nouă în Hristos.",
+    keywords: ["botez", "botezat", "apa", "viata noua", "innoire", "ingropati", "inviat"],
     baseScore: 0.86,
   },
   {
@@ -195,18 +126,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: 11,
     referenceLabel: "Luca 2:10-11",
     theme: "nașterea Domnului",
-    reason:
-      "Se potrivește colindelor și cântărilor despre nașterea Mântuitorului.",
-    keywords: [
-      "nastere",
-      "betleem",
-      "prunc",
-      "iesle",
-      "pastori",
-      "ingeri",
-      "craciun",
-      "mantuitor",
-    ],
+    reason: "Se potrivește colindelor și cântărilor despre nașterea Mântuitorului.",
+    keywords: ["nastere", "betleem", "prunc", "iesle", "pastori", "ingeri", "craciun", "mantuitor"],
     baseScore: 0.88,
   },
   {
@@ -216,18 +137,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Matei 11:28",
     theme: "chemare și odihnă în Hristos",
-    reason:
-      "Se potrivește cântărilor de chemare, mângâiere, oboseală sufletească și întoarcere la Domnul.",
-    keywords: [
-      "veniti",
-      "chemare",
-      "odihna",
-      "povara",
-      "trudit",
-      "obosit",
-      "mangaiere",
-      "vino",
-    ],
+    reason: "Se potrivește cântărilor de chemare, mângâiere, oboseală sufletească și întoarcere la Domnul.",
+    keywords: ["veniti", "chemare", "odihna", "povara", "trudit", "obosit", "mangaiere", "vino"],
     baseScore: 0.84,
   },
   {
@@ -239,17 +150,7 @@ const templates: SuggestionTemplate[] = [
     theme: "încredere în încercări",
     reason:
       "Este potrivit pentru cântări despre ajutorul lui Dumnezeu în furtuni, necazuri și perioade grele.",
-    keywords: [
-      "furtuni",
-      "necaz",
-      "incercare",
-      "ajutor",
-      "adapost",
-      "teama",
-      "frica",
-      "valuri",
-      "greu",
-    ],
+    keywords: ["furtuni", "necaz", "incercare", "ajutor", "adapost", "teama", "frica", "valuri", "greu"],
     baseScore: 0.87,
   },
   {
@@ -259,18 +160,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Isaia 41:10",
     theme: "curaj și sprijin divin",
-    reason:
-      "Se potrivește cântărilor despre frică, slăbiciune și puterea lui Dumnezeu care susține.",
-    keywords: [
-      "frica",
-      "teme",
-      "putere",
-      "sprijin",
-      "ajutor",
-      "mana",
-      "intareste",
-      "incurajare",
-    ],
+    reason: "Se potrivește cântărilor despre frică, slăbiciune și puterea lui Dumnezeu care susține.",
+    keywords: ["frica", "teme", "putere", "sprijin", "ajutor", "mana", "intareste", "incurajare"],
     baseScore: 0.84,
   },
   {
@@ -282,15 +173,7 @@ const templates: SuggestionTemplate[] = [
     theme: "rugăciune și pace",
     reason:
       "Este potrivit pentru cântările despre rugăciune, pacea lui Dumnezeu și încredere în purtarea Lui de grijă.",
-    keywords: [
-      "rugaciune",
-      "pace",
-      "ingrijorare",
-      "cereri",
-      "multumiri",
-      "inima",
-      "ganduri",
-    ],
+    keywords: ["rugaciune", "pace", "ingrijorare", "cereri", "multumiri", "inima", "ganduri"],
     baseScore: 0.85,
   },
   {
@@ -300,16 +183,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "1 Tesaloniceni 5:18",
     theme: "mulțumire",
-    reason:
-      "Se potrivește cântărilor de mulțumire și recunoștință față de Dumnezeu.",
-    keywords: [
-      "multumire",
-      "multumesc",
-      "recunostinta",
-      "binecuvantari",
-      "daruri",
-      "bunatate",
-    ],
+    reason: "Se potrivește cântărilor de mulțumire și recunoștință față de Dumnezeu.",
+    keywords: ["multumire", "multumesc", "recunostinta", "binecuvantari", "daruri", "bunatate"],
     baseScore: 0.84,
   },
   {
@@ -321,16 +196,7 @@ const templates: SuggestionTemplate[] = [
     theme: "nădejde și cer",
     reason:
       "Se potrivește cântărilor despre cer, nădejdea veșnică, pregătirea locului și revenirea Domnului.",
-    keywords: [
-      "cer",
-      "nadejde",
-      "vesnic",
-      "acasa",
-      "locas",
-      "revenire",
-      "vine",
-      "vesnicie",
-    ],
+    keywords: ["cer", "nadejde", "vesnic", "acasa", "locas", "revenire", "vine", "vesnicie"],
     baseScore: 0.83,
   },
   {
@@ -342,15 +208,7 @@ const templates: SuggestionTemplate[] = [
     theme: "revenirea Domnului și mângâiere",
     reason:
       "Este potrivit pentru cântările despre revenirea Domnului, învierea celor credincioși și mângâierea creștină.",
-    keywords: [
-      "revenire",
-      "vine",
-      "trambita",
-      "rapire",
-      "inviere",
-      "mangaiere",
-      "adormiti",
-    ],
+    keywords: ["revenire", "vine", "trambita", "rapire", "inviere", "mangaiere", "adormiti"],
     baseScore: 0.86,
   },
   {
@@ -362,16 +220,7 @@ const templates: SuggestionTemplate[] = [
     theme: "păstorire și mângâiere",
     reason:
       "Se potrivește cântărilor despre Domnul ca Păstor, călăuzire, grijă și mângâiere în valea umbrei morții.",
-    keywords: [
-      "pastor",
-      "calauzire",
-      "mangaiere",
-      "vale",
-      "moarte",
-      "toiag",
-      "odihna",
-      "ape",
-    ],
+    keywords: ["pastor", "calauzire", "mangaiere", "vale", "moarte", "toiag", "odihna", "ape"],
     baseScore: 0.85,
   },
   {
@@ -381,17 +230,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Galateni 2:20",
     theme: "viață trăită prin Hristos",
-    reason:
-      "Este potrivit pentru cântările despre predare, trăire pentru Hristos și identitate în El.",
-    keywords: [
-      "traiesc",
-      "hristos",
-      "predare",
-      "viata",
-      "eu",
-      "credinta",
-      "rastignit",
-    ],
+    reason: "Este potrivit pentru cântările despre predare, trăire pentru Hristos și identitate în El.",
+    keywords: ["traiesc", "hristos", "predare", "viata", "eu", "credinta", "rastignit"],
     baseScore: 0.82,
   },
   {
@@ -401,17 +241,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "2 Corinteni 5:17",
     theme: "făptură nouă",
-    reason:
-      "Se potrivește cântărilor despre schimbarea vieții, naștere din nou și înnoire.",
-    keywords: [
-      "nou",
-      "noua",
-      "schimbare",
-      "nascut",
-      "innoire",
-      "viata",
-      "faptura",
-    ],
+    reason: "Se potrivește cântărilor despre schimbarea vieții, naștere din nou și înnoire.",
+    keywords: ["nou", "noua", "schimbare", "nascut", "innoire", "viata", "faptura"],
     baseScore: 0.82,
   },
   {
@@ -421,17 +252,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Faptele Apostolilor 1:8",
     theme: "mărturie și Duhul Sfânt",
-    reason:
-      "Este potrivit pentru cântările despre mărturie, misiune și puterea Duhului Sfânt.",
-    keywords: [
-      "duh",
-      "sfant",
-      "marturie",
-      "misiune",
-      "putere",
-      "vesti",
-      "evanghelie",
-    ],
+    reason: "Este potrivit pentru cântările despre mărturie, misiune și puterea Duhului Sfânt.",
+    keywords: ["duh", "sfant", "marturie", "misiune", "putere", "vesti", "evanghelie"],
     baseScore: 0.83,
   },
   {
@@ -455,16 +277,7 @@ const templates: SuggestionTemplate[] = [
     theme: "Cina Domnului și jertfa Domnului",
     reason:
       "Este potrivit pentru cântări folosite la Cina Domnului, amintirea morții Domnului și vestirea revenirii Lui.",
-    keywords: [
-      "cina",
-      "paine",
-      "pahar",
-      "sange",
-      "trup",
-      "moarte",
-      "jertfa",
-      "amintire",
-    ],
+    keywords: ["cina", "paine", "pahar", "sange", "trup", "moarte", "jertfa", "amintire"],
     baseScore: 0.9,
   },
 
@@ -501,16 +314,7 @@ const templates: SuggestionTemplate[] = [
     theme: "Hristos neschimbat",
     reason:
       "Este potrivit pentru cântări despre credincioșia și neschimbarea Domnului Isus de-a lungul vremurilor.",
-    keywords: [
-      "neschimbat",
-      "acelasi",
-      "ieri",
-      "azi",
-      "vesnic",
-      "ramane",
-      "credincios",
-      "statornic",
-    ],
+    keywords: ["neschimbat", "acelasi", "ieri", "azi", "vesnic", "ramane", "credincios", "statornic"],
     baseScore: 0.86,
   },
   {
@@ -522,16 +326,7 @@ const templates: SuggestionTemplate[] = [
     theme: "Mielul este vrednic",
     reason:
       "Se potrivește cântărilor care Îl proclamă pe Mielul jertfit ca vrednic de laudă, cinste și slavă.",
-    keywords: [
-      "miel",
-      "vrednic",
-      "jertfit",
-      "lauda",
-      "cinste",
-      "slava",
-      "putere",
-      "mielul",
-    ],
+    keywords: ["miel", "vrednic", "jertfit", "lauda", "cinste", "slava", "putere", "mielul"],
     baseScore: 0.9,
   },
   {
@@ -541,18 +336,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Ioan 8:12",
     theme: "Hristos, lumina lumii",
-    reason:
-      "Este potrivit pentru cântări despre lumină, călăuzire și ieșirea din întuneric prin Hristos.",
-    keywords: [
-      "lumina",
-      "intuneric",
-      "calauzeste",
-      "calea",
-      "straluceste",
-      "soare",
-      "rază",
-      "raza",
-    ],
+    reason: "Este potrivit pentru cântări despre lumină, călăuzire și ieșirea din întuneric prin Hristos.",
+    keywords: ["lumina", "intuneric", "calauzeste", "calea", "straluceste", "soare", "rază", "raza"],
     baseScore: 0.86,
   },
   {
@@ -564,16 +349,7 @@ const templates: SuggestionTemplate[] = [
     theme: "Hristos, calea, adevărul și viața",
     reason:
       "Se potrivește cântărilor care vorbesc despre cale, adevăr, viață și apropierea de Tatăl prin Domnul Isus.",
-    keywords: [
-      "cale",
-      "calea",
-      "adevar",
-      "viata",
-      "tatal",
-      "drum",
-      "urmez",
-      "urmare",
-    ],
+    keywords: ["cale", "calea", "adevar", "viata", "tatal", "drum", "urmez", "urmare"],
     baseScore: 0.86,
   },
   {
@@ -583,18 +359,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: 23,
     referenceLabel: "Plângerile lui Ieremia 3:22-23",
     theme: "bunătatea și credincioșia Domnului",
-    reason:
-      "Este potrivit pentru cântări despre îndurare, bunătate, credincioșie și har în fiecare zi.",
-    keywords: [
-      "bunatate",
-      "indurare",
-      "mila",
-      "credinciosie",
-      "dimineata",
-      "har",
-      "bun",
-      "mari sunt",
-    ],
+    reason: "Este potrivit pentru cântări despre îndurare, bunătate, credincioșie și har în fiecare zi.",
+    keywords: ["bunatate", "indurare", "mila", "credinciosie", "dimineata", "har", "bun", "mari sunt"],
     baseScore: 0.88,
   },
   {
@@ -606,15 +372,7 @@ const templates: SuggestionTemplate[] = [
     theme: "binecuvântare, iertare și vindecare",
     reason:
       "Se potrivește cântărilor care cheamă sufletul la binecuvântarea Domnului și amintesc iertarea și îndurările Lui.",
-    keywords: [
-      "binecuvanteaza",
-      "suflete",
-      "iertare",
-      "vindecare",
-      "indurari",
-      "bunatati",
-      "lauda suflete",
-    ],
+    keywords: ["binecuvanteaza", "suflete", "iertare", "vindecare", "indurari", "bunatati", "lauda suflete"],
     baseScore: 0.88,
   },
   {
@@ -626,16 +384,7 @@ const templates: SuggestionTemplate[] = [
     theme: "ajutorul vine de la Domnul",
     reason:
       "Este potrivit pentru cântări despre ridicarea privirii spre Dumnezeu, ajutor, pază și sprijin în călătorie.",
-    keywords: [
-      "ajutor",
-      "munti",
-      "privirea",
-      "paza",
-      "pazeste",
-      "calatorie",
-      "drum",
-      "sprijin",
-    ],
+    keywords: ["ajutor", "munti", "privirea", "paza", "pazeste", "calatorie", "drum", "sprijin"],
     baseScore: 0.86,
   },
   {
@@ -666,18 +415,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: 8,
     referenceLabel: "2 Timotei 4:7-8",
     theme: "alergarea credinței până la capăt",
-    reason:
-      "Este potrivit pentru cântări despre alergare, luptă, credincioșie și nădejdea cununii.",
-    keywords: [
-      "alergare",
-      "lupta",
-      "credinta",
-      "cunună",
-      "cununa",
-      "sfarsit",
-      "pana la capat",
-      "biruit",
-    ],
+    reason: "Este potrivit pentru cântări despre alergare, luptă, credincioșie și nădejdea cununii.",
+    keywords: ["alergare", "lupta", "credinta", "cunună", "cununa", "sfarsit", "pana la capat", "biruit"],
     baseScore: 0.84,
   },
   {
@@ -687,18 +426,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: 19,
     referenceLabel: "1 Petru 1:18-19",
     theme: "răscumpărare prin sângele lui Hristos",
-    reason:
-      "Se potrivește cântărilor despre răscumpărare, sângele Domnului Isus și prețul jertfei Sale.",
-    keywords: [
-      "rascumparat",
-      "rascumparare",
-      "sange",
-      "pret",
-      "miel",
-      "jertfa",
-      "iertat",
-      "curatit",
-    ],
+    reason: "Se potrivește cântărilor despre răscumpărare, sângele Domnului Isus și prețul jertfei Sale.",
+    keywords: ["rascumparat", "rascumparare", "sange", "pret", "miel", "jertfa", "iertat", "curatit"],
     baseScore: 0.9,
   },
   {
@@ -710,16 +439,7 @@ const templates: SuggestionTemplate[] = [
     theme: "cântare, învățătură și mulțumire",
     reason:
       "Este potrivit pentru cântări despre cântarea bisericii, lauda din inimă și mulțumirea adusă Domnului.",
-    keywords: [
-      "cantare",
-      "cantari",
-      "psalmi",
-      "laude",
-      "duhovnicesti",
-      "inima",
-      "multumire",
-      "har",
-    ],
+    keywords: ["cantare", "cantari", "psalmi", "laude", "duhovnicesti", "inima", "multumire", "har"],
     baseScore: 0.82,
   },
   {
@@ -729,18 +449,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: 4,
     referenceLabel: "Apocalipsa 21:3-4",
     theme: "cer nou și mângâiere veșnică",
-    reason:
-      "Se potrivește cântărilor despre cer, lacrimi șterse, veșnicie și nădejdea finală.",
-    keywords: [
-      "cer",
-      "lacrimi",
-      "durere",
-      "moarte",
-      "vesnicie",
-      "acasa",
-      "nou",
-      "mangaiere",
-    ],
+    reason: "Se potrivește cântărilor despre cer, lacrimi șterse, veșnicie și nădejdea finală.",
+    keywords: ["cer", "lacrimi", "durere", "moarte", "vesnicie", "acasa", "nou", "mangaiere"],
     baseScore: 0.87,
   },
   {
@@ -761,8 +471,19 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Psalmii 34:18",
     theme: "Domnul aproape de cei zdrobiți",
-    reason: "Se potrivește cântărilor despre mângâiere, lacrimi, inimă frântă și apropierea Domnului în durere.",
-    keywords: ["lacrimi", "plans", "plang", "durere", "zdrobit", "inima franta", "aproape", "mangaiere", "suflet ranit"],
+    reason:
+      "Se potrivește cântărilor despre mângâiere, lacrimi, inimă frântă și apropierea Domnului în durere.",
+    keywords: [
+      "lacrimi",
+      "plans",
+      "plang",
+      "durere",
+      "zdrobit",
+      "inima franta",
+      "aproape",
+      "mangaiere",
+      "suflet ranit",
+    ],
     baseScore: 0.86,
   },
   {
@@ -772,7 +493,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: 3,
     referenceLabel: "Psalmii 40:1-3",
     theme: "cântare nouă după izbăvire",
-    reason: "Se potrivește cântărilor despre izbăvire, ridicare din groapă și cântare nouă pusă de Dumnezeu în inimă.",
+    reason:
+      "Se potrivește cântărilor despre izbăvire, ridicare din groapă și cântare nouă pusă de Dumnezeu în inimă.",
     keywords: ["cantare noua", "izbavire", "groapa", "mocirla", "stanca", "ridicat", "strigat", "nadejde"],
     baseScore: 0.88,
   },
@@ -805,8 +527,18 @@ const templates: SuggestionTemplate[] = [
     verseEnd: 5,
     referenceLabel: "Psalmii 100:4-5",
     theme: "mulțumire și bunătatea Domnului",
-    reason: "Se potrivește cântărilor de mulțumire, intrare înaintea Domnului cu laude și recunoașterea bunătății Lui.",
-    keywords: ["multumire", "multumesc", "bunatate", "bun", "credinciosie", "porti", "curtile", "binecuvantati"],
+    reason:
+      "Se potrivește cântărilor de mulțumire, intrare înaintea Domnului cu laude și recunoașterea bunătății Lui.",
+    keywords: [
+      "multumire",
+      "multumesc",
+      "bunatate",
+      "bun",
+      "credinciosie",
+      "porti",
+      "curtile",
+      "binecuvantati",
+    ],
     baseScore: 0.86,
   },
   {
@@ -827,8 +559,20 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Isaia 53:5",
     theme: "jertfa și rănile lui Hristos",
-    reason: "Se potrivește cântărilor despre Golgota, cruce, răni, suferința Domnului și pacea adusă prin jertfa Lui.",
-    keywords: ["golgota", "cruce", "rani", "strapuns", "zdrobit", "pacatele", "faradelegi", "pace", "tamaduire", "suferinta"],
+    reason:
+      "Se potrivește cântărilor despre Golgota, cruce, răni, suferința Domnului și pacea adusă prin jertfa Lui.",
+    keywords: [
+      "golgota",
+      "cruce",
+      "rani",
+      "strapuns",
+      "zdrobit",
+      "pacatele",
+      "faradelegi",
+      "pace",
+      "tamaduire",
+      "suferinta",
+    ],
     baseScore: 0.91,
   },
   {
@@ -838,8 +582,18 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Isaia 43:1",
     theme: "răscumpărat și chemat pe nume",
-    reason: "Se potrivește cântărilor despre apartenență, răscumpărare, chemare pe nume și siguranță în Dumnezeu.",
-    keywords: ["al tau", "sunt al tau", "rascumparat", "chemat pe nume", "nu te teme", "izbavesc", "apartin", "numele meu"],
+    reason:
+      "Se potrivește cântărilor despre apartenență, răscumpărare, chemare pe nume și siguranță în Dumnezeu.",
+    keywords: [
+      "al tau",
+      "sunt al tau",
+      "rascumparat",
+      "chemat pe nume",
+      "nu te teme",
+      "izbavesc",
+      "apartin",
+      "numele meu",
+    ],
     baseScore: 0.88,
   },
   {
@@ -850,7 +604,17 @@ const templates: SuggestionTemplate[] = [
     referenceLabel: "Ioan 10:11",
     theme: "Păstorul cel bun",
     reason: "Se potrivește cântărilor despre Isus ca Păstor, grijă, călăuzire și jertfa pentru oi.",
-    keywords: ["pastor", "pastorul", "bunul pastor", "oile", "calauzeste", "grija", "toiag", "pasuni", "da viata"],
+    keywords: [
+      "pastor",
+      "pastorul",
+      "bunul pastor",
+      "oile",
+      "calauzeste",
+      "grija",
+      "toiag",
+      "pasuni",
+      "da viata",
+    ],
     baseScore: 0.88,
   },
   {
@@ -882,7 +646,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Romani 10:9",
     theme: "mărturisirea lui Isus ca Domn",
-    reason: "Se potrivește cântărilor care proclamă că Isus este Domnul și cheamă la credință în învierea Lui.",
+    reason:
+      "Se potrivește cântărilor care proclamă că Isus este Domnul și cheamă la credință în învierea Lui.",
     keywords: ["isus este domnul", "hristos e domnul", "domn", "marturisesc", "cred", "inviat", "mantuit"],
     baseScore: 0.9,
   },
@@ -904,7 +669,8 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Evrei 4:16",
     theme: "apropiere de tronul harului",
-    reason: "Se potrivește cântărilor despre rugăciune, apropiere de Dumnezeu, har și ajutor la vreme de nevoie.",
+    reason:
+      "Se potrivește cântărilor despre rugăciune, apropiere de Dumnezeu, har și ajutor la vreme de nevoie.",
     keywords: ["rugaciune", "ma apropii", "tron", "scaunul harului", "har", "indurare", "ajutor", "nevoie"],
     baseScore: 0.86,
   },
@@ -926,11 +692,20 @@ const templates: SuggestionTemplate[] = [
     verseEnd: null,
     referenceLabel: "Apocalipsa 22:20",
     theme: "venirea Domnului",
-    reason: "Se potrivește cântărilor despre revenirea Domnului, dorul după cer și chemarea «Vino, Doamne Isuse». ",
-    keywords: ["vino doamne", "maranata", "vine curand", "revenire", "astept", "cer", "acasa", "doamne isuse"],
+    reason:
+      "Se potrivește cântărilor despre revenirea Domnului, dorul după cer și chemarea «Vino, Doamne Isuse». ",
+    keywords: [
+      "vino doamne",
+      "maranata",
+      "vine curand",
+      "revenire",
+      "astept",
+      "cer",
+      "acasa",
+      "doamne isuse",
+    ],
     baseScore: 0.89,
   },
-
 ];
 
 const genericKeywords = new Set([
@@ -1056,21 +831,19 @@ export function suggestBibleVersesForSong(input: {
     );
 
     const titleTokenMatches = titleTokens.filter((token) =>
-      template.keywords.some((keyword) => keywordVariants(keyword).includes(token) || normalizeText(keyword).includes(token)),
+      template.keywords.some(
+        (keyword) => keywordVariants(keyword).includes(token) || normalizeText(keyword).includes(token),
+      ),
     );
 
     // Titlul cântării are prioritate. Versurile sunt folosite ca al doilea strat de potrivire.
     // Astfel, „Isus Hristos e Domnul” va primi versete despre domnia lui Hristos,
     // iar nu aceeași listă generică pentru toate cântările.
     const titleScore =
-      meaningfulTitleMatches.length * 0.24 +
-      titleMatches.length * 0.07 +
-      titleTokenMatches.length * 0.09;
-    const lyricsScore =
-      meaningfulLyricMatches.length * 0.095 +
-      lyricMatches.length * 0.018;
-    const exactTitlePhraseBonus = template.keywords.some((keyword) =>
-      keyword.includes(" ") && titleNormalized.includes(normalizeText(keyword)),
+      meaningfulTitleMatches.length * 0.24 + titleMatches.length * 0.07 + titleTokenMatches.length * 0.09;
+    const lyricsScore = meaningfulLyricMatches.length * 0.095 + lyricMatches.length * 0.018;
+    const exactTitlePhraseBonus = template.keywords.some(
+      (keyword) => keyword.includes(" ") && titleNormalized.includes(normalizeText(keyword)),
     )
       ? 0.24
       : 0;
@@ -1095,9 +868,14 @@ export function suggestBibleVersesForSong(input: {
           : template.reason,
       confidence: score,
       matchedKeywords: unique([...titleMatches, ...lyricMatches, ...titleTokenMatches]),
-      titleSignalCount: meaningfulTitleMatches.length + titleTokenMatches.length + (exactTitlePhraseBonus > 0 ? 1 : 0),
+      titleSignalCount:
+        meaningfulTitleMatches.length + titleTokenMatches.length + (exactTitlePhraseBonus > 0 ? 1 : 0),
       lyricSignalCount: meaningfulLyricMatches.length,
-      totalSignalCount: meaningfulTitleMatches.length + titleTokenMatches.length + meaningfulLyricMatches.length + (exactTitlePhraseBonus > 0 ? 1 : 0),
+      totalSignalCount:
+        meaningfulTitleMatches.length +
+        titleTokenMatches.length +
+        meaningfulLyricMatches.length +
+        (exactTitlePhraseBonus > 0 ? 1 : 0),
       fullMatchCount: fullMatches.length,
     };
   });
@@ -1112,12 +890,13 @@ export function suggestBibleVersesForSong(input: {
         b.matchedKeywords.length - a.matchedKeywords.length,
     )
     .slice(0, limit)
-    .map(({ titleSignalCount, lyricSignalCount, totalSignalCount, fullMatchCount, ...item }) => item as BibleVerseSuggestion);
+    .map(
+      ({ titleSignalCount, lyricSignalCount, totalSignalCount, fullMatchCount, ...item }) =>
+        item as BibleVerseSuggestion,
+    );
 }
 
-export function serializeBibleVerseSuggestion(
-  suggestion: BibleVerseSuggestion,
-) {
+export function serializeBibleVerseSuggestion(suggestion: BibleVerseSuggestion) {
   return JSON.stringify({
     book: suggestion.book,
     chapter: suggestion.chapter,

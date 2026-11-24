@@ -44,13 +44,13 @@ Pentru proiect existent, verifică repository-ul în Project configuration.
 
 Setările sunt preluate din `netlify.toml`:
 
-| Setare | Valoare |
-|---|---|
-| Framework | Next.js, detectat automat |
-| Node | 22 |
-| Build command | npm run build:netlify |
-| Publish directory | .next |
-| Base directory | rădăcina repository-ului |
+| Setare            | Valoare                   |
+| ----------------- | ------------------------- |
+| Framework         | Next.js, detectat automat |
+| Node              | 22                        |
+| Build command     | npm run build:netlify     |
+| Publish directory | .next                     |
+| Base directory    | rădăcina repository-ului  |
 
 Nu folosi o regulă SPA `/* /index.html 200`. Runtime-ul Next.js este instalat de
 Netlify; nu este necesar un plugin cu versiune aleasă manual.
@@ -61,13 +61,13 @@ Netlify; nu este necesar un plugin cu versiune aleasă manual.
 Folosește contextul Production și scope-urile Builds + Functions; cheia privată
 nu trebuie pusă la dispoziția unor Deploy Previews din contribuții neîncredere.
 
-| Variabilă | Conținut |
-|---|---|
-| NEXT_PUBLIC_SUPABASE_URL | URL-ul proiectului Supabase existent |
-| NEXT_PUBLIC_SUPABASE_ANON_KEY | cheia anon / publishable a aceluiași proiect |
-| SUPABASE_SERVICE_ROLE_KEY | cheia privată service_role / secret, numai pe server |
-| YOUTUBE_DATA_API_KEY | opțional: cheia YouTube Data API v3, numai pe server, pentru sugestii în colecția de tineri |
-| NEXT_PUBLIC_SITE_URL | URL-ul HTTPS al proiectului, de exemplu https://songapp-bcbgiroc.netlify.app |
+| Variabilă                     | Conținut                                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| NEXT_PUBLIC_SUPABASE_URL      | URL-ul proiectului Supabase existent                                                                                                  |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | cheia anon / publishable a aceluiași proiect                                                                                          |
+| SUPABASE_SERVICE_ROLE_KEY     | cheia privată service_role / secret, numai pe server                                                                                  |
+| YOUTUBE_DATA_API_KEY          | opțional: cheia YouTube Data API v3, numai pe server, pentru sugestii automate în colecția de tineri; fără ea rămâne căutarea manuală |
+| NEXT_PUBLIC_SITE_URL          | URL-ul HTTPS al proiectului, de exemplu https://songapp-bcbgiroc.netlify.app                                                          |
 
 Preflight-ul oprește build-ul dacă lipsesc variabilele sau URL-ul public indică
 localhost. Nu afișează valorile private în loguri. Schimbarea variabilelor cere

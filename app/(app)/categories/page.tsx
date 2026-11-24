@@ -9,7 +9,7 @@ export default async function CategoriesPage() {
 
   const [{ data: categories, error }, { data: songCategoryRows }] = await Promise.all([
     supabase.from("categories").select("id,name,slug,parent_id").order("name"),
-    supabase.from("song_categories").select("category_id")
+    supabase.from("song_categories").select("category_id"),
   ]);
 
   const countMap = new Map<string, number>();
@@ -26,29 +26,42 @@ export default async function CategoriesPage() {
         <div>
           <div className="eyebrow">Bibliotecă</div>
           <h1>Categorii cântări</h1>
-          <p className="muted">Folosește categoriile pentru Paște, Nașterea Domnului, botez, Cina Domnului, mulțumire, înmormântare și alte secțiuni.</p>
+          <p className="muted">
+            Folosește categoriile pentru Paște, Nașterea Domnului, botez, Cina Domnului, mulțumire,
+            înmormântare și alte secțiuni.
+          </p>
         </div>
-        <Link className="btn secondary" href="/songs">Toate cântările</Link>
+        <Link className="btn secondary" href="/songs">
+          Toate cântările
+        </Link>
       </div>
 
       <div className="grid grid-2">
-        {editable ? <section className="card">
-          <h2>Adaugă categorie</h2>
-          <SaveForm action={createCategoryAction} className="form-grid">
-            <label className="label">Nume categorie
-              <input className="input" name="name" placeholder="ex: Cina Domnului" required />
-            </label>
-            <label className="label">Categorie părinte, opțional
-              <select className="select" name="parent_id" defaultValue="">
-                <option value="">Fără categorie părinte</option>
-                {parentOptions.map((category: any) => (
-                  <option key={category.id} value={category.id}>{category.name}</option>
-                ))}
-              </select>
-            </label>
-            <button className="btn" type="submit">Creează categorie</button>
-          </SaveForm>
-        </section> : null}
+        {editable ? (
+          <section className="card">
+            <h2>Adaugă categorie</h2>
+            <SaveForm action={createCategoryAction} className="form-grid">
+              <label className="label">
+                Nume categorie
+                <input className="input" name="name" placeholder="ex: Cina Domnului" required />
+              </label>
+              <label className="label">
+                Categorie părinte, opțional
+                <select className="select" name="parent_id" defaultValue="">
+                  <option value="">Fără categorie părinte</option>
+                  {parentOptions.map((category: any) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="btn" type="submit">
+                Creează categorie
+              </button>
+            </SaveForm>
+          </section>
+        ) : null}
 
         <section className="card">
           <h2>Categorii existente</h2>
@@ -64,16 +77,24 @@ export default async function CategoriesPage() {
                   <span className="badge">{countMap.get(category.id) || 0} cântări</span>
                 </summary>
                 <div className="management-actions">
-                  <Link className="btn secondary btn-compact" href={`/songs?category=${category.id}`}>Vezi cântările</Link>
-                  {editable ? <SaveForm action={deleteCategoryAction} className="inline-form delete-inline-form">
-                    <input type="hidden" name="category_id" value={category.id} />
-                    <input className="input compact-confirm" name="confirm" placeholder="STERGE" />
-                    <button className="btn danger btn-compact" type="submit">Șterge</button>
-                  </SaveForm> : null}
+                  <Link className="btn secondary btn-compact" href={`/songs?category=${category.id}`}>
+                    Vezi cântările
+                  </Link>
+                  {editable ? (
+                    <SaveForm action={deleteCategoryAction} className="inline-form delete-inline-form">
+                      <input type="hidden" name="category_id" value={category.id} />
+                      <input className="input compact-confirm" name="confirm" placeholder="STERGE" />
+                      <button className="btn danger btn-compact" type="submit">
+                        Șterge
+                      </button>
+                    </SaveForm>
+                  ) : null}
                 </div>
               </details>
             ))}
-            {(!categories || categories.length === 0) ? <p className="muted">Nu există categorii încă.</p> : null}
+            {!categories || categories.length === 0 ? (
+              <p className="muted">Nu există categorii încă.</p>
+            ) : null}
           </div>
         </section>
       </div>

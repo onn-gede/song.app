@@ -1,140 +1,357 @@
-import {arrangeSections,normalizePerformanceStructure,changedProgramIds} from "../lib/song-performance";
+import { arrangeSections, normalizePerformanceStructure, changedProgramIds } from "../lib/song-performance";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { assertSourceUrl, extractLinks, parseResurseSong } from "../lib/external-sync/parser";
-import { processNextSyncUnit } from "../lib/external-sync/worker";
+import { assertSourceUrl, extractLinks, parseResurseSong } from "../legacy/external-sync/lib/parser";
+import { processNextSyncUnit } from "../legacy/external-sync/lib/worker";
 import { buildProgramSlides, type PresentationItem } from "../lib/presentation";
 import { libraryPage, libraryHref } from "../lib/library";
 
-const songHtml='<h1>Cântare de test</h1><p>1. Prima linie pentru testul cântării</p><p>A doua linie pentru test</p><p>Resurse înrudite</p><p>Nu importa acest text</p>';
-test('source URL boundaries and extraction reject misleading domains',()=>{
-  for(const url of ['https://evil.resursecrestine.ro/cantece/1/a','https://resursecrestine.ro.evil.org/cantece/1/a','http://www.resursecrestine.ro/','https://user:pass@www.resursecrestine.ro/','https://www.resursecrestine.ro:8443/']) assert.throws(()=>assertSourceUrl(url));
-  const links=extractLinks('<a href="/cantece/123/test">Test</a><a href="https://resursecrestine.ro.evil.org/cantece/9/x">Attack</a><a href="/cantece/123/test">Again</a>', 'https://www.resursecrestine.ro','resursecrestine');
-  assert.equal(links.length,1);
-  const song=parseResurseSong(songHtml,links[0].url);
-  assert.ok(song?.lyrics.includes('Prima linie'));
-  assert.ok(!song?.lyrics.includes('Nu importa'));
+const songHtml =
+  "<h1>Cântare de test</h1><p>1. Prima linie pentru testul cântării</p><p>A doua linie pentru test</p><p>Resurse înrudite</p><p>Nu importa acest text</p>";
+test("source URL boundaries and extraction reject misleading domains", () => {
+  for (const url of [
+    "https://evil.resursecrestine.ro/cantece/1/a",
+    "https://resursecrestine.ro.evil.org/cantece/1/a",
+    "http://www.resursecrestine.ro/",
+    "https://user:pass@www.resursecrestine.ro/",
+    "https://www.resursecrestine.ro:8443/",
+  ])
+    assert.throws(() => assertSourceUrl(url));
+  const links = extractLinks(
+    '<a href="/cantece/123/test">Test</a><a href="https://resursecrestine.ro.evil.org/cantece/9/x">Attack</a><a href="/cantece/123/test">Again</a>',
+    "https://www.resursecrestine.ro",
+    "resursecrestine",
+  );
+  assert.equal(links.length, 1);
+  const song = parseResurseSong(songHtml, links[0].url);
+  assert.ok(song?.lyrics.includes("Prima linie"));
+  assert.ok(!song?.lyrics.includes("Nu importa"));
 });
-test('program presentation sorts sections and keeps repeated songs distinct',()=>{
-  const makeSong=(id:string,position:number,is_backup=false):PresentationItem=>({id,position,is_backup,item_type:'song',custom_title:null,custom_text:null,songs:{title:'Cântare',lyrics_text:null,song_sections:[{id:'s2',position:2,section_type:'chorus',section_label:'Refren',content:'Refren text'},{id:'s1',position:1,section_type:'verse',section_label:'Strofa 1',content:'Cântare\nStrofa text'}]}});
-  const items=[makeSong('repeat',3),makeSong('backup',900,true),makeSong('first',1),{id:'prayer',position:2,is_backup:false,item_type:'prayer',custom_title:'Rugăciune',custom_text:null,songs:null}];
-  const slides=buildProgramSlides(items);
-  assert.equal(slides.length,5);assert.equal(slides[0].content,'Cântare\nStrofa text');assert.equal(slides[2].content,'Rugăciune');
-  assert.equal(new Set(slides.map(s=>s.id)).size,5);
-  assert.equal(buildProgramSlides(items,true).length,7);
+test("program presentation sorts sections and keeps repeated songs distinct", () => {
+  const makeSong = (id: string, position: number, is_backup = false): PresentationItem => ({
+    id,
+    position,
+    is_backup,
+    item_type: "song",
+    custom_title: null,
+    custom_text: null,
+    songs: {
+      title: "Cântare",
+      lyrics_text: null,
+      song_sections: [
+        { id: "s2", position: 2, section_type: "chorus", section_label: "Refren", content: "Refren text" },
+        {
+          id: "s1",
+          position: 1,
+          section_type: "verse",
+          section_label: "Strofa 1",
+          content: "Cântare\nStrofa text",
+        },
+      ],
+    },
+  });
+  const items = [
+    makeSong("repeat", 3),
+    makeSong("backup", 900, true),
+    makeSong("first", 1),
+    {
+      id: "prayer",
+      position: 2,
+      is_backup: false,
+      item_type: "prayer",
+      custom_title: "Rugăciune",
+      custom_text: null,
+      songs: null,
+    },
+  ];
+  const slides = buildProgramSlides(items);
+  assert.equal(slides.length, 5);
+  assert.equal(slides[0].content, "Cântare\nStrofa text");
+  assert.equal(slides[2].content, "Rugăciune");
+  assert.equal(new Set(slides.map((s) => s.id)).size, 5);
+  assert.equal(buildProgramSlides(items, true).length, 7);
 });
-test('pagination keeps filters and rejects malformed page values',()=>{
-  assert.equal(libraryPage('NaN'),1);assert.equal(libraryPage('-4'),1);assert.equal(libraryPage('2.5'),1);
-  const url=new URL(libraryHref({q:'har',category:'a',sort:'created_desc',deleted:'2'},3),'http://localhost');
-  assert.equal(url.searchParams.get('q'),'har');assert.equal(url.searchParams.get('category'),'a');assert.equal(url.searchParams.get('page'),'3');assert.ok(!url.searchParams.has('deleted'));
+test("pagination keeps filters and rejects malformed page values", () => {
+  assert.equal(libraryPage("NaN"), 1);
+  assert.equal(libraryPage("-4"), 1);
+  assert.equal(libraryPage("2.5"), 1);
+  const url = new URL(
+    libraryHref({ q: "har", category: "a", sort: "created_desc", deleted: "2" }, 3),
+    "http://localhost",
+  );
+  assert.equal(url.searchParams.get("q"), "har");
+  assert.equal(url.searchParams.get("category"), "a");
+  assert.equal(url.searchParams.get("page"), "3");
+  assert.ok(!url.searchParams.has("deleted"));
 });
 function fakeClient(job: unknown) {
   const calls: Array<{ name: string; args: any }> = [];
-  const client={rpc:async(name:string,args:any)=>{calls.push({name,args});return {data:name==='claim_external_sync'?job:true,error:null};}} as unknown as SupabaseClient;
+  const client = {
+    rpc: async (name: string, args: any) => {
+      calls.push({ name, args });
+      return { data: name === "claim_external_sync" ? job : true, error: null };
+    },
+  } as unknown as SupabaseClient;
   return { client, calls };
 }
-test('worker commits fetch errors to one item without aborting remaining songs',async()=>{
-  const {client,calls}=fakeClient({id:'run',lease_token:'token',pages_scanned:1,found_count:2,next_index:0,discovered_links:[{url:'https://www.resursecrestine.ro/cantece/1/a'}],options:{pages:1,maxSongs:25,overwrite:false}});
-  assert.equal(await processNextSyncUnit(client,{fetchHtml:async()=>{throw new Error('HTTP 503');}}),true);
-  assert.equal(calls[1].name,'commit_external_sync_song');assert.equal(calls[1].args.p_error,'HTTP 503');assert.equal(calls[1].args.p_song,null);
+test("worker commits fetch errors to one item without aborting remaining songs", async () => {
+  const { client, calls } = fakeClient({
+    id: "run",
+    lease_token: "token",
+    pages_scanned: 1,
+    found_count: 2,
+    next_index: 0,
+    discovered_links: [{ url: "https://www.resursecrestine.ro/cantece/1/a" }],
+    options: { pages: 1, maxSongs: 25, overwrite: false },
+  });
+  assert.equal(
+    await processNextSyncUnit(client, {
+      fetchHtml: async () => {
+        throw new Error("HTTP 503");
+      },
+    }),
+    true,
+  );
+  assert.equal(calls[1].name, "commit_external_sync_song");
+  assert.equal(calls[1].args.p_error, "HTTP 503");
+  assert.equal(calls[1].args.p_song, null);
 });
-test('worker discovery checkpoints one page and does no detached work',async()=>{
-  const {client,calls}=fakeClient({id:'run',lease_token:'token',pages_scanned:0,found_count:0,next_index:0,discovered_links:[],options:{pages:2,maxSongs:25,overwrite:false}});
-  await processNextSyncUnit(client,{fetchHtml:async()=>'<a href="/cantece/123/test">Test</a>'});
-  assert.equal(calls.length,2);assert.equal(calls[1].name,'checkpoint_external_scan');assert.equal(calls[1].args.p_page,1);assert.equal(calls[1].args.p_links.length,1);
+test("worker discovery checkpoints one page and does no detached work", async () => {
+  const { client, calls } = fakeClient({
+    id: "run",
+    lease_token: "token",
+    pages_scanned: 0,
+    found_count: 0,
+    next_index: 0,
+    discovered_links: [],
+    options: { pages: 2, maxSongs: 25, overwrite: false },
+  });
+  await processNextSyncUnit(client, { fetchHtml: async () => '<a href="/cantece/123/test">Test</a>' });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].name, "checkpoint_external_scan");
+  assert.equal(calls[1].args.p_page, 1);
+  assert.equal(calls[1].args.p_links.length, 1);
 });
-test('worker records scan failures explicitly and can stay idle',async()=>{
-  const {client,calls}=fakeClient({id:'run',lease_token:'token',pages_scanned:0,options:{pages:1}});
-  await processNextSyncUnit(client,{fetchHtml:async()=>{throw new Error('Scan failed');}});
-  assert.equal(calls[1].name,'fail_external_sync');
-  const idle=fakeClient(null);assert.equal(await processNextSyncUnit(idle.client),false);
-});
-
-test('v46 committed program state wins over stale route props, while newer versions win', async () => {
-  const { latestMeetingSnapshot } = await import('../lib/meeting-state.js');
-  const empty={revision:0,principal:null,secondary:[],items:[]};
-  const saved={...empty,revision:2,principal:'Filip',secondary:['Ana']};
-  assert.equal(latestMeetingSnapshot(empty,saved).principal,'Filip');
-  assert.deepEqual(latestMeetingSnapshot(empty,saved).secondary,['Ana']);
-  assert.equal(latestMeetingSnapshot({...saved,revision:3,principal:'Emanuel'},saved).principal,'Emanuel');
-  assert.equal(latestMeetingSnapshot(saved,null),saved);
-});
-test('v52 program phases use exact start/two-hour instants and preserve template/archive states', async () => {
-  const { meetingStatus,bucharestDayStart } = await import('../lib/meeting-state.js');
-  const now=new Date('2026-10-28T08:00:00Z');
-  assert.equal(meetingStatus('2026-10-27T18:00Z','draft',false,now),'finished');
-  assert.equal(meetingStatus('2026-10-28T07:00Z','draft',false,now),'in_progress');
-  assert.equal(meetingStatus('2026-10-27T23:00Z','ready',false,now),'finished');
-  assert.equal(meetingStatus('2026-10-27T10:00Z','draft',true,now),'template');
-  assert.equal(meetingStatus('2026-10-27T10:00Z','archived',false,now),'archived');
-  assert.equal(meetingStatus('2026-10-28T10:00Z','draft',false,new Date('2026-10-28T09:59:59.999Z')),'draft');
-  assert.equal(meetingStatus('2026-10-28T10:00Z','draft',false,new Date('2026-10-28T10:00:00Z')),'in_progress');
-  assert.equal(meetingStatus('2026-10-28T10:00Z','draft',false,new Date('2026-10-28T11:59:59.999Z')),'in_progress');
-  assert.equal(meetingStatus('2026-10-28T10:00Z','draft',false,new Date('2026-10-28T12:00:00Z')),'finished');
-  assert.equal(meetingStatus('2026-10-28T21:30Z','draft',false,new Date('2026-10-28T22:10Z')),'in_progress');
-  assert.equal(bucharestDayStart(new Date('2026-03-29T12:00Z')),'2026-03-28T22:00:00.000Z');
-  assert.equal(bucharestDayStart(new Date('2026-10-25T12:00Z')),'2026-10-24T21:00:00.000Z');
-});
-
-test('v50 presentation carries each song key, program override wins, and moments do not inherit it',()=>{
- const song:PresentationItem={id:'a',position:1,is_backup:false,item_type:'song',custom_title:null,custom_text:null,selected_key:' F# ',songs:{title:'Titlu',default_key:'G',lyrics_text:'Strofa unu\n\nStrofa doi',song_sections:[]}};
- const original:PresentationItem={...song,id:'b',position:2,selected_key:null};
- const unknown:PresentationItem={...song,id:'c',position:3,selected_key:null,songs:{...song.songs!,default_key:null}};
- const moment:PresentationItem={id:'m',position:4,is_backup:false,item_type:'prayer',custom_title:'Rugăciune',custom_text:null,songs:null};
- const slides=buildProgramSlides([song,original,unknown,moment]);
- assert.deepEqual(slides.map(s=>s.musicalKey),['F#','F#','G','G',null,null,undefined]);
- const sections:PresentationItem={...song,songs:{...song.songs!,song_sections:[{id:'verse',position:1,section_label:null,section_type:'verse',content:'Versuri'}]}};
- assert.equal(buildProgramSlides([sections])[0].musicalKey,'F#');
-});
-
- test('v52 collection identity is deterministic, explicit source wins and unsafe colors are rejected',async()=>{
- const {primarySource,collectionStyle,validCollectionColor}=await import('../lib/collection-colors.js');
- const sources=[{source_id:'a',collection_id:'one',name:'Tineri',color:'#9f1239',number:'380A'},{source_id:'b',collection_id:'two',name:'Carte',color:'#1d4ed8',number:'004'}];
- assert.equal(primarySource(sources,'b')?.number,'004');assert.equal(primarySource(sources,null,'two')?.source_id,'b');assert.equal(primarySource(sources)?.source_id,'a');assert.equal(primarySource([]),null);
- assert.equal(validCollectionColor('red;display:none'),false);assert.equal(validCollectionColor('#abcdef'),true);
- assert.equal((collectionStyle(sources[0]) as any)['--collection-color'],'#9f1239');assert.notEqual((collectionStyle({color:'#ffffff'}) as any)['--collection-ink'],'#ffffff');
- });
-
- test('v56 activity uses Romanian labels and excludes internal/sensitive field codes',async()=>{
- const {eventLabel,changedFields,activityValue}=await import('../lib/activity-labels.js');
- assert.equal(eventLabel('update'),'Modificare');assert.equal(activityValue(true,'is_congregational'),'Da');assert.equal(activityValue('editor','role'),'Editor');
- assert.deepEqual(changedFields({fields:['notes','lyrics_text','password','search_vector','updated_at']}),['notes','lyrics_text']);assert.equal(activityValue('00000000-0000-0000-0000-000000000001','selected_source_id'),'Referință actualizată');
- });
-
-test('v58 presentation filenames identify number/title without extracting lyrics',async()=>{const {presentationFileIdentity}=await import('../lib/presentation-file.js');assert.equal(presentationFileIdentity('folder/063 Titlu cu ș.ppt')?.number,'063');assert.equal(presentationFileIdentity('016. Glorii din cer.pptx')?.title,'Glorii din cer');assert.equal(presentationFileIdentity('Fără număr.ppt'),null);assert.equal(presentationFileIdentity('001 Invalid.exe'),null);});
-
-
-test('moment presentation preserves Diverse and song type even when stored under the text enum',()=>{
- const base={id:'moment',position:1,is_backup:false,item_type:'text',custom_title:null,custom_text:null,songs:null};
- assert.equal(buildProgramSlides([{...base,moment_kind:'other'}])[0].content,'Diverse');
- assert.equal(buildProgramSlides([{...base,moment_kind:'other'}])[0].label,'Diverse');
- assert.equal(buildProgramSlides([{...base,item_type:'song',moment_kind:'song'}])[0].content,'Cântare');
- assert.equal(buildProgramSlides([{...base,moment_kind:'text'}])[0].label,'Poezie');
- assert.equal(buildProgramSlides([{...base,moment_kind:'other',custom_title:'Moment comun',custom_text:'Observații păstrate'}])[0].content,'Observații păstrate');
+test("worker records scan failures explicitly and can stay idle", async () => {
+  const { client, calls } = fakeClient({
+    id: "run",
+    lease_token: "token",
+    pages_scanned: 0,
+    options: { pages: 1 },
+  });
+  await processNextSyncUnit(client, {
+    fetchHtml: async () => {
+      throw new Error("Scan failed");
+    },
+  });
+  assert.equal(calls[1].name, "fail_external_sync");
+  const idle = fakeClient(null);
+  assert.equal(await processNextSyncUnit(idle.client), false);
 });
 
-
-test('v62 arrangement preserves indexed verse order, repeats refrains and changes are limited to added/edited items',async()=>{
- const sections=[{id:'s1',section_type:'verse'},{id:'r',section_type:'chorus'},{id:'s2',section_type:'verse'},{id:'b',section_type:'bridge'}];
- assert.deepEqual(arrangeSections(sections,'S,R,S,R,R,B,S,R').map(x=>x.id),['s1','r','s2','r','r','b','s1','r']);
- assert.deepEqual(arrangeSections(sections,'S2,R,S1').map(x=>x.id),['s2','r','s1']);assert.equal(normalizePerformanceStructure('s1, r, s2'),'S1,R,S2');assert.throws(()=>normalizePerformanceStructure('invalid'));assert.deepEqual(arrangeSections(sections,'S99'),sections);
- assert.deepEqual(changedProgramIds(null,{a:'new'}),[]);assert.deepEqual(changedProgramIds({a:'old',b:'same'},{a:'new',b:'same',c:'added'}),['a','c']);
+test("v46 committed program state wins over stale route props, while newer versions win", async () => {
+  const { latestMeetingSnapshot } = await import("../lib/meeting-state.js");
+  const empty = { revision: 0, principal: null, secondary: [], items: [] };
+  const saved = { ...empty, revision: 2, principal: "Filip", secondary: ["Ana"] };
+  assert.equal(latestMeetingSnapshot(empty, saved).principal, "Filip");
+  assert.deepEqual(latestMeetingSnapshot(empty, saved).secondary, ["Ana"]);
+  assert.equal(
+    latestMeetingSnapshot({ ...saved, revision: 3, principal: "Emanuel" }, saved).principal,
+    "Emanuel",
+  );
+  assert.equal(latestMeetingSnapshot(saved, null), saved);
+});
+test("v52 program phases use exact start/two-hour instants and preserve template/archive states", async () => {
+  const { meetingStatus, bucharestDayStart } = await import("../lib/meeting-state.js");
+  const now = new Date("2026-10-28T08:00:00Z");
+  assert.equal(meetingStatus("2026-10-27T18:00Z", "draft", false, now), "finished");
+  assert.equal(meetingStatus("2026-10-28T07:00Z", "draft", false, now), "in_progress");
+  assert.equal(meetingStatus("2026-10-27T23:00Z", "ready", false, now), "finished");
+  assert.equal(meetingStatus("2026-10-27T10:00Z", "draft", true, now), "template");
+  assert.equal(meetingStatus("2026-10-27T10:00Z", "archived", false, now), "archived");
+  assert.equal(
+    meetingStatus("2026-10-28T10:00Z", "draft", false, new Date("2026-10-28T09:59:59.999Z")),
+    "draft",
+  );
+  assert.equal(
+    meetingStatus("2026-10-28T10:00Z", "draft", false, new Date("2026-10-28T10:00:00Z")),
+    "in_progress",
+  );
+  assert.equal(
+    meetingStatus("2026-10-28T10:00Z", "draft", false, new Date("2026-10-28T11:59:59.999Z")),
+    "in_progress",
+  );
+  assert.equal(
+    meetingStatus("2026-10-28T10:00Z", "draft", false, new Date("2026-10-28T12:00:00Z")),
+    "finished",
+  );
+  assert.equal(
+    meetingStatus("2026-10-28T21:30Z", "draft", false, new Date("2026-10-28T22:10Z")),
+    "in_progress",
+  );
+  assert.equal(bucharestDayStart(new Date("2026-03-29T12:00Z")), "2026-03-28T22:00:00.000Z");
+  assert.equal(bucharestDayStart(new Date("2026-10-25T12:00Z")), "2026-10-24T21:00:00.000Z");
 });
 
-test('v83 musical keys are trimmed consistently and invalid long values are rejected',async()=>{
- const {normalizeMusicalKey}=await import('../lib/musical-key.js');
- assert.equal(normalizeMusicalKey('  F#   minor  '),'F# minor');
- assert.equal(normalizeMusicalKey('   '),null);
- assert.throws(()=>normalizeMusicalKey('A'.repeat(21)));
+test("v50 presentation carries each song key, program override wins, and moments do not inherit it", () => {
+  const song: PresentationItem = {
+    id: "a",
+    position: 1,
+    is_backup: false,
+    item_type: "song",
+    custom_title: null,
+    custom_text: null,
+    selected_key: " F# ",
+    songs: { title: "Titlu", default_key: "G", lyrics_text: "Strofa unu\n\nStrofa doi", song_sections: [] },
+  };
+  const original: PresentationItem = { ...song, id: "b", position: 2, selected_key: null };
+  const unknown: PresentationItem = {
+    ...song,
+    id: "c",
+    position: 3,
+    selected_key: null,
+    songs: { ...song.songs!, default_key: null },
+  };
+  const moment: PresentationItem = {
+    id: "m",
+    position: 4,
+    is_backup: false,
+    item_type: "prayer",
+    custom_title: "Rugăciune",
+    custom_text: null,
+    songs: null,
+  };
+  const slides = buildProgramSlides([song, original, unknown, moment]);
+  assert.deepEqual(
+    slides.map((s) => s.musicalKey),
+    ["F#", "F#", "G", "G", null, null, undefined],
+  );
+  const sections: PresentationItem = {
+    ...song,
+    songs: {
+      ...song.songs!,
+      song_sections: [
+        { id: "verse", position: 1, section_label: null, section_type: "verse", content: "Versuri" },
+      ],
+    },
+  };
+  assert.equal(buildProgramSlides([sections])[0].musicalKey, "F#");
 });
 
-test('v83 YouTube links accept common formats and produce privacy embeds',async()=>{
- const {normalizeYouTubeUrl,youtubeVideoId,youtubePrivacyEmbedUrl,youtubeThumbnailUrl}=await import('../lib/youtube.js');
- assert.equal(youtubeVideoId('https://youtu.be/dQw4w9WgXcQ?t=3'),'dQw4w9WgXcQ');
- assert.equal(youtubeVideoId('https://www.youtube.com/shorts/dQw4w9WgXcQ'),'dQw4w9WgXcQ');
- assert.equal(normalizeYouTubeUrl('https://music.youtube.com/watch?v=dQw4w9WgXcQ'),'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
- assert.equal(youtubePrivacyEmbedUrl('https://youtube.com/watch?v=dQw4w9WgXcQ'),'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0');
- assert.equal(youtubeThumbnailUrl('https://youtu.be/dQw4w9WgXcQ'),'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg');
- assert.throws(()=>normalizeYouTubeUrl('https://example.com/watch?v=dQw4w9WgXcQ'));
+test("v52 collection identity is deterministic, explicit source wins and unsafe colors are rejected", async () => {
+  const { primarySource, collectionStyle, validCollectionColor } =
+    await import("../lib/collection-colors.js");
+  const sources = [
+    { source_id: "a", collection_id: "one", name: "Tineri", color: "#9f1239", number: "380A" },
+    { source_id: "b", collection_id: "two", name: "Carte", color: "#1d4ed8", number: "004" },
+  ];
+  assert.equal(primarySource(sources, "b")?.number, "004");
+  assert.equal(primarySource(sources, null, "two")?.source_id, "b");
+  assert.equal(primarySource(sources)?.source_id, "a");
+  assert.equal(primarySource([]), null);
+  assert.equal(validCollectionColor("red;display:none"), false);
+  assert.equal(validCollectionColor("#abcdef"), true);
+  assert.equal((collectionStyle(sources[0]) as any)["--collection-color"], "#9f1239");
+  assert.notEqual((collectionStyle({ color: "#ffffff" }) as any)["--collection-ink"], "#ffffff");
+});
+
+test("v56 activity uses Romanian labels and excludes internal/sensitive field codes", async () => {
+  const { eventLabel, changedFields, activityValue } = await import("../lib/activity-labels.js");
+  assert.equal(eventLabel("update"), "Modificare");
+  assert.equal(activityValue(true, "is_congregational"), "Da");
+  assert.equal(activityValue("editor", "role"), "Editor");
+  assert.deepEqual(
+    changedFields({ fields: ["notes", "lyrics_text", "password", "search_vector", "updated_at"] }),
+    ["notes", "lyrics_text"],
+  );
+  assert.equal(
+    activityValue("00000000-0000-0000-0000-000000000001", "selected_source_id"),
+    "Referință actualizată",
+  );
+});
+
+test("v58 presentation filenames identify number/title without extracting lyrics", async () => {
+  const { presentationFileIdentity } = await import("../lib/presentation-file.js");
+  assert.equal(presentationFileIdentity("folder/063 Titlu cu ș.ppt")?.number, "063");
+  assert.equal(presentationFileIdentity("016. Glorii din cer.pptx")?.title, "Glorii din cer");
+  assert.equal(presentationFileIdentity("Fără număr.ppt"), null);
+  assert.equal(presentationFileIdentity("001 Invalid.exe"), null);
+});
+
+test("moment presentation preserves Diverse and song type even when stored under the text enum", () => {
+  const base = {
+    id: "moment",
+    position: 1,
+    is_backup: false,
+    item_type: "text",
+    custom_title: null,
+    custom_text: null,
+    songs: null,
+  };
+  assert.equal(buildProgramSlides([{ ...base, moment_kind: "other" }])[0].content, "Diverse");
+  assert.equal(buildProgramSlides([{ ...base, moment_kind: "other" }])[0].label, "Diverse");
+  assert.equal(
+    buildProgramSlides([{ ...base, item_type: "song", moment_kind: "song" }])[0].content,
+    "Cântare",
+  );
+  assert.equal(buildProgramSlides([{ ...base, moment_kind: "text" }])[0].label, "Poezie");
+  assert.equal(
+    buildProgramSlides([
+      { ...base, moment_kind: "other", custom_title: "Moment comun", custom_text: "Observații păstrate" },
+    ])[0].content,
+    "Observații păstrate",
+  );
+});
+
+test("v62 arrangement preserves indexed verse order, repeats refrains and changes are limited to added/edited items", async () => {
+  const sections = [
+    { id: "s1", section_type: "verse" },
+    { id: "r", section_type: "chorus" },
+    { id: "s2", section_type: "verse" },
+    { id: "b", section_type: "bridge" },
+  ];
+  assert.deepEqual(
+    arrangeSections(sections, "S,R,S,R,R,B,S,R").map((x) => x.id),
+    ["s1", "r", "s2", "r", "r", "b", "s1", "r"],
+  );
+  assert.deepEqual(
+    arrangeSections(sections, "S2,R,S1").map((x) => x.id),
+    ["s2", "r", "s1"],
+  );
+  assert.equal(normalizePerformanceStructure("s1, r, s2"), "S1,R,S2");
+  assert.throws(() => normalizePerformanceStructure("invalid"));
+  assert.deepEqual(arrangeSections(sections, "S99"), sections);
+  assert.deepEqual(changedProgramIds(null, { a: "new" }), []);
+  assert.deepEqual(changedProgramIds({ a: "old", b: "same" }, { a: "new", b: "same", c: "added" }), [
+    "a",
+    "c",
+  ]);
+});
+
+test("v83 musical keys are trimmed consistently and invalid long values are rejected", async () => {
+  const { normalizeMusicalKey } = await import("../lib/musical-key.js");
+  assert.equal(normalizeMusicalKey("  F#   minor  "), "F# minor");
+  assert.equal(normalizeMusicalKey("   "), null);
+  assert.throws(() => normalizeMusicalKey("A".repeat(21)));
+});
+
+test("v83 YouTube links accept common formats and produce privacy embeds", async () => {
+  const { normalizeYouTubeUrl, youtubeVideoId, youtubePrivacyEmbedUrl, youtubeThumbnailUrl } =
+    await import("../lib/youtube.js");
+  assert.equal(youtubeVideoId("https://youtu.be/dQw4w9WgXcQ?t=3"), "dQw4w9WgXcQ");
+  assert.equal(youtubeVideoId("https://www.youtube.com/shorts/dQw4w9WgXcQ"), "dQw4w9WgXcQ");
+  assert.equal(
+    normalizeYouTubeUrl("https://music.youtube.com/watch?v=dQw4w9WgXcQ"),
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  );
+  assert.equal(
+    youtubePrivacyEmbedUrl("https://youtube.com/watch?v=dQw4w9WgXcQ"),
+    "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0",
+  );
+  assert.equal(
+    youtubeThumbnailUrl("https://youtu.be/dQw4w9WgXcQ"),
+    "https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+  );
+  assert.throws(() => normalizeYouTubeUrl("https://example.com/watch?v=dQw4w9WgXcQ"));
 });

@@ -65,13 +65,17 @@ export function stripRepeatedSongTitleLines(
   sourceNumbers: Array<string | null | undefined> = [],
 ) {
   if (!content) return "";
-  return String(content)
-    .split(/\r?\n/)
-    // A title may itself be the first lyric line. Never infer a header from its text.
-    .filter((line) => !(/^\d+$/.test(line.trim()) && sourceNumbers.some(n=>String(n||'')===line.trim())))
-    .join("\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return (
+    String(content)
+      .split(/\r?\n/)
+      // A title may itself be the first lyric line. Never infer a header from its text.
+      .filter(
+        (line) => !(/^\d+$/.test(line.trim()) && sourceNumbers.some((n) => String(n || "") === line.trim())),
+      )
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
 }
 
 export function cleanSectionContentForSong(

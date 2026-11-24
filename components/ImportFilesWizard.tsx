@@ -4,10 +4,12 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import {
   confirmSongFilesImportBatchAction,
   previewSongFilesImportAction,
-  type ConfirmImportBatchError,
-  type ImportPreviewItem,
-  type ImportPreviewResult
-} from "@/app/(app)/import/actions";
+} from "@/features/import/server/actions";
+import type {
+  ConfirmImportBatchError,
+  ImportPreviewItem,
+  ImportPreviewResult,
+} from "@/features/import/types";
 
 type Collection = {
   id: string;
@@ -87,14 +89,15 @@ function ImportLoadingOverlay({
   title,
   description,
   progress,
-  elapsedSeconds
+  elapsedSeconds,
 }: {
   title: string;
   description: string;
   progress?: ImportProgress | null;
   elapsedSeconds?: number;
 }) {
-  const percent = progress && progress.total > 0 ? Math.round((progress.processed / progress.total) * 100) : 0;
+  const percent =
+    progress && progress.total > 0 ? Math.round((progress.processed / progress.total) * 100) : 0;
   const remaining = progress ? estimateRemainingSeconds(progress) : null;
 
   return (
@@ -108,7 +111,9 @@ function ImportLoadingOverlay({
           {progress ? (
             <div className="import-progress-box">
               <div className="import-progress-meta small">
-                <span>{progress.processed} din {progress.total} procesate</span>
+                <span>
+                  {progress.processed} din {progress.total} procesate
+                </span>
                 <span>{percent}%</span>
               </div>
               <div className="import-progress-track" aria-hidden="true">
@@ -119,11 +124,20 @@ function ImportLoadingOverlay({
                 <span>Sărite/erori: {progress.skipped}</span>
               </div>
               <p className="muted small">Timp rămas estimat: {formatDuration(remaining)}</p>
-              {progress.currentLabel ? <p className="muted small">Ultimul lot: {progress.currentLabel}</p> : null}
-              {progress.errors.length > 0 ? <p className="error small">{progress.errors.length} fișiere au fost sărite. Le vei vedea după finalizare.</p> : null}
+              {progress.currentLabel ? (
+                <p className="muted small">Ultimul lot: {progress.currentLabel}</p>
+              ) : null}
+              {progress.errors.length > 0 ? (
+                <p className="error small">
+                  {progress.errors.length} fișiere au fost sărite. Le vei vedea după finalizare.
+                </p>
+              ) : null}
             </div>
           ) : elapsedSeconds ? (
-            <p className="muted small">Timp scurs: {formatDuration(elapsedSeconds)}. Pentru arhive mari, progresul exact apare după ce analiza inițială termină lista cântărilor.</p>
+            <p className="muted small">
+              Timp scurs: {formatDuration(elapsedSeconds)}. Pentru arhive mari, progresul exact apare după ce
+              analiza inițială termină lista cântărilor.
+            </p>
           ) : null}
         </div>
       </div>
@@ -134,15 +148,19 @@ function ImportLoadingOverlay({
 function CollectionFields({ collections }: Props) {
   return (
     <div className="form-two">
-      <label className="label">Colecție existentă
+      <label className="label">
+        Colecție existentă
         <select className="select" name="collection_id" defaultValue="">
           <option value="">Alege colecția...</option>
           {collections.map((collection) => (
-            <option key={collection.id} value={collection.id}>{collection.name} ({collection.short_code})</option>
+            <option key={collection.id} value={collection.id}>
+              {collection.name} ({collection.short_code})
+            </option>
           ))}
         </select>
       </label>
-      <label className="label">Sau colecție nouă
+      <label className="label">
+        Sau colecție nouă
         <input className="input" name="new_collection_name" placeholder="ex: Colinde 2026" />
       </label>
     </div>
@@ -152,13 +170,16 @@ function CollectionFields({ collections }: Props) {
 function SongMetadataFields() {
   return (
     <div className="form-three">
-      <label className="label">Tonalitate
+      <label className="label">
+        Tonalitate
         <input className="input" name="default_key" placeholder="ex: D, G, Em" />
       </label>
-      <label className="label">BPM
+      <label className="label">
+        BPM
         <input className="input" type="number" name="bpm" min="30" max="260" placeholder="ex: 72" />
       </label>
-      <label className="label">Structură
+      <label className="label">
+        Structură
         <input className="input" name="structure" placeholder="ex: V1, R, V2, R" />
       </label>
     </div>
@@ -201,10 +222,14 @@ export function ImportFilesWizard({ collections }: Props) {
     const form = formRef.current;
     if (!form) return;
     const formData = new FormData(form);
-    const limitMB=Number(process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB||0);
-    const files=formData.getAll('files').filter((file):file is File=>file instanceof File);
-    if(limitMB>0 && files.reduce((sum,file)=>sum+file.size,0)>limitMB*1024*1024){setError(`În varianta online, alege fișiere de maximum ${limitMB} MB în total per lot. Împarte importul în loturi mai mici.`);return;}
-
+    const limitMB = Number(process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB || 0);
+    const files = formData.getAll("files").filter((file): file is File => file instanceof File);
+    if (limitMB > 0 && files.reduce((sum, file) => sum + file.size, 0) > limitMB * 1024 * 1024) {
+      setError(
+        `În varianta online, alege fișiere de maximum ${limitMB} MB în total per lot. Împarte importul în loturi mai mici.`,
+      );
+      return;
+    }
 
     startTransition(async () => {
       try {
@@ -252,21 +277,25 @@ export function ImportFilesWizard({ collections }: Props) {
       created,
       skipped,
       startedAt,
-      errors: []
+      errors: [],
     });
 
     try {
       for (let start = 0; start < preview.items.length; start += batchSize) {
         const items = preview.items.slice(start, start + batchSize);
-        const batchDecisions = Object.fromEntries(items.map((item) => [item.previewId, decisions[item.previewId] || defaultDecisionForItem(item)]));
-        const batchTargets = Object.fromEntries(items.map((item) => [item.previewId, targets[item.previewId] || ""]));
+        const batchDecisions = Object.fromEntries(
+          items.map((item) => [item.previewId, decisions[item.previewId] || defaultDecisionForItem(item)]),
+        );
+        const batchTargets = Object.fromEntries(
+          items.map((item) => [item.previewId, targets[item.previewId] || ""]),
+        );
 
         const result = await confirmSongFilesImportBatchAction({
           collectionId: preview.collectionId,
           metadata: preview.metadata,
           items,
           decisions: batchDecisions,
-          targets: batchTargets
+          targets: batchTargets,
         });
 
         processed += result.processed;
@@ -283,7 +312,7 @@ export function ImportFilesWizard({ collections }: Props) {
           skipped,
           startedAt,
           currentLabel: items[items.length - 1]?.fileName,
-          errors: [...allErrors]
+          errors: [...allErrors],
         });
       }
 
@@ -302,7 +331,9 @@ export function ImportFilesWizard({ collections }: Props) {
         window.location.assign(`/songs/${createdOrUpdatedIds[0]}/lyrics`);
         return;
       }
-      window.location.assign(`/review?status=needs_review&imported=${created}&skipped=${skipped}${errorQuery}`);
+      window.location.assign(
+        `/review?status=needs_review&imported=${created}&skipped=${skipped}${errorQuery}`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nu am putut confirma importul.");
       setIsImporting(false);
@@ -331,23 +362,42 @@ export function ImportFilesWizard({ collections }: Props) {
       <form ref={formRef} onSubmit={handlePreview} className="form-grid file-import-form">
         <CollectionFields collections={collections} />
 
-        <label className="label">Fișiere
-          <input className="input file-input" name="files" type="file" accept=".txt,.md,.ppt,.pptx,.pdf,.zip,text/plain,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip" multiple required />
+        <label className="label">
+          Fișiere
+          <input
+            className="input file-input"
+            name="files"
+            type="file"
+            accept=".txt,.md,.ppt,.pptx,.pdf,.zip,text/plain,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip"
+            multiple
+            required
+          />
         </label>
 
         <div className="form-two">
-          <label className="label">Titlu manual pentru un singur fișier, opțional
-            <input className="input" name="title_override" placeholder="Lasă gol ca să fie preluat din numele fișierului" />
+          <label className="label">
+            Titlu manual pentru un singur fișier, opțional
+            <input
+              className="input"
+              name="title_override"
+              placeholder="Lasă gol ca să fie preluat din numele fișierului"
+            />
           </label>
-          <label className="label">Număr manual pentru un singur fișier, opțional
+          <label className="label">
+            Număr manual pentru un singur fișier, opțional
             <input className="input" name="song_number_override" placeholder="ex: 352 sau 001b" />
           </label>
         </div>
 
         <SongMetadataFields />
 
-        <label className="label">Note interne aplicate importului
-          <textarea className="textarea" name="notes" placeholder="ex: import inițial, verificat parțial, carte sursă etc." />
+        <label className="label">
+          Note interne aplicate importului
+          <textarea
+            className="textarea"
+            name="notes"
+            placeholder="ex: import inițial, verificat parțial, carte sursă etc."
+          />
         </label>
 
         {error ? <p className="error">{error}</p> : null}
@@ -356,13 +406,17 @@ export function ImportFilesWizard({ collections }: Props) {
             <strong>{importErrors.length} fișiere au fost sărite:</strong>
             <div className="import-error-list small">
               {importErrors.slice(0, 8).map((item) => (
-                <div key={item.previewId}>• {item.fileName}: {item.message}</div>
+                <div key={item.previewId}>
+                  • {item.fileName}: {item.message}
+                </div>
               ))}
               {importErrors.length > 8 ? <div>… și încă {importErrors.length - 8}.</div> : null}
             </div>
           </div>
         ) : null}
-        <button className="btn" type="submit" disabled={isPending || isImporting}>{isPending ? "Analizez fișierele…" : "Analizează fișierele și verifică dublurile"}</button>
+        <button className="btn" type="submit" disabled={isPending || isImporting}>
+          {isPending ? "Analizez fișierele…" : "Analizează fișierele și verifică dublurile"}
+        </button>
       </form>
 
       {preview ? (
@@ -373,17 +427,49 @@ export function ImportFilesWizard({ collections }: Props) {
                 <div className="eyebrow">Import wizard</div>
                 <h2>Confirmă importul</h2>
                 <p className="muted small">
-                  {preview.items.length} cântări analizate în colecția <strong>{preview.collectionName}</strong>. {preview.duplicateCount > 0 ? `${preview.duplicateCount} posibile dubluri găsite.` : "Nu am găsit dubluri evidente."}
+                  {preview.items.length} cântări analizate în colecția{" "}
+                  <strong>{preview.collectionName}</strong>.{" "}
+                  {preview.duplicateCount > 0
+                    ? `${preview.duplicateCount} posibile dubluri găsite.`
+                    : "Nu am găsit dubluri evidente."}
                 </p>
               </div>
-              <button className="btn secondary btn-compact" type="button" onClick={() => setPreview(null)} disabled={isImporting}>Închide</button>
+              <button
+                className="btn secondary btn-compact"
+                type="button"
+                onClick={() => setPreview(null)}
+                disabled={isImporting}
+              >
+                Închide
+              </button>
             </div>
 
             {preview.duplicateCount > 0 ? (
               <div className="inline-form import-wizard-actions">
-                <button className="btn secondary btn-compact" type="button" onClick={() => setAllDuplicateDecisions("skip")} disabled={isImporting}>Nu suprascrie dublurile</button>
-                <button className="btn secondary btn-compact" type="button" onClick={() => setAllDuplicateDecisions("overwrite")} disabled={isImporting}>Suprascrie toate dublurile</button>
-                <button className="btn secondary btn-compact" type="button" onClick={() => setAllDuplicateDecisions("create")} disabled={isImporting}>Importă ca noi</button>
+                <button
+                  className="btn secondary btn-compact"
+                  type="button"
+                  onClick={() => setAllDuplicateDecisions("skip")}
+                  disabled={isImporting}
+                >
+                  Nu suprascrie dublurile
+                </button>
+                <button
+                  className="btn secondary btn-compact"
+                  type="button"
+                  onClick={() => setAllDuplicateDecisions("overwrite")}
+                  disabled={isImporting}
+                >
+                  Suprascrie toate dublurile
+                </button>
+                <button
+                  className="btn secondary btn-compact"
+                  type="button"
+                  onClick={() => setAllDuplicateDecisions("create")}
+                  disabled={isImporting}
+                >
+                  Importă ca noi
+                </button>
               </div>
             ) : null}
 
@@ -392,20 +478,33 @@ export function ImportFilesWizard({ collections }: Props) {
                 {preview.items.map((item, index) => {
                   const decision = decisions[item.previewId] || defaultDecisionForItem(item);
                   return (
-                    <div className={`import-preview-row ${item.duplicates.length > 0 ? "has-duplicates" : ""} ${!item.canImport ? "has-import-issues" : ""}`} key={item.previewId}>
+                    <div
+                      className={`import-preview-row ${item.duplicates.length > 0 ? "has-duplicates" : ""} ${!item.canImport ? "has-import-issues" : ""}`}
+                      key={item.previewId}
+                    >
                       <div className="import-preview-main">
-                        <div className="row-title">{index + 1}. {item.title || item.fileName}</div>
+                        <div className="row-title">
+                          {index + 1}. {item.title || item.fileName}
+                        </div>
                         <div className="badges compact-badges">
                           {item.songNumber ? <span className="badge">nr. {item.songNumber}</span> : null}
                           <span className="badge">{item.fileType.toUpperCase()}</span>
-                          {!item.canImport ? <span className="badge warning">fără text</span> : item.duplicates.length > 0 ? <span className="badge warning">dublură posibilă</span> : <span className="badge">nouă</span>}
+                          {!item.canImport ? (
+                            <span className="badge warning">fără text</span>
+                          ) : item.duplicates.length > 0 ? (
+                            <span className="badge warning">dublură posibilă</span>
+                          ) : (
+                            <span className="badge">nouă</span>
+                          )}
                         </div>
                         <p className="muted small">{item.fileName}</p>
                         {item.importIssues.length > 0 ? (
                           <div className="duplicate-box import-issue-box">
                             <strong>Problemă la import:</strong>
                             {item.importIssues.map((issue) => (
-                              <div className="small" key={`${item.previewId}-${issue}`}>• {issue}</div>
+                              <div className="small" key={`${item.previewId}-${issue}`}>
+                                • {issue}
+                              </div>
                             ))}
                           </div>
                         ) : null}
@@ -413,32 +512,52 @@ export function ImportFilesWizard({ collections }: Props) {
                           <div className="duplicate-box">
                             <strong>Potriviri existente:</strong>
                             {item.duplicates.map((duplicate) => (
-                              <div className="small" key={`${item.previewId}-${duplicate.songId}`}>• {duplicate.title} {duplicate.songNumber ? `(nr. ${duplicate.songNumber})` : ""} — {duplicate.reason}</div>
+                              <div className="small" key={`${item.previewId}-${duplicate.songId}`}>
+                                • {duplicate.title}{" "}
+                                {duplicate.songNumber ? `(nr. ${duplicate.songNumber})` : ""} —{" "}
+                                {duplicate.reason}
+                              </div>
                             ))}
                           </div>
                         ) : null}
                       </div>
 
                       <div className="import-preview-decision">
-                        <label className="label">Acțiune
+                        <label className="label">
+                          Acțiune
                           <select
                             className="select compact-select"
                             name={`decision_${item.previewId}`}
                             value={decision}
                             disabled={!item.canImport || isImporting}
-                            onChange={(event) => setDecisions((current) => ({ ...current, [item.previewId]: event.target.value }))}
+                            onChange={(event) =>
+                              setDecisions((current) => ({
+                                ...current,
+                                [item.previewId]: event.target.value,
+                              }))
+                            }
                           >
                             {!item.canImport ? <option value="skip">Sari peste</option> : null}
                             {item.canImport ? <option value="create">Importă ca nouă</option> : null}
                             {item.canImport ? <option value="skip">Sari peste</option> : null}
-                            {item.canImport && item.duplicates.length > 0 ? <option value="overwrite">Suprascrie existentă</option> : null}
+                            {item.canImport && item.duplicates.length > 0 ? (
+                              <option value="overwrite">Suprascrie existentă</option>
+                            ) : null}
                           </select>
                         </label>
                         {item.duplicates.length > 0 ? (
-                          <label className="label">Țintă suprascriere
-                            <select className="select compact-select" name={`target_${item.previewId}`} defaultValue={item.duplicates[0]?.songId || ""} disabled={!item.canImport || decision !== "overwrite" || isImporting}>
+                          <label className="label">
+                            Țintă suprascriere
+                            <select
+                              className="select compact-select"
+                              name={`target_${item.previewId}`}
+                              defaultValue={item.duplicates[0]?.songId || ""}
+                              disabled={!item.canImport || decision !== "overwrite" || isImporting}
+                            >
                               {item.duplicates.map((duplicate) => (
-                                <option key={duplicate.songId} value={duplicate.songId}>{duplicate.title}</option>
+                                <option key={duplicate.songId} value={duplicate.songId}>
+                                  {duplicate.title}
+                                </option>
                               ))}
                             </select>
                           </label>
@@ -449,8 +568,17 @@ export function ImportFilesWizard({ collections }: Props) {
                 })}
               </div>
               <div className="inline-form" style={{ justifyContent: "flex-end" }}>
-                <button className="btn secondary" type="button" onClick={() => setPreview(null)} disabled={isImporting}>Anulează</button>
-                <button className="btn" type="submit" disabled={isImporting}>{isImporting ? "Import în curs…" : "Confirmă importul"}</button>
+                <button
+                  className="btn secondary"
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  disabled={isImporting}
+                >
+                  Anulează
+                </button>
+                <button className="btn" type="submit" disabled={isImporting}>
+                  {isImporting ? "Import în curs…" : "Confirmă importul"}
+                </button>
               </div>
             </form>
           </div>

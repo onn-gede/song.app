@@ -7,4 +7,3 @@
 - importul din text permite lipire mobilă asistată și alegerea categoriei inițiale;
 - fiecare cântare poate avea un link YouTube, redat într-un player încărcat numai la cerere;
 - pagina publică generează metadata OpenGraph/Twitter cu titlul programului.
-

@@ -16,11 +16,14 @@ export type FreeShowImport = {
 type ExportSlide = { label: string; content: string; color?: string | null };
 
 function object(value: unknown): Record<string, any> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {};
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, any>) : {};
 }
 
 function cleanText(value: unknown) {
-  return String(value ?? "").replace(/\r\n?/g, "\n").replace(/[ \t]+\n/g, "\n").trim();
+  return String(value ?? "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
 }
 
 function sectionType(label: string): FreeShowSection["type"] {
@@ -46,11 +49,17 @@ function textFromItem(item: unknown) {
   const data = object(item);
   if (data.type && data.type !== "text") return "";
   const lines = Array.isArray(data.lines) ? data.lines : [];
-  return lines.map((line: unknown) => {
-    const row = object(line);
-    const fragments = Array.isArray(row.text) ? row.text : [];
-    return fragments.map((fragment: unknown) => cleanText(object(fragment).value)).filter(Boolean).join("");
-  }).join("\n").trim();
+  return lines
+    .map((line: unknown) => {
+      const row = object(line);
+      const fragments = Array.isArray(row.text) ? row.text : [];
+      return fragments
+        .map((fragment: unknown) => cleanText(object(fragment).value))
+        .filter(Boolean)
+        .join("");
+    })
+    .join("\n")
+    .trim();
 }
 
 function freeShowObject(value: unknown): Record<string, any> {
@@ -79,16 +88,22 @@ function orderedSlides(show: Record<string, any>) {
   const activeLayout = cleanText(object(show.settings).activeLayout);
   const layout = object(layouts[activeLayout] || Object.values(layouts)[0]);
   const refs = Array.isArray(layout.slides) ? layout.slides : [];
-  const roots = refs.map((entry: unknown) => cleanText(typeof entry === "string" ? entry : object(entry).id)).filter(Boolean);
+  const roots = refs
+    .map((entry: unknown) => cleanText(typeof entry === "string" ? entry : object(entry).id))
+    .filter(Boolean);
   const result: Array<{ id: string; group: string }> = [];
   const append = (id: string, ancestors: Set<string>, inheritedGroup = "") => {
     if (!slides[id] || ancestors.has(id)) return;
     const slide = object(slides[id]);
     const group = cleanText(slide.group) || inheritedGroup;
     result.push({ id, group });
-    const next = new Set(ancestors); next.add(id);
+    const next = new Set(ancestors);
+    next.add(id);
     const children = Array.isArray(slide.children) ? slide.children : [];
-    children.map(cleanText).filter(Boolean).forEach((child: string) => append(child, next, group));
+    children
+      .map(cleanText)
+      .filter(Boolean)
+      .forEach((child: string) => append(child, next, group));
   };
   (roots.length ? roots : Object.keys(slides)).forEach((id) => append(id, new Set()));
   return result.slice(0, 1000);
@@ -99,18 +114,34 @@ export function parseFreeShow(raw: string | unknown): FreeShowImport {
   const show = freeShowObject(parsed);
   if (!Object.keys(object(show.slides)).length) throw new Error("Fișierul nu conține slide-uri FreeShow.");
 
-  const sections = orderedSlides(show).map(({ id, group }, index) => {
-    const slide = object(object(show.slides)[id]);
-    const candidates = (Array.isArray(slide.items) ? slide.items : []).map(textFromItem).filter(Boolean).sort((a: string, b: string) => b.length - a.length);
-    const label = group;
-    const type = sectionType(label);
-    return { label: label || defaultLabel(type, index), type, content: candidates[0] || "" };
-  }).filter((section) => section.content).slice(0, 500);
+  const sections = orderedSlides(show)
+    .map(({ id, group }, index) => {
+      const slide = object(object(show.slides)[id]);
+      const candidates = (Array.isArray(slide.items) ? slide.items : [])
+        .map(textFromItem)
+        .filter(Boolean)
+        .sort((a: string, b: string) => b.length - a.length);
+      const label = group;
+      const type = sectionType(label);
+      return { label: label || defaultLabel(type, index), type, content: candidates[0] || "" };
+    })
+    .filter((section) => section.content)
+    .slice(0, 500);
 
   if (!sections.length) throw new Error("Fișierul FreeShow nu conține text care poate fi importat.");
   const title = cleanText(show.name || object(show.meta).title) || "Cântare importată din FreeShow";
-  const lyricsText = sections.map((section) => `${section.label}\n${section.content}`).join("\n\n").slice(0, 1_000_000);
-  const tokens: Record<FreeShowSection["type"], string> = {verse:"S",chorus:"R",bridge:"B",prechorus:"PR",ending:"F",text:"T"};
+  const lyricsText = sections
+    .map((section) => `${section.label}\n${section.content}`)
+    .join("\n\n")
+    .slice(0, 1_000_000);
+  const tokens: Record<FreeShowSection["type"], string> = {
+    verse: "S",
+    chorus: "R",
+    bridge: "B",
+    prechorus: "PR",
+    ending: "F",
+    text: "T",
+  };
   return {
     title: title.slice(0, 240),
     sections,
@@ -121,26 +152,37 @@ export function parseFreeShow(raw: string | unknown): FreeShowImport {
   };
 }
 
-export function buildFreeShow(name: string, slides: ExportSlide[], meta: Record<string, string | null | undefined> = {}) {
-  const prepared = slides.map((slide) => ({...slide,content:cleanText(slide.content)})).filter((slide) => slide.content);
+export function buildFreeShow(
+  name: string,
+  slides: ExportSlide[],
+  meta: Record<string, string | null | undefined> = {},
+) {
+  const prepared = slides
+    .map((slide) => ({ ...slide, content: cleanText(slide.content) }))
+    .filter((slide) => slide.content);
   if (!prepared.length) throw new Error("Nu există versuri pentru export.");
   const slideMap: Record<string, any> = {};
-  const layoutSlides: Array<{id:string}> = [];
+  const layoutSlides: Array<{ id: string }> = [];
   prepared.forEach((slide, index) => {
     const id = `songapp-slide-${index + 1}`;
-    layoutSlides.push({id});
+    layoutSlides.push({ id });
     slideMap[id] = {
       group: slide.label || `Slide ${index + 1}`,
       color: slide.color || "#28624c",
       settings: { resolution: { width: 1920, height: 1080 } },
       notes: "",
-      items: [{
-        type: "text",
-        lines: slide.content.split("\n").map((line) => ({align:"text-align:center;",text:[{value:line,style:"font-size:96px;"}]})),
-        style: "top:120px;left:80px;height:840px;width:1760px;font-family:Arial;",
-        align: "align-items:center;",
-        language: "",
-      }],
+      items: [
+        {
+          type: "text",
+          lines: slide.content.split("\n").map((line) => ({
+            align: "text-align:center;",
+            text: [{ value: line, style: "font-size:96px;" }],
+          })),
+          style: "top:120px;left:80px;height:840px;width:1760px;font-family:Arial;",
+          align: "align-items:center;",
+          language: "",
+        },
+      ],
     };
   });
   const now = Date.now();
@@ -150,16 +192,32 @@ export function buildFreeShow(name: string, slides: ExportSlide[], meta: Record<
     settings: { activeLayout: "songapp-layout", template: null },
     timestamps: { created: now, modified: now, used: null },
     meta: {
-      number: meta.number || "", title: meta.title || name, artist: meta.artist || "", author: meta.author || "",
-      composer: meta.composer || "", publisher: meta.publisher || "", copyright: meta.copyright || "", CCLI: meta.CCLI || "", year: meta.year || "", key: meta.key || "",
+      number: meta.number || "",
+      title: meta.title || name,
+      artist: meta.artist || "",
+      author: meta.author || "",
+      composer: meta.composer || "",
+      publisher: meta.publisher || "",
+      copyright: meta.copyright || "",
+      CCLI: meta.CCLI || "",
+      year: meta.year || "",
+      key: meta.key || "",
     },
     slides: slideMap,
-    layouts: { "songapp-layout": { name: "SongApp", notes: "Exportat din SongApp BCBgiroc", slides: layoutSlides } },
+    layouts: {
+      "songapp-layout": { name: "SongApp", notes: "Exportat din SongApp BCBgiroc", slides: layoutSlides },
+    },
     media: {},
   };
 }
 
 export function safeFreeShowFileName(value: string) {
-  const clean = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._ -]+/g, "").replace(/\s+/g, " ").trim().slice(0, 100);
+  const clean = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._ -]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
   return `${clean || "cantare-songapp"}.show`;
 }

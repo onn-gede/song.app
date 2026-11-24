@@ -1,0 +1,15 @@
+.next
+dist-worker
+node_modules
+local-assets
+public/downloads
+public/pdf.worker-*.mjs
+supabase/**/*.sql
+docs/history/**
+docs/releases/archive/**
+docs/verification/root-legacy/**
+data
+*.zip
+*.ppt
+*.pptx
+*.pdf

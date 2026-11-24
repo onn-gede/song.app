@@ -19,12 +19,16 @@ function readString(formData: FormData, key: string) {
 
 function isMissingRpcError(message: string) {
   const value = message.toLowerCase();
-  return value.includes("could not find the function") || value.includes("schema cache") || value.includes("pgrst202");
+  return (
+    value.includes("could not find the function") ||
+    value.includes("schema cache") ||
+    value.includes("pgrst202")
+  );
 }
 
 export async function bulkUpdateImportStatusAction(
   _prevState: BulkImportStatusState,
-  formData: FormData
+  formData: FormData,
 ): Promise<BulkImportStatusState> {
   await requireProfile("editor");
   const status = readString(formData, "status");
@@ -44,7 +48,7 @@ export async function bulkUpdateImportStatusAction(
   // și evită problemele de RLS. Dacă schema cache nu l-a încărcat încă, cădem pe update direct.
   const rpcResult = await supabase.rpc("bulk_update_import_status", {
     p_file_ids: ids,
-    p_status: status
+    p_status: status,
   });
 
   if (rpcResult.error) {
@@ -52,10 +56,7 @@ export async function bulkUpdateImportStatusAction(
       return { ok: false, error: rpcResult.error.message };
     }
 
-    const directResult = await supabase
-      .from("song_files")
-      .update({ import_status: status })
-      .in("id", ids);
+    const directResult = await supabase.from("song_files").update({ import_status: status }).in("id", ids);
 
     if (directResult.error) {
       return { ok: false, error: directResult.error.message };
@@ -68,7 +69,7 @@ export async function bulkUpdateImportStatusAction(
     return {
       ok: true,
       updated: ids.length,
-      message: `Status schimbat pentru ${ids.length} importuri.`
+      message: `Status schimbat pentru ${ids.length} importuri.`,
     };
   }
 
@@ -81,6 +82,6 @@ export async function bulkUpdateImportStatusAction(
   return {
     ok: true,
     updated,
-    message: `Status schimbat pentru ${updated} importuri.`
+    message: `Status schimbat pentru ${updated} importuri.`,
   };
 }

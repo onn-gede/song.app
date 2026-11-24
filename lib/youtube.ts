@@ -38,4 +38,3 @@ export function youtubeThumbnailUrl(value: string | null | undefined) {
   const id = youtubeVideoId(value);
   return id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : null;
 }
-

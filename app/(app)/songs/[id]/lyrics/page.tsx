@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SongSectionsEditor } from "@/components/SongSectionsEditor";
-import { updateSongLyricsAction } from "../../actions";
+import { updateSongLyricsAction } from "@/features/songs/server/actions";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -23,7 +23,7 @@ function splitLyricsFallback(text?: string | null) {
       id: `fallback-${index}`,
       section_type: index === 1 ? "chorus" : "verse",
       section_label: index === 1 ? "R" : String(index + 1),
-      content: content.trim()
+      content: content.trim(),
     }))
     .filter((section) => section.content.length > 0);
 }
@@ -34,15 +34,26 @@ export default async function SongLyricsReviewPage({ params }: PageProps) {
 
   const [{ data: song }, { data: sections }, { data: files }, { data: sources }] = await Promise.all([
     supabase.from("songs").select("id,title,structure,lyrics_text").eq("id", id).single(),
-    supabase.from("song_sections").select("id,section_type,section_label,position,content").eq("song_id", id).order("position"),
-    supabase.from("song_files").select("id,file_name,import_status,parsed_text,parser_notes,created_at").eq("song_id", id).order("created_at", { ascending: false }),
-    supabase.from("song_sources").select("song_number,source_title,song_collections(name,short_code)").eq("song_id", id)
+    supabase
+      .from("song_sections")
+      .select("id,section_type,section_label,position,content")
+      .eq("song_id", id)
+      .order("position"),
+    supabase
+      .from("song_files")
+      .select("id,file_name,import_status,parsed_text,parser_notes,created_at")
+      .eq("song_id", id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("song_sources")
+      .select("song_number,source_title,song_collections(name,short_code)")
+      .eq("song_id", id),
   ]);
 
   if (!song) notFound();
 
   const sourceFile = (files || [])[0] as any;
-  const initialSections = (sections && sections.length > 0) ? sections : splitLyricsFallback(song.lyrics_text);
+  const initialSections = sections && sections.length > 0 ? sections : splitLyricsFallback(song.lyrics_text);
   const importStatus = sourceFile?.import_status || "needs_review";
 
   return (
@@ -54,15 +65,22 @@ export default async function SongLyricsReviewPage({ params }: PageProps) {
           <div className="badges" style={{ marginTop: 12 }}>
             {(sources || []).map((source: any, index: number) => (
               <span className="badge" key={index}>
-                {source.song_collections?.short_code || source.song_collections?.name || "Sursă"}{source.song_number ? ` nr. ${source.song_number}` : ""}
+                {source.song_collections?.short_code || source.song_collections?.name || "Sursă"}
+                {source.song_number ? ` nr. ${source.song_number}` : ""}
               </span>
             ))}
-            <span className={importStatus === "approved" ? "badge" : "badge warning"}>{statusLabel(importStatus)}</span>
+            <span className={importStatus === "approved" ? "badge" : "badge warning"}>
+              {statusLabel(importStatus)}
+            </span>
           </div>
         </div>
         <div className="inline-form">
-          <Link className="btn secondary" href="/review">Importuri</Link>
-          <Link className="btn secondary" href={`/songs/${song.id}`}>Înapoi la cântare</Link>
+          <Link className="btn secondary" href="/review">
+            Importuri
+          </Link>
+          <Link className="btn secondary" href={`/songs/${song.id}`}>
+            Înapoi la cântare
+          </Link>
         </div>
       </div>
 
@@ -71,13 +89,21 @@ export default async function SongLyricsReviewPage({ params }: PageProps) {
 
         <section className="card form-grid">
           <h2>Date principale</h2>
-          <label className="label">Titlu
+          <label className="label">
+            Titlu
             <input className="input" name="title" defaultValue={song.title} required />
           </label>
-          <label className="label">Structură
-            <input className="input" name="structure" defaultValue={song.structure || ""} placeholder="ex: V1, R, V2, R" />
+          <label className="label">
+            Structură
+            <input
+              className="input"
+              name="structure"
+              defaultValue={song.structure || ""}
+              placeholder="ex: V1, R, V2, R"
+            />
           </label>
-          <label className="label">Status import
+          <label className="label">
+            Status import
             <select className="select" name="import_status" defaultValue={importStatus}>
               <option value="needs_review">Necesită verificare</option>
               <option value="approved">Verificat / aprobat</option>
@@ -87,7 +113,9 @@ export default async function SongLyricsReviewPage({ params }: PageProps) {
             </select>
           </label>
           <div className="inline-form">
-            <button className="btn" type="submit">Salvează versurile</button>
+            <button className="btn mobile-primary-save" type="submit">
+              Salvează versurile
+            </button>
             <label className="check-inline">
               <input type="checkbox" name="go_back_to_review" />
               <span>după salvare, revino la importuri</span>
@@ -110,7 +138,9 @@ export default async function SongLyricsReviewPage({ params }: PageProps) {
               </details>
             </div>
           ) : (
-            <p className="muted">Această cântare nu are fișier importat asociat. Poți totuși edita versurile.</p>
+            <p className="muted">
+              Această cântare nu are fișier importat asociat. Poți totuși edita versurile.
+            </p>
           )}
         </section>
 

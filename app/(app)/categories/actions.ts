@@ -43,10 +43,7 @@ export async function createCategoryAction(formData: FormData) {
   const supabase = (await requireProfile("editor")).supabase;
   const baseSlug = slugifyRo(name);
 
-  const { data: existing } = await supabase
-    .from("categories")
-    .select("slug")
-    .like("slug", `${baseSlug}%`);
+  const { data: existing } = await supabase.from("categories").select("slug").like("slug", `${baseSlug}%`);
 
   const usedSlugs = new Set((existing || []).map((item: any) => item.slug));
   let slug = baseSlug;
@@ -60,7 +57,7 @@ export async function createCategoryAction(formData: FormData) {
   const { error } = await supabase.from("categories").insert({
     name,
     slug,
-    parent_id: parentId || null
+    parent_id: parentId || null,
   });
 
   if (error) throw new Error(error.message);
@@ -69,7 +66,6 @@ export async function createCategoryAction(formData: FormData) {
   revalidatePath("/songs");
   refresh();
 }
-
 
 export async function deleteCategoryAction(formData: FormData) {
   await requireProfile("editor");
@@ -80,10 +76,7 @@ export async function deleteCategoryAction(formData: FormData) {
   if (confirm !== "STERGE") throw new Error("Pentru ștergere trebuie să scrii exact: STERGE");
 
   const supabase = (await requireProfile("editor")).supabase;
-  const { error } = await supabase
-    .from("categories")
-    .delete()
-    .eq("id", categoryId);
+  const { error } = await supabase.from("categories").delete().eq("id", categoryId);
 
   if (error) throw new Error(error.message);
 

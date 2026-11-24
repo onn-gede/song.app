@@ -1,0 +1,15 @@
+SongApp v108 / 0.37.0
+
+Arhivă completă, nu patch.
+
+Include:
+- butoane uniforme în antetul programului;
+- versuri și informații despre solist organizate clar în public/live;
+- structura afișată fără prefixul redundant;
+- marcaje discrete în calendar;
+- salvarea confirmată a tonalității în program și, când lipsește, în cântare;
+- completarea sigură a tonalităților lipsă din colecția de tineri;
+- curățarea controlată a sesiunilor Supabase expirate.
+
+Actualizare SQL necesară:
+supabase/updates/UPDATE-V108.sql

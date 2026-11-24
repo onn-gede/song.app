@@ -1,0 +1,18 @@
+SongApp v107 / 0.36.0
+
+Pachet complet de aplicație, pregătit pentru instalare într-un folder nou.
+
+Include:
+- reorganizarea structurală v105;
+- actualizările public/mobil v106;
+- interfața programelor și calendarul v107;
+- codul sursă, testele, scripturile și documentația;
+- migrațiile și update-urile SQL istorice.
+
+Nu include:
+- node_modules;
+- .next sau dist-worker;
+- .env.local ori alte secrete;
+- cache-uri locale.
+
+Nu există SQL nou pentru v107.

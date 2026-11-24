@@ -1,11 +1,11 @@
-import {SongSourceEditor} from "@/components/SongSourceEditor";
-import {deleteSongAction} from "../../actions";
+import { SongSourceEditor } from "@/components/SongSourceEditor";
+import { deleteSongAction } from "@/features/songs/server/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { updateSongMetadataAction } from "../../actions";
-import {SongYouTubeField} from "@/components/SongYouTubeField";
-import {isYouthCollection} from "@/lib/youtube-suggestions";
+import { updateSongMetadataAction } from "@/features/songs/server/actions";
+import { SongYouTubeField } from "@/components/SongYouTubeField";
+import { isYouthCollection } from "@/lib/youtube-suggestions";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -13,19 +13,36 @@ export default async function SongEditPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: song }, { data: categories }, { data: selectedCategories }, { data: sources }] = await Promise.all([
-    supabase.from("songs").select("id,title,default_key,bpm,structure,notes,youtube_url").eq("id", id).single(),
-    supabase.from("categories").select("id,name,slug").order("name"),
-    supabase.from("song_categories").select("category_id").eq("song_id", id),
-    supabase.from("song_sources").select("id,collection_id,song_number,source_title,song_collections(name,short_code)").eq("song_id", id)
-  ]);
+  const [{ data: song }, { data: categories }, { data: selectedCategories }, { data: sources }] =
+    await Promise.all([
+      supabase
+        .from("songs")
+        .select("id,title,default_key,bpm,structure,notes,youtube_url")
+        .eq("id", id)
+        .single(),
+      supabase.from("categories").select("id,name,slug").order("name"),
+      supabase.from("song_categories").select("category_id").eq("song_id", id),
+      supabase
+        .from("song_sources")
+        .select("id,collection_id,song_number,source_title,song_collections(name,short_code)")
+        .eq("song_id", id),
+    ]);
 
   if (!song) notFound();
-  const [{data:collections},{data:nextNumbers}]=await Promise.all([supabase.from("song_collections").select("id,name").eq("is_active",true).order("name"),supabase.rpc("next_song_numbers_v80")]);
-  const numberSuggestions=Object.fromEntries((nextNumbers||[]).map((row:any)=>[row.collection_id,row.next_number]));
+  const [{ data: collections }, { data: nextNumbers }] = await Promise.all([
+    supabase.from("song_collections").select("id,name").eq("is_active", true).order("name"),
+    supabase.rpc("next_song_numbers_v80"),
+  ]);
+  const numberSuggestions = Object.fromEntries(
+    (nextNumbers || []).map((row: any) => [row.collection_id, row.next_number]),
+  );
 
   const selected = new Set((selectedCategories || []).map((item: any) => item.category_id));
-  const isYouth=(sources||[]).some((source:any)=>isYouthCollection(Array.isArray(source.song_collections)?source.song_collections[0]:source.song_collections));
+  const isYouth = (sources || []).some((source: any) =>
+    isYouthCollection(
+      Array.isArray(source.song_collections) ? source.song_collections[0] : source.song_collections,
+    ),
+  );
 
   return (
     <>
@@ -36,12 +53,15 @@ export default async function SongEditPage({ params }: PageProps) {
           <div className="badges" style={{ marginTop: 12 }}>
             {(sources || []).map((source: any, index: number) => (
               <span className="badge" key={index}>
-                {source.song_collections?.short_code || source.song_collections?.name || "Sursă"}{source.song_number ? ` nr. ${source.song_number}` : ""}
+                {source.song_collections?.short_code || source.song_collections?.name || "Sursă"}
+                {source.song_number ? ` nr. ${source.song_number}` : ""}
               </span>
             ))}
           </div>
         </div>
-        <Link className="btn secondary" href={`/songs/${song.id}`}>Înapoi la cântare</Link>
+        <Link className="btn secondary" href={`/songs/${song.id}`}>
+          Înapoi la cântare
+        </Link>
       </div>
 
       <form action={updateSongMetadataAction} className="grid grid-2 song-edit-layout">
@@ -49,49 +69,126 @@ export default async function SongEditPage({ params }: PageProps) {
 
         <section className="card form-grid">
           <h2>Specificații cântare</h2>
-          <label className="label">Titlu
+          <label className="label">
+            Titlu
             <input className="input" name="title" defaultValue={song.title} required />
           </label>
           <div className="form-two">
-            <label className="label">Tonalitate
-              <input className="input" name="default_key" defaultValue={song.default_key || ""} placeholder="ex: G / A / Em" />
+            <label className="label">
+              Tonalitate
+              <input
+                className="input"
+                name="default_key"
+                defaultValue={song.default_key || ""}
+                placeholder="ex: G / A / Em"
+              />
             </label>
-            <label className="label">BPM
-              <input className="input" name="bpm" type="number" min="30" max="260" defaultValue={song.bpm || ""} placeholder="ex: 72" />
+            <label className="label">
+              BPM
+              <input
+                className="input"
+                name="bpm"
+                type="number"
+                min="30"
+                max="260"
+                defaultValue={song.bpm || ""}
+                placeholder="ex: 72"
+              />
             </label>
           </div>
-          <label className="label">Structură
-            <input className="input" name="structure" defaultValue={song.structure || ""} placeholder="ex: V1, R, V2, R, Bridge, R" />
+          <label className="label">
+            Structură
+            <input
+              className="input"
+              name="structure"
+              defaultValue={song.structure || ""}
+              placeholder="ex: V1, R, V2, R, Bridge, R"
+            />
           </label>
-          <SongYouTubeField songId={song.id} title={song.title} initialUrl={song.youtube_url||""} isYouth={isYouth}/>
-          <label className="label">Note interne
-            <textarea className="textarea" name="notes" defaultValue={song.notes || ""} placeholder="Observații pentru echipă, intrare, tranziție, mod de cântare" />
+          <SongYouTubeField
+            songId={song.id}
+            title={song.title}
+            initialUrl={song.youtube_url || ""}
+            isYouth={isYouth}
+          />
+          <label className="label">
+            Note interne
+            <textarea
+              className="textarea"
+              name="notes"
+              defaultValue={song.notes || ""}
+              placeholder="Observații pentru echipă, intrare, tranziție, mod de cântare"
+            />
           </label>
-          <button className="btn" type="submit">Salvează modificările</button>
+          <button className="btn mobile-primary-save" type="submit">
+            Salvează modificările
+          </button>
         </section>
 
         <section className="card">
           <div className="top-row" style={{ marginBottom: 12 }}>
             <h2>Categorii</h2>
-            <Link className="btn secondary btn-compact" href="/categories">Administrează categorii</Link>
+            <Link className="btn secondary btn-compact" href="/categories">
+              Administrează categorii
+            </Link>
           </div>
           <p className="muted small">Poți încadra aceeași cântare în mai multe secțiuni.</p>
           <div className="checkbox-grid">
             {(categories || []).map((category: any) => (
               <label className="check-row" key={category.id}>
-                <input type="checkbox" name="category_ids" value={category.id} defaultChecked={selected.has(category.id)} />
+                <input
+                  type="checkbox"
+                  name="category_ids"
+                  value={category.id}
+                  defaultChecked={selected.has(category.id)}
+                />
                 <span>
                   <strong>{category.name}</strong>
                   <small>/{category.slug}</small>
                 </span>
               </label>
             ))}
-            {(!categories || categories.length === 0) ? <p className="muted">Nu există categorii încă. Creează-le din pagina Categorii.</p> : null}
+            {!categories || categories.length === 0 ? (
+              <p className="muted">Nu există categorii încă. Creează-le din pagina Categorii.</p>
+            ) : null}
           </div>
         </section>
       </form>
-      <section className="card"><h2>Colecții și numere</h2><p className="muted small">La schimbarea colecției, aplicația completează automat următorul număr disponibil. Îl poți edita înainte de salvare.</p><div className="grid">{(sources||[]).map((source:any)=><SongSourceEditor key={source.id} songId={id} source={source} collections={collections||[]} suggestions={numberSuggestions}/>)}</div></section>
-      <details className="card"><summary>Ștergere definitivă</summary><p>Elimină cântarea din bibliotecă și din toate programele. Numerele eliberate pot fi refolosite. Operațiunea nu are anulare.</p><form action={deleteSongAction} className="form-grid"><input type="hidden" name="song_id" value={id}/><label className="label">Scrie STERGE pentru confirmare<input className="input" name="confirm" required pattern="STERGE"/></label><button className="btn danger" type="submit">Șterge definitiv cântarea</button></form></details>
+      <section className="card">
+        <h2>Colecții și numere</h2>
+        <p className="muted small">
+          La schimbarea colecției, aplicația completează automat următorul număr disponibil. Îl poți edita
+          înainte de salvare.
+        </p>
+        <div className="grid">
+          {(sources || []).map((source: any) => (
+            <SongSourceEditor
+              key={source.id}
+              songId={id}
+              source={source}
+              collections={collections || []}
+              suggestions={numberSuggestions}
+            />
+          ))}
+        </div>
+      </section>
+      <details className="card">
+        <summary>Ștergere definitivă</summary>
+        <p>
+          Elimină cântarea din bibliotecă și din toate programele. Numerele eliberate pot fi refolosite.
+          Operațiunea nu are anulare.
+        </p>
+        <form action={deleteSongAction} className="form-grid">
+          <input type="hidden" name="song_id" value={id} />
+          <label className="label">
+            Scrie STERGE pentru confirmare
+            <input className="input" name="confirm" required pattern="STERGE" />
+          </label>
+          <button className="btn danger" type="submit">
+            Șterge definitiv cântarea
+          </button>
+        </form>
+      </details>
     </>
   );
 }

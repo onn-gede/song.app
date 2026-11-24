@@ -1,18 +1,18 @@
 "use client";
 
-import {collectionStyle} from "@/lib/collection-colors";
-import {SourceTags} from "./SourceTags";
+import { collectionStyle } from "@/lib/collection-colors";
+import { SourceTags } from "./SourceTags";
 import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import type {PresentationSlide} from '@/lib/presentation';
+import type { PresentationSlide } from "@/lib/presentation";
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function splitFallbackLyrics(lyricsText: string | null | undefined,lyricsOnly=false): PresentationSlide[] {
+function splitFallbackLyrics(lyricsText: string | null | undefined, lyricsOnly = false): PresentationSlide[] {
   const chunks = String(lyricsText || "")
     .split(/\n{2,}/)
     .map((chunk) => chunk.trim())
@@ -21,7 +21,8 @@ function splitFallbackLyrics(lyricsText: string | null | undefined,lyricsOnly=fa
   return chunks.map((content, index) => ({
     id: `fallback-${index}`,
     label: `Slide ${index + 1}`,
-    content,lyricsOnly,
+    content,
+    lyricsOnly,
   }));
 }
 
@@ -46,18 +47,27 @@ export function SongPresentation({
   slides,
   fallbackLyrics,
   returnHref,
-  defaultKey,live=false,
-  programKind,lyricsOnly=false,projectionMode=false,controlChannel,
+  defaultKey,
+  live = false,
+  programKind,
+  lyricsOnly = false,
+  projectionMode = false,
+  controlChannel,
 }: {
   songId: string;
   title: string;
   slides: PresentationSlide[];
   fallbackLyrics?: string | null;
   returnHref?: string;
-  defaultKey?:string|null;live?:boolean;programKind?:string;lyricsOnly?:boolean;projectionMode?:boolean;controlChannel?:string;
+  defaultKey?: string | null;
+  live?: boolean;
+  programKind?: string;
+  lyricsOnly?: boolean;
+  projectionMode?: boolean;
+  controlChannel?: string;
 }) {
   const router = useRouter();
-  const shell=useRef<HTMLDivElement>(null);
+  const shell = useRef<HTMLDivElement>(null);
   const exitHref = returnHref || `/songs/${songId}`;
   const allSlides = useMemo(() => {
     const prepared = slides
@@ -67,53 +77,97 @@ export function SongPresentation({
         label: slide.label?.trim() || "Slide",
       }))
       .filter((slide) => slide.content.length > 0);
-    return prepared.length > 0 ? prepared : splitFallbackLyrics(fallbackLyrics,lyricsOnly);
-  }, [slides, fallbackLyrics,lyricsOnly]);
+    return prepared.length > 0 ? prepared : splitFallbackLyrics(fallbackLyrics, lyricsOnly);
+  }, [slides, fallbackLyrics, lyricsOnly]);
 
   const [index, setIndex] = useState(0);
   const [fontScale, setFontScale] = useState(105);
-  const [controlsVisible,setControlsVisible]=useState(false);
-  const [flash,setFlash]=useState(false);const previousSlides=useRef<string|null>(null);
-  const projectionChannel=useRef<BroadcastChannel|null>(null);
-  const contentVersion=JSON.stringify(allSlides);
-  useEffect(()=>{if(previousSlides.current!==null&&previousSlides.current!==contentVersion)setFlash(true);previousSlides.current=contentVersion;},[contentVersion]);
-  useEffect(()=>{if(!live)return;const update=()=>{if(!document.hidden)router.refresh();};const timer=setInterval(update,15000);window.addEventListener('focus',update);return()=>{clearInterval(timer);window.removeEventListener('focus',update);};},[live,router]);
-  const current = allSlides[Math.min(index,Math.max(0,allSlides.length-1))];
-  const musicalKey=current?.musicalKey!==undefined ? current.musicalKey : defaultKey;
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const [flash, setFlash] = useState(false);
+  const previousSlides = useRef<string | null>(null);
+  const projectionChannel = useRef<BroadcastChannel | null>(null);
+  const contentVersion = JSON.stringify(allSlides);
+  useEffect(() => {
+    if (previousSlides.current !== null && previousSlides.current !== contentVersion) setFlash(true);
+    previousSlides.current = contentVersion;
+  }, [contentVersion]);
+  useEffect(() => {
+    if (!live) return;
+    const update = () => {
+      if (!document.hidden) router.refresh();
+    };
+    const timer = setInterval(update, 15000);
+    window.addEventListener("focus", update);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", update);
+    };
+  }, [live, router]);
+  const current = allSlides[Math.min(index, Math.max(0, allSlides.length - 1))];
+  const musicalKey = current?.musicalKey !== undefined ? current.musicalKey : defaultKey;
   const currentLines = useMemo(() => normalizeLines(current?.content || ""), [current?.content]);
   const autoScale = useMemo(() => calculateAutoScale(currentLines), [currentLines]);
   const combinedScale = autoScale * (fontScale / 100);
   const canGoPrev = index > 0;
   const canGoNext = index < allSlides.length - 1;
 
-  useEffect(()=>{
-    if(!projectionMode||!controlChannel)return;
-    const handle=(message:any)=>{
-      if(!message||message.channel!==controlChannel)return;
-      if(message.type==="previous")setIndex(value=>clamp(value-1,0,Math.max(0,allSlides.length-1)));
-      if(message.type==="next")setIndex(value=>clamp(value+1,0,Math.max(0,allSlides.length-1)));
-      if(message.type==="first")setIndex(0);
-      if(message.type==="last")setIndex(Math.max(0,allSlides.length-1));
-      if(message.type==="smaller")setFontScale(value=>clamp(value-5,70,135));
-      if(message.type==="larger")setFontScale(value=>clamp(value+5,70,135));
-      if(message.type==="ack")setFlash(false);
-      if(message.type==="close")window.close();
+  useEffect(() => {
+    if (!projectionMode || !controlChannel) return;
+    const handle = (message: any) => {
+      if (!message || message.channel !== controlChannel) return;
+      if (message.type === "previous")
+        setIndex((value) => clamp(value - 1, 0, Math.max(0, allSlides.length - 1)));
+      if (message.type === "next")
+        setIndex((value) => clamp(value + 1, 0, Math.max(0, allSlides.length - 1)));
+      if (message.type === "first") setIndex(0);
+      if (message.type === "last") setIndex(Math.max(0, allSlides.length - 1));
+      if (message.type === "smaller") setFontScale((value) => clamp(value - 5, 70, 135));
+      if (message.type === "larger") setFontScale((value) => clamp(value + 5, 70, 135));
+      if (message.type === "ack") setFlash(false);
+      if (message.type === "close") window.close();
     };
-    const broadcast=typeof BroadcastChannel!=="undefined"?new BroadcastChannel(`songapp-projection-${controlChannel}`):null;
-    if(broadcast)broadcast.onmessage=event=>handle(event.data);
-    projectionChannel.current=broadcast;
-    const onMessage=(event:MessageEvent)=>{if(event.origin===window.location.origin&&event.data?.source==="songapp-projection")handle(event.data);};
-    const onUnload=()=>{const message={source:"songapp-projection",channel:controlChannel,type:"closed"};broadcast?.postMessage(message);try{window.opener?.postMessage(message,window.location.origin);}catch{}};
-    window.addEventListener("message",onMessage);window.addEventListener("beforeunload",onUnload);
-    return()=>{window.removeEventListener("message",onMessage);window.removeEventListener("beforeunload",onUnload);broadcast?.close();if(projectionChannel.current===broadcast)projectionChannel.current=null;};
-  },[projectionMode,controlChannel,allSlides.length]);
+    const broadcast =
+      typeof BroadcastChannel !== "undefined"
+        ? new BroadcastChannel(`songapp-projection-${controlChannel}`)
+        : null;
+    if (broadcast) broadcast.onmessage = (event) => handle(event.data);
+    projectionChannel.current = broadcast;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin === window.location.origin && event.data?.source === "songapp-projection")
+        handle(event.data);
+    };
+    const onUnload = () => {
+      const message = { source: "songapp-projection", channel: controlChannel, type: "closed" };
+      broadcast?.postMessage(message);
+      try {
+        window.opener?.postMessage(message, window.location.origin);
+      } catch {}
+    };
+    window.addEventListener("message", onMessage);
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("beforeunload", onUnload);
+      broadcast?.close();
+      if (projectionChannel.current === broadcast) projectionChannel.current = null;
+    };
+  }, [projectionMode, controlChannel, allSlides.length]);
 
-  useEffect(()=>{
-    if(!projectionMode||!controlChannel)return;
-    const message={source:"songapp-projection",channel:controlChannel,type:"state",index,total:allSlides.length,flash};
+  useEffect(() => {
+    if (!projectionMode || !controlChannel) return;
+    const message = {
+      source: "songapp-projection",
+      channel: controlChannel,
+      type: "state",
+      index,
+      total: allSlides.length,
+      flash,
+    };
     projectionChannel.current?.postMessage(message);
-    try{window.opener?.postMessage(message,window.location.origin);}catch{}
-  },[projectionMode,controlChannel,index,allSlides.length,flash]);
+    try {
+      window.opener?.postMessage(message, window.location.origin);
+    } catch {}
+  }, [projectionMode, controlChannel, index, allSlides.length, flash]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("songapp:presentation-font-scale-v83");
@@ -128,7 +182,15 @@ export function SongPresentation({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        if(projectionMode){const message={source:"songapp-projection",channel:controlChannel,type:"closed"};projectionChannel.current?.postMessage(message);try{window.opener?.postMessage(message,window.location.origin);}catch{}window.close();return;}
+        if (projectionMode) {
+          const message = { source: "songapp-projection", channel: controlChannel, type: "closed" };
+          projectionChannel.current?.postMessage(message);
+          try {
+            window.opener?.postMessage(message, window.location.origin);
+          } catch {}
+          window.close();
+          return;
+        }
         router.push(exitHref);
         return;
       }
@@ -154,7 +216,7 @@ export function SongPresentation({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [allSlides.length, router, exitHref,projectionMode,controlChannel]);
+  }, [allSlides.length, router, exitHref, projectionMode, controlChannel]);
 
   if (allSlides.length === 0) {
     return (
@@ -162,34 +224,121 @@ export function SongPresentation({
         <div className="presentation-empty">
           <h1>{title}</h1>
           <p>Nu există elemente pentru prezentare.</p>
-          {!projectionMode?<Link className="presentation-link" href={exitHref}>Înapoi</Link>:null}
+          {!projectionMode ? (
+            <Link className="presentation-link" href={exitHref}>
+              Înapoi
+            </Link>
+          ) : null}
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`presentation-shell${lyricsOnly?" presentation-song-mode":""}${controlsVisible?" presentation-controls-visible":""}${projectionMode?" presentation-projection-output":""}`} ref={shell}>
-      {!projectionMode?<><button className="presentation-fullscreen-reveal" type="button" aria-label="Arată comenzile prezentării" onClick={()=>setControlsVisible(value=>!value)} />
-      <header className="presentation-topbar">
-        <div>
-          <div className="presentation-eyebrow">{programKind==='rehearsal'?'Repetiție · prezentare':'Prezentare'}</div>
-          <strong>{title}</strong>
-        </div>
-        <div className="presentation-actions">
-          {flash?<button className="presentation-mini-button presentation-acknowledge" type="button" onClick={()=>setFlash(false)}>Am văzut</button>:null}
-          <span>{index + 1} / {allSlides.length}</span>
-          <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value - 5, 70, 135))}>A−</button>
-          <span className="presentation-scale">{fontScale}%</span>
-          <button className="presentation-mini-button" type="button" onClick={() => setFontScale((value) => clamp(value + 5, 70, 135))}>A+</button>
-          <button className="presentation-mini-button" type="button" onClick={() => setFontScale(105)}>Reset</button>
-          <button className="presentation-mini-button" type="button" onClick={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void shell.current?.requestFullscreen?.();}}>Ecran complet</button>
-          <Link className="presentation-link" href={exitHref}>Ieșire</Link>
-        </div>
-      </header></>:null}
+    <div
+      className={`presentation-shell${lyricsOnly ? " presentation-song-mode" : ""}${controlsVisible ? " presentation-controls-visible" : ""}${projectionMode ? " presentation-projection-output" : ""}`}
+      ref={shell}
+    >
+      {!projectionMode ? (
+        <>
+          <button
+            className="presentation-fullscreen-reveal"
+            type="button"
+            aria-label="Arată comenzile prezentării"
+            onClick={() => setControlsVisible((value) => !value)}
+          />
+          <header className="presentation-topbar">
+            <div>
+              <div className="presentation-eyebrow">
+                {programKind === "rehearsal" ? "Repetiție · prezentare" : "Prezentare"}
+              </div>
+              <strong>{title}</strong>
+            </div>
+            <div className="presentation-actions">
+              {flash ? (
+                <button
+                  className="presentation-mini-button presentation-acknowledge"
+                  type="button"
+                  onClick={() => setFlash(false)}
+                >
+                  Am văzut
+                </button>
+              ) : null}
+              <span>
+                {index + 1} / {allSlides.length}
+              </span>
+              <button
+                className="presentation-mini-button"
+                type="button"
+                onClick={() => setFontScale((value) => clamp(value - 5, 70, 135))}
+              >
+                A−
+              </button>
+              <span className="presentation-scale">{fontScale}%</span>
+              <button
+                className="presentation-mini-button"
+                type="button"
+                onClick={() => setFontScale((value) => clamp(value + 5, 70, 135))}
+              >
+                A+
+              </button>
+              <button className="presentation-mini-button" type="button" onClick={() => setFontScale(105)}>
+                Reset
+              </button>
+              <button
+                className="presentation-mini-button"
+                type="button"
+                onClick={() => {
+                  if (document.fullscreenElement) void document.exitFullscreen();
+                  else void shell.current?.requestFullscreen?.();
+                }}
+              >
+                Ecran complet
+              </button>
+              <Link className="presentation-link" href={exitHref}>
+                Ieșire
+              </Link>
+            </div>
+          </header>
+        </>
+      ) : null}
 
-      <main className={"presentation-slide"+(flash?" recent-program-change":"")} onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}>
-        {!current.lyricsOnly?<div className="presentation-slide-heading" style={current.source?collectionStyle(current.source):{color:current.momentColor||undefined}}><div className="presentation-label" style={{color:current.source?"var(--collection-ink)":current.momentColor||undefined}}>{current.label}</div>{current.source?<SourceTags source={current.source}/>:null}{current.isCongregational?<span className="badge congregational-tag">Cântare în comun</span>:null}{current.verseCount!==undefined?<span className="badge">Strofe: {current.verseCount??"—"}</span>:null}{current.structure?<span className="badge">Structură: {current.structure}</span>:null}{musicalKey!==undefined?<span className="presentation-musical-key" aria-label="Tonalitatea cântării">Tonalitate {musicalKey || "—"}</span>:null}</div>:null}
+      <main
+        className={"presentation-slide" + (flash ? " recent-program-change" : "")}
+        onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}
+      >
+        {!current.lyricsOnly ? (
+          <div
+            className="presentation-slide-heading"
+            style={
+              current.source ? collectionStyle(current.source) : { color: current.momentColor || undefined }
+            }
+          >
+            <div
+              className="presentation-label"
+              style={{ color: current.source ? "var(--collection-ink)" : current.momentColor || undefined }}
+            >
+              {current.label}
+            </div>
+            {current.source ? <SourceTags source={current.source} /> : null}
+            {current.isCongregational ? (
+              <span className="badge congregational-tag">Cântare în comun</span>
+            ) : null}
+            {current.verseCount !== undefined ? (
+              <span className="badge">Strofe: {current.verseCount ?? "—"}</span>
+            ) : null}
+            {current.structure ? (
+              <span className="badge" title="Structura cântării">
+                {current.structure}
+              </span>
+            ) : null}
+            {musicalKey !== undefined ? (
+              <span className="presentation-musical-key" aria-label="Tonalitatea cântării">
+                Tonalitate {musicalKey || "—"}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <div
           className="presentation-lyrics"
           style={{
@@ -198,31 +347,43 @@ export function SongPresentation({
           }}
         >
           {currentLines.map((line, lineIndex) => (
-            <div className="presentation-line" key={`${current.id}-line-${lineIndex}`}>{line}</div>
+            <div className="presentation-line" key={`${current.id}-line-${lineIndex}`}>
+              {line}
+            </div>
           ))}
         </div>
       </main>
 
-      {!projectionMode?<footer className="presentation-footer">
-        <button type="button" onClick={() => setIndex((value) => clamp(value - 1, 0, allSlides.length - 1))} disabled={!canGoPrev}>
-          ← Înapoi
-        </button>
-        <div className="presentation-dots" aria-label="Slide-uri">
-          {allSlides.map((slide, slideIndex) => (
-            <button
-              key={slide.id}
-              type="button"
-              aria-label={`Mergi la ${slide.label}`}
-              className={slideIndex === index ? "active" : ""}
-              onClick={() => setIndex(slideIndex)}
-            />
-          ))}
-        </div>
-        <button type="button" onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))} disabled={!canGoNext}>
-          Înainte →
-        </button>
-        <span className="presentation-hint">ESC ieșire · Ctrl +/- mărime text</span>
-      </footer>:null}
+      {!projectionMode ? (
+        <footer className="presentation-footer">
+          <button
+            type="button"
+            onClick={() => setIndex((value) => clamp(value - 1, 0, allSlides.length - 1))}
+            disabled={!canGoPrev}
+          >
+            ← Înapoi
+          </button>
+          <div className="presentation-dots" aria-label="Slide-uri">
+            {allSlides.map((slide, slideIndex) => (
+              <button
+                key={slide.id}
+                type="button"
+                aria-label={`Mergi la ${slide.label}`}
+                className={slideIndex === index ? "active" : ""}
+                onClick={() => setIndex(slideIndex)}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIndex((value) => clamp(value + 1, 0, allSlides.length - 1))}
+            disabled={!canGoNext}
+          >
+            Înainte →
+          </button>
+          <span className="presentation-hint">ESC ieșire · Ctrl +/- mărime text</span>
+        </footer>
+      ) : null}
     </div>
   );
 }

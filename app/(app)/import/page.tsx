@@ -1,10 +1,10 @@
-import {PresentationImportWizard} from "@/components/PresentationImportWizard";
+import { PresentationImportWizard } from "@/components/PresentationImportWizard";
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { ImportLinkWizard } from "@/components/ImportLinkWizard";
 import { ImportWorkspace } from "@/components/ImportWorkspace";
 import { ImportFilesWizard } from "@/components/ImportFilesWizard";
-import { importTextSongAction } from "./actions";
+import { importTextSongAction } from "@/features/import/server/actions";
 import { FreeShowImportWizard } from "@/components/FreeShowImportWizard";
 import { LyricsPasteField } from "@/components/LyricsPasteField";
 import { ManualYouTubeSuggestion } from "@/components/ManualYouTubeSuggestion";
@@ -17,21 +17,25 @@ const sourceTypes = [
   ["ppt", "PPT transcris"],
   ["pdf", "PDF transcris"],
   ["docx", "DOCX transcris"],
-  ["other", "Alt format"]
+  ["other", "Alt format"],
 ];
 
 function CollectionFields({ collections, idPrefix = "" }: { collections: any[] | null; idPrefix?: string }) {
   return (
     <div className="form-two">
-      <label className="label">Colecție existentă
+      <label className="label">
+        Colecție existentă
         <select className="select" name="collection_id" defaultValue="">
           <option value="">Alege colecția...</option>
           {(collections || []).map((collection: any) => (
-            <option key={`${idPrefix}${collection.id}`} value={collection.id}>{collection.name} ({collection.short_code})</option>
+            <option key={`${idPrefix}${collection.id}`} value={collection.id}>
+              {collection.name} ({collection.short_code})
+            </option>
           ))}
         </select>
       </label>
-      <label className="label">Sau colecție nouă
+      <label className="label">
+        Sau colecție nouă
         <input className="input" name="new_collection_name" placeholder="ex: Colinde 2026" />
       </label>
     </div>
@@ -41,13 +45,16 @@ function CollectionFields({ collections, idPrefix = "" }: { collections: any[] |
 function SongMetadataFields() {
   return (
     <div className="form-three">
-      <label className="label">Tonalitate
+      <label className="label">
+        Tonalitate
         <input className="input" name="default_key" placeholder="ex: D, G, Em" />
       </label>
-      <label className="label">BPM
+      <label className="label">
+        BPM
         <input className="input" type="number" name="bpm" min="30" max="260" placeholder="ex: 72" />
       </label>
-      <label className="label">Structură
+      <label className="label">
+        Structură
         <input className="input" name="structure" placeholder="ex: V1, R, V2, R" />
       </label>
     </div>
@@ -57,12 +64,16 @@ function SongMetadataFields() {
 export default async function ImportPage() {
   const { supabase } = await requireProfile("editor");
   const [{ data: collections, error }, { data: categories, error: categoriesError }] = await Promise.all([
-    supabase.from("song_collections").select("id,name,short_code,source_type").eq("is_active", true).order("name"),
-    supabase.from("categories").select("id,name").order("name")
+    supabase
+      .from("song_collections")
+      .select("id,name,short_code,source_type")
+      .eq("is_active", true)
+      .order("name"),
+    supabase.from("categories").select("id,name").order("name"),
   ]);
 
   if (error || categoriesError) throw new Error("Colecțiile și categoriile nu pot fi încărcate momentan.");
-  const youthCollectionIds=(collections||[]).filter(isYouthCollection).map(collection=>collection.id);
+  const youthCollectionIds = (collections || []).filter(isYouthCollection).map((collection) => collection.id);
 
   return (
     <>
@@ -73,54 +84,121 @@ export default async function ImportPage() {
           <p className="muted">Alege sursa cântării, verifică versurile și adaug-o în colecțiile tale.</p>
         </div>
         <div className="inline-form">
-          <Link className="btn secondary" href="/collections">Colecții</Link>
-          <Link className="btn" href="/review">Verificare import</Link>
+          <Link className="btn secondary" href="/collections">
+            Colecții
+          </Link>
+          <Link className="btn" href="/review">
+            Verificare import
+          </Link>
         </div>
       </div>
 
       <ImportWorkspace
-        link={<ImportLinkWizard collections={collections || []}/>}
-        files={<><h2>Importă din fișiere</h2>{process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB ? <p className="muted small">Maximum {process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB} MB în total per lot în varianta online.</p> : null}<p className="muted">Încarcă unul sau mai multe fișiere, verifică preview-ul și confirmă importul.</p><FreeShowImportWizard collections={collections||[]}/><PresentationImportWizard collections={collections||[]}/><details className="import-format-help"><summary>Import cu extragerea versurilor (PPTX, PDF, TXT)</summary><ImportFilesWizard collections={collections || []}/></details><details className="import-format-help"><summary>Formate acceptate și recomandări</summary><p>FreeShow (.show/.json), PPTX, TXT și PDF cu text selectabil. Poți grupa mai multe fișiere într-un ZIP. Pentru fișierele vechi PPT, salvează mai întâi ca PPTX din PowerPoint.</p></details></>}
-        text={<><h2>Adaugă o cântare</h2><p className="muted">Titlul este suficient. Poți adăuga versurile acum sau mai târziu din pagina cântării.</p>          <form action={importTextSongAction} className="form-grid">
-            <label className="label">Titlu cântare
-              <input className="input" name="title" placeholder="ex: Când furtuni în viață-mi vin" required />
-            </label>
-
-            <LyricsPasteField />
-
-            <label className="label">Categorie inițială <span className="muted small">(opțional)</span>
-              <select className="select" name="category_id" defaultValue="">
-                <option value="">Fără categorie pentru moment</option>
-                {(categories || []).map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
-              </select>
-              <small>Poți adăuga ulterior aceeași cântare în mai multe categorii.</small>
-            </label>
-
-            <details className="import-optional-fields"><summary>Detalii opționale și colecție</summary><div className="form-grid">
-            <CollectionFields collections={collections || []} idPrefix="manual-" />
-
-            <div className="form-two">
-              <label className="label">Număr în colecție
-                <input className="input" name="song_number" placeholder="Automat: următorul număr disponibil" />
+        link={<ImportLinkWizard collections={collections || []} />}
+        files={
+          <>
+            <h2>Importă din fișiere</h2>
+            {process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB ? (
+              <p className="muted small">
+                Maximum {process.env.NEXT_PUBLIC_IMPORT_LIMIT_MB} MB în total per lot în varianta online.
+              </p>
+            ) : null}
+            <p className="muted">
+              Încarcă unul sau mai multe fișiere, verifică preview-ul și confirmă importul.
+            </p>
+            <FreeShowImportWizard collections={collections || []} />
+            <PresentationImportWizard collections={collections || []} />
+            <details className="import-format-help">
+              <summary>Import cu extragerea versurilor (PPTX, PDF, TXT)</summary>
+              <ImportFilesWizard collections={collections || []} />
+            </details>
+            <details className="import-format-help">
+              <summary>Formate acceptate și recomandări</summary>
+              <p>
+                FreeShow (.show/.json), PPTX, TXT și PDF cu text selectabil. Poți grupa mai multe fișiere
+                într-un ZIP. Pentru fișierele vechi PPT, salvează mai întâi ca PPTX din PowerPoint.
+              </p>
+            </details>
+          </>
+        }
+        text={
+          <>
+            <h2>Adaugă o cântare</h2>
+            <p className="muted">
+              Titlul este suficient. Poți adăuga versurile acum sau mai târziu din pagina cântării.
+            </p>{" "}
+            <form action={importTextSongAction} className="form-grid">
+              <label className="label">
+                Titlu cântare
+                <input
+                  className="input"
+                  name="title"
+                  placeholder="ex: Când furtuni în viață-mi vin"
+                  required
+                />
               </label>
-              <label className="label">Tip sursă
-                <select className="select" name="source_type" defaultValue="txt">
-                  {sourceTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+
+              <LyricsPasteField />
+
+              <label className="label">
+                Categorie inițială <span className="muted small">(opțional)</span>
+                <select className="select" name="category_id" defaultValue="">
+                  <option value="">Fără categorie pentru moment</option>
+                  {(categories || []).map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
+                <small>Poți adăuga ulterior aceeași cântare în mai multe categorii.</small>
               </label>
-            </div>
 
-            <SongMetadataFields />
+              <details className="import-optional-fields">
+                <summary>Detalii opționale și colecție</summary>
+                <div className="form-grid">
+                  <CollectionFields collections={collections || []} idPrefix="manual-" />
 
-            <ManualYouTubeSuggestion youthCollectionIds={youthCollectionIds}/>
+                  <div className="form-two">
+                    <label className="label">
+                      Număr în colecție
+                      <input
+                        className="input"
+                        name="song_number"
+                        placeholder="Automat: următorul număr disponibil"
+                      />
+                    </label>
+                    <label className="label">
+                      Tip sursă
+                      <select className="select" name="source_type" defaultValue="txt">
+                        {sourceTypes.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
 
-            <label className="label">Note interne
-              <textarea className="textarea" name="notes" placeholder="Observații despre cântare, sursă, adaptări, variante etc." />
-            </label>
+                  <SongMetadataFields />
 
-            </div></details>
-            <button className="btn secondary" type="submit">Adaugă cântarea</button>
-          </form></>}
+                  <ManualYouTubeSuggestion youthCollectionIds={youthCollectionIds} />
+
+                  <label className="label">
+                    Note interne
+                    <textarea
+                      className="textarea"
+                      name="notes"
+                      placeholder="Observații despre cântare, sursă, adaptări, variante etc."
+                    />
+                  </label>
+                </div>
+              </details>
+              <button className="btn secondary" type="submit">
+                Adaugă cântarea
+              </button>
+            </form>
+          </>
+        }
       />
     </>
   );

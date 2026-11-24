@@ -4,9 +4,18 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AddSongToMeeting } from "./AddSongToMeeting";
 import { RecentUsageIcon } from "@/components/RecentUsageIcon";
-import { searchSongsWithUsageAction, type RecentUsage, type SongSearchResult } from "@/app/(app)/meetings/actions";
+import { searchSongsWithUsageAction } from "@/features/meetings/server/actions";
+import type { RecentUsage, SongSearchResult } from "@/features/meetings/types";
 
-export function SongSearch({ autofocus = false, canAdd = true, initialRecent }: { autofocus?: boolean; canAdd?: boolean; initialRecent?: Record<string, RecentUsage> }) {
+export function SongSearch({
+  autofocus = false,
+  canAdd = true,
+  initialRecent,
+}: {
+  autofocus?: boolean;
+  canAdd?: boolean;
+  initialRecent?: Record<string, RecentUsage>;
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SongSearchResult[]>([]);
   const [recent, setRecent] = useState<Record<string, RecentUsage>>(initialRecent || {});
@@ -30,7 +39,10 @@ export function SongSearch({ autofocus = false, canAdd = true, initialRecent }: 
     const handle = window.setTimeout(async () => {
       try {
         const data = await searchSongsWithUsageAction(trimmed, 25, initialRecent === undefined);
-        if (!cancelled) { setResults(data.songs); if (data.recent) setRecent(data.recent); }
+        if (!cancelled) {
+          setResults(data.songs);
+          if (data.recent) setRecent(data.recent);
+        }
       } catch (error) {
         if (!cancelled) {
           setError(error instanceof Error ? error.message : "Căutarea a eșuat.");
@@ -63,7 +75,9 @@ export function SongSearch({ autofocus = false, canAdd = true, initialRecent }: 
         placeholder="Caută o cântare... ex: 352, Isus, har, cruce, furtuni"
         autoFocus={autofocus}
       />
-      <div className="muted small" role="status" aria-live="polite">{helper}</div>
+      <div className="muted small" role="status" aria-live="polite">
+        {helper}
+      </div>
 
       {error ? <p className="error">{error}</p> : null}
 
@@ -73,7 +87,9 @@ export function SongSearch({ autofocus = false, canAdd = true, initialRecent }: 
           return (
             <div className="row compact-row" key={song.song_id}>
               <div className="row-main">
-                <Link href={`/songs/${song.song_id}`} className="row-title">{song.title}</Link>
+                <Link href={`/songs/${song.song_id}`} className="row-title">
+                  {song.title}
+                </Link>
                 <div className="badges compact-badges">
                   {song.matched_source ? <span className="badge">{song.matched_source}</span> : null}
                   {song.default_key ? <span className="badge">Tonalitate: {song.default_key}</span> : null}

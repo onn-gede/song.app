@@ -42,12 +42,18 @@ export async function mergeDuplicateSongsAction(formData: FormData) {
   redirect("/duplicates?merged=1");
 }
 
-export async function mergeDuplicateGroupsAction(groups: Array<{primary:string;duplicates:string[]}>, confirm: string) {
-  const {supabase}=await requireProfile("editor");
-  if(confirm!=="UNIFICA"||!Array.isArray(groups)||!groups.length||groups.length>200)throw new Error("Selectează grupurile și scrie UNIFICA.");
-  const {data,error}=await supabase.rpc("merge_duplicate_song_groups_v47",{p_groups:groups});
-  if(error)throw new Error(error.message);
-  for(const route of ["/duplicates","/songs","/dashboard","/collections"])revalidatePath(route);
-  revalidatePath("/meetings","layout");revalidatePath("/program","layout");refresh();
-  return data as {merged:number;groups:number};
+export async function mergeDuplicateGroupsAction(
+  groups: Array<{ primary: string; duplicates: string[] }>,
+  confirm: string,
+) {
+  const { supabase } = await requireProfile("editor");
+  if (confirm !== "UNIFICA" || !Array.isArray(groups) || !groups.length || groups.length > 200)
+    throw new Error("Selectează grupurile și scrie UNIFICA.");
+  const { data, error } = await supabase.rpc("merge_duplicate_song_groups_v47", { p_groups: groups });
+  if (error) throw new Error(error.message);
+  for (const route of ["/duplicates", "/songs", "/dashboard", "/collections"]) revalidatePath(route);
+  revalidatePath("/meetings", "layout");
+  revalidatePath("/program", "layout");
+  refresh();
+  return data as { merged: number; groups: number };
 }

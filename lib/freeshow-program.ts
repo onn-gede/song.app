@@ -34,58 +34,71 @@ export type FreeShowProgramItem = {
 };
 
 function clean(value: unknown) {
-  return String(value ?? "").replace(/\r\n?/g, "\n").trim();
+  return String(value ?? "")
+    .replace(/\r\n?/g, "\n")
+    .trim();
 }
 
 function songSlides(row: FreeShowProgramRow) {
   const song = row.song!;
-  const sections = [...(song.song_sections || [])]
-    .sort((a, b) => Number(a.position || 0) - Number(b.position || 0));
+  const sections = [...(song.song_sections || [])].sort(
+    (a, b) => Number(a.position || 0) - Number(b.position || 0),
+  );
 
   if (sections.length) {
-    return sections.map((section, index) => ({
-      label: clean(section.section_label || section.section_type) || `Strofa ${index + 1}`,
-      content: stripRepeatedSongTitleLines(clean(section.content), song.title),
-    })).filter((slide) => slide.content);
+    return sections
+      .map((section, index) => ({
+        label: clean(section.section_label || section.section_type) || `Strofa ${index + 1}`,
+        content: stripRepeatedSongTitleLines(clean(section.content), song.title),
+      }))
+      .filter((slide) => slide.content);
   }
 
-  return clean(song.lyrics_text).split(/\n\s*\n/).map((content, index) => ({
-    label: `Strofa ${index + 1}`,
-    content: stripRepeatedSongTitleLines(content, song.title),
-  })).filter((slide) => slide.content);
+  return clean(song.lyrics_text)
+    .split(/\n\s*\n/)
+    .map((content, index) => ({
+      label: `Strofa ${index + 1}`,
+      content: stripRepeatedSongTitleLines(content, song.title),
+    }))
+    .filter((slide) => slide.content);
 }
 
 export function buildFreeShowProgramItems(rows: FreeShowProgramRow[]): FreeShowProgramItem[] {
-  return rows.map((row) => {
-    if (row.song) {
-      const slides = songSlides(row);
-      const name = clean(row.song.title) || "Cântare fără titlu";
+  return rows
+    .map((row) => {
+      if (row.song) {
+        const slides = songSlides(row);
+        const name = clean(row.song.title) || "Cântare fără titlu";
+        return {
+          id: row.id,
+          kind: "song" as const,
+          name,
+          library_name: name,
+          source_key: `songapp-song:${row.song.id}`,
+          text: slides
+            .map((slide) => slide.content)
+            .join("\n\n")
+            .slice(0, 1_000_000),
+          slide_count: slides.length,
+          slides,
+        };
+      }
+
+      const content = clean(row.custom_text || row.notes);
+      const name = clean(row.custom_title) || "Moment";
+      const slides = content ? [{ label: name, content }] : [];
       return {
         id: row.id,
-        kind: "song" as const,
+        kind: "moment" as const,
         name,
-        library_name: name,
-        source_key: `songapp-song:${row.song.id}`,
-        text: slides.map((slide) => slide.content).join("\n\n").slice(0, 1_000_000),
+        library_name: `${name} · SongApp ${row.id.slice(0, 8)}`.slice(0, 240),
+        source_key: `songapp-meeting-item:${row.id}`,
+        text: content.slice(0, 1_000_000),
         slide_count: slides.length,
         slides,
       };
-    }
-
-    const content = clean(row.custom_text || row.notes);
-    const name = clean(row.custom_title) || "Moment";
-    const slides = content ? [{ label: name, content }] : [];
-    return {
-      id: row.id,
-      kind: "moment" as const,
-      name,
-      library_name: `${name} · SongApp ${row.id.slice(0, 8)}`.slice(0, 240),
-      source_key: `songapp-meeting-item:${row.id}`,
-      text: content.slice(0, 1_000_000),
-      slide_count: slides.length,
-      slides,
-    };
-  }).filter((item) => item.text && item.slide_count > 0);
+    })
+    .filter((item) => item.text && item.slide_count > 0);
 }
 
 export function formatFreeShowProgramDate(value: string | Date) {
@@ -99,13 +112,22 @@ export function formatFreeShowProgramDate(value: string | Date) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(date).replace(",", " ·");
+  })
+    .format(date)
+    .replace(",", " ·");
 }
 
-export function buildFreeShowProgramPayload(programId: string, programName: string, meetingDate: string | Date, rows: FreeShowProgramRow[]) {
+export function buildFreeShowProgramPayload(
+  programId: string,
+  programName: string,
+  meetingDate: string | Date,
+  rows: FreeShowProgramRow[],
+) {
   const items = buildFreeShowProgramItems(rows);
   const dateLabel = formatFreeShowProgramDate(meetingDate);
-  const safeId = clean(programId).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 100);
+  const safeId = clean(programId)
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 100);
   return {
     name: `SongApp · ${clean(programName)}`.slice(0, 240),
     project_id: `songapp-${safeId || "program"}`,

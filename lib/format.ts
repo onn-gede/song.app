@@ -5,7 +5,7 @@ export function formatDateTime(value: string | null | undefined) {
   return new Intl.DateTimeFormat("ro-RO", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: "Europe/Bucharest"
+    timeZone: "Europe/Bucharest",
   }).format(date);
 }
 

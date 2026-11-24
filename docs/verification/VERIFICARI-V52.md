@@ -2,17 +2,17 @@
 
 ## Cerințe și implementare
 
-| Cerință | Implementare |
-|---|---|
-| Culoare pentru fiecare colecție | Coloană persistentă, paletă inițială, editor de culoare în Colecții. Culoarea textului este ajustată pentru contrast când se alege o nuanță foarte deschisă. |
-| Identitate în ordinea programului | Linie verticală lângă drag, titlu și număr în culoarea colecției; tonalitate, număr exact și nume colecție în etichete. |
-| Cântare cu mai multe colecții | Sursa se alege la adăugare și poate fi schimbată în editor. Se păstrează după salvare, copiere și în linkul public. |
-| Edit lângă solist și observații | Buton în aceeași zonă cu textul; salvare confirmată cu actualizare și închidere fără refresh. |
-| Adaugă moment sus | Buton alăturat cu Adaugă cântări; formular modal pentru rugăciune/poezie/îndemn/mesaj/pauză. |
-| Echipa și data | Bloc verde distinct pentru principal/secundari; data și ora mai mari lângă titlu. |
-| Avertizări și calendar | Căutarea arată următoarea planificare/în curs și ultima utilizare trecută. Calendar modal cu cercuri roșii, selecția zilei și detalii exacte pe programe. |
-| Stări după oră | În pregătire înainte de început; În curs pentru primele două ore; Finalizat de la două ore inclusiv. Actualizare locală la limitele de timp și la revenirea în tab, fără polling. |
-| Mobil | Butoane și etichete rearanjate; calendar într-o coloană; fără depășire orizontală în scenariile testate. |
+| Cerință                           | Implementare                                                                                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Culoare pentru fiecare colecție   | Coloană persistentă, paletă inițială, editor de culoare în Colecții. Culoarea textului este ajustată pentru contrast când se alege o nuanță foarte deschisă.                      |
+| Identitate în ordinea programului | Linie verticală lângă drag, titlu și număr în culoarea colecției; tonalitate, număr exact și nume colecție în etichete.                                                           |
+| Cântare cu mai multe colecții     | Sursa se alege la adăugare și poate fi schimbată în editor. Se păstrează după salvare, copiere și în linkul public.                                                               |
+| Edit lângă solist și observații   | Buton în aceeași zonă cu textul; salvare confirmată cu actualizare și închidere fără refresh.                                                                                     |
+| Adaugă moment sus                 | Buton alăturat cu Adaugă cântări; formular modal pentru rugăciune/poezie/îndemn/mesaj/pauză.                                                                                      |
+| Echipa și data                    | Bloc verde distinct pentru principal/secundari; data și ora mai mari lângă titlu.                                                                                                 |
+| Avertizări și calendar            | Căutarea arată următoarea planificare/în curs și ultima utilizare trecută. Calendar modal cu cercuri roșii, selecția zilei și detalii exacte pe programe.                         |
+| Stări după oră                    | În pregătire înainte de început; În curs pentru primele două ore; Finalizat de la două ore inclusiv. Actualizare locală la limitele de timp și la revenirea în tab, fără polling. |
+| Mobil                             | Butoane și etichete rearanjate; calendar într-o coloană; fără depășire orizontală în scenariile testate.                                                                          |
 
 ## Verificări automate
 

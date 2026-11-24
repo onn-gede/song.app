@@ -21,16 +21,25 @@ const SECTION_TYPES = [
   { value: "bridge", label: "Bridge" },
   { value: "prechorus", label: "Pre-refren" },
   { value: "ending", label: "Final" },
-  { value: "text", label: "Text" }
+  { value: "text", label: "Text" },
 ];
-const SECTION_LABELS:Record<string,string>={verse:"Strofă",chorus:"Refren",bridge:"Bridge",prechorus:"Pre-refren",ending:"Final",text:"Text"};
+const SECTION_LABELS: Record<string, string> = {
+  verse: "Strofă",
+  chorus: "Refren",
+  bridge: "Bridge",
+  prechorus: "Pre-refren",
+  ending: "Final",
+  text: "Text",
+};
 
-function createEmptySection(index: number): Required<Pick<SectionInput, "section_type" | "section_label" | "content">> & { id: string } {
+function createEmptySection(
+  index: number,
+): Required<Pick<SectionInput, "section_type" | "section_label" | "content">> & { id: string } {
   return {
     id: `new-${Date.now()}-${index}`,
     section_type: "verse",
     section_label: "",
-    content: ""
+    content: "",
   };
 }
 
@@ -41,7 +50,7 @@ export function SongSectionsEditor({ sections, songTitle }: Props) {
         id: section.id || `section-${index}`,
         section_type: section.section_type || "verse",
         section_label: section.section_label || "",
-        content: stripRepeatedSongTitleLines(section.content || "", songTitle)
+        content: stripRepeatedSongTitleLines(section.content || "", songTitle),
       }));
     }
 
@@ -51,11 +60,19 @@ export function SongSectionsEditor({ sections, songTitle }: Props) {
   const [items, setItems] = useState(initialSections);
 
   function updateItem(index: number, key: "section_type" | "section_label" | "content", value: string) {
-    setItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item));
+    setItems((current) =>
+      current.map((item, itemIndex) => (itemIndex === index ? { ...item, [key]: value } : item)),
+    );
   }
 
-  function updateSectionType(index:number,value:string){
-    setItems(current=>current.map((item,itemIndex)=>itemIndex===index?{...item,section_type:value,section_label:SECTION_LABELS[value]||""}:item));
+  function updateSectionType(index: number, value: string) {
+    setItems((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index
+          ? { ...item, section_type: value, section_label: SECTION_LABELS[value] || "" }
+          : item,
+      ),
+    );
   }
 
   function addSection(afterIndex?: number) {
@@ -68,7 +85,9 @@ export function SongSectionsEditor({ sections, songTitle }: Props) {
   }
 
   function removeSection(index: number) {
-    setItems((current) => current.length <= 1 ? current : current.filter((_, itemIndex) => itemIndex !== index));
+    setItems((current) =>
+      current.length <= 1 ? current : current.filter((_, itemIndex) => itemIndex !== index),
+    );
   }
 
   function moveSection(index: number, direction: -1 | 1) {
@@ -89,9 +108,13 @@ export function SongSectionsEditor({ sections, songTitle }: Props) {
       <div className="section-editor-header">
         <div>
           <h2>Versuri pe secțiuni</h2>
-          <p className="muted small">Poți modifica textul, etichetele și ordinea. Câmpurile goale nu vor fi salvate.</p>
+          <p className="muted small">
+            Poți modifica textul, etichetele și ordinea. Câmpurile goale nu vor fi salvate.
+          </p>
         </div>
-        <button className="btn secondary btn-compact" type="button" onClick={() => addSection()}>+ Adaugă secțiune</button>
+        <button className="btn secondary btn-compact" type="button" onClick={() => addSection()}>
+          + Adaugă secțiune
+        </button>
       </div>
 
       <div className="grid">
@@ -99,19 +122,67 @@ export function SongSectionsEditor({ sections, songTitle }: Props) {
           <div className="section-edit-card" key={section.id || index}>
             <div className="section-edit-top">
               <span className="program-position">{index + 1}</span>
-              <label className="label section-type-field">Tip
-                <select className="select" name={`section_type_${index}`} value={section.section_type} onChange={(event) => updateSectionType(index,event.target.value)}>
-                  {SECTION_TYPES.map((type) => <option value={type.value} key={type.value}>{type.label}</option>)}
+              <label className="label section-type-field">
+                Tip
+                <select
+                  className="select"
+                  name={`section_type_${index}`}
+                  value={section.section_type}
+                  onChange={(event) => updateSectionType(index, event.target.value)}
+                >
+                  {SECTION_TYPES.map((type) => (
+                    <option value={type.value} key={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
                 </select>
               </label>
-              <label className="label section-label-field">Etichetă
-                <input className="input" name={`section_label_${index}`} value={section.section_label || ""} onChange={(event) => updateItem(index, "section_label", event.target.value)} placeholder="ex: 1 / R / Bridge" />
+              <label className="label section-label-field">
+                Etichetă
+                <input
+                  className="input"
+                  name={`section_label_${index}`}
+                  value={section.section_label || ""}
+                  onChange={(event) => updateItem(index, "section_label", event.target.value)}
+                  placeholder="ex: 1 / R / Bridge"
+                />
               </label>
               <div className="section-edit-actions">
-                <button className="icon-btn" type="button" onClick={() => moveSection(index, -1)} disabled={index === 0} title="Mută sus">↑</button>
-                <button className="icon-btn" type="button" onClick={() => moveSection(index, 1)} disabled={index === items.length - 1} title="Mută jos">↓</button>
-                <button className="icon-btn" type="button" onClick={() => addSection(index)} title="Adaugă după">+</button>
-                <button className="icon-btn danger-text" type="button" onClick={() => removeSection(index)} disabled={items.length <= 1} title="Șterge">×</button>
+                <button
+                  className="icon-btn"
+                  type="button"
+                  onClick={() => moveSection(index, -1)}
+                  disabled={index === 0}
+                  title="Mută sus"
+                >
+                  ↑
+                </button>
+                <button
+                  className="icon-btn"
+                  type="button"
+                  onClick={() => moveSection(index, 1)}
+                  disabled={index === items.length - 1}
+                  title="Mută jos"
+                >
+                  ↓
+                </button>
+                <button
+                  className="icon-btn"
+                  type="button"
+                  onClick={() => addSection(index)}
+                  title="Adaugă după"
+                >
+                  +
+                </button>
+                <button
+                  className="icon-btn danger-text"
+                  type="button"
+                  onClick={() => removeSection(index)}
+                  disabled={items.length <= 1}
+                  title="Șterge"
+                >
+                  ×
+                </button>
               </div>
             </div>
             <textarea

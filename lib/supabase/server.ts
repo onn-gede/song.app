@@ -16,14 +16,12 @@ export const createClient = cache(async () => {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
           } catch {
             // Server Components cannot always set cookies. Middleware refreshes the session.
           }
-        }
-      }
-    }
+        },
+      },
+    },
   );
 });

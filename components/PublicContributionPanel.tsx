@@ -1,8 +1,13 @@
 "use client";
-import {PUBLIC_LIMITS} from "@/lib/public-contribution";
+import { PUBLIC_LIMITS } from "@/lib/public-contribution";
 
 import { useState, useTransition } from "react";
-import { addPublicSongContributionAction, publicSearchSongsAction, type PublicPositionOption, type PublicSongSearchResult } from "@/app/program/actions";
+import {
+  addPublicSongContributionAction,
+  publicSearchSongsAction,
+  type PublicPositionOption,
+  type PublicSongSearchResult,
+} from "@/app/program/actions";
 
 function compactLyrics(text?: string | null) {
   return (text || "")
@@ -13,7 +18,13 @@ function compactLyrics(text?: string | null) {
     .join("\n");
 }
 
-export function PublicContributionPanel({ slug, positionOptions }: { slug: string; positionOptions: PublicPositionOption[] }) {
+export function PublicContributionPanel({
+  slug,
+  positionOptions,
+}: {
+  slug: string;
+  positionOptions: PublicPositionOption[];
+}) {
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [query, setQuery] = useState("");
@@ -60,7 +71,7 @@ export function PublicContributionPanel({ slug, positionOptions }: { slug: strin
           isBackup,
           proposedPosition: selectedPositionNumber(),
           contributorName: name || null,
-          notes: notes || null
+          notes: notes || null,
         });
         openStatus("Propunerea a fost trimisă. Echipa o va verifica înainte de a o adăuga în program.");
       } catch (err) {
@@ -75,30 +86,66 @@ export function PublicContributionPanel({ slug, positionOptions }: { slug: strin
         <div>
           <div className="eyebrow">Propuneri externe</div>
           <h2>Propune o cântare</h2>
-          <p className="muted small">Propune cântări sau intervenții. Poți indica și poziția dorită în program.</p>
+          <p className="muted small">
+            Propune cântări sau intervenții. Poți indica și poziția dorită în program.
+          </p>
         </div>
       </div>
 
       <div className="public-edit-grid public-edit-grid-v38">
-        <label className="label">Numele tău, opțional
-          <input className="input" maxLength={PUBLIC_LIMITS.name} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Andrei" />
+        <label className="label">
+          Numele tău, opțional
+          <input
+            className="input"
+            maxLength={PUBLIC_LIMITS.name}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Ex: Andrei"
+          />
         </label>
-        <label className="label">Poziție propusă
-          <select className="select" value={proposedPosition} onChange={(event) => setProposedPosition(event.target.value)}>
+        <label className="label">
+          Poziție propusă
+          <select
+            className="select"
+            value={proposedPosition}
+            onChange={(event) => setProposedPosition(event.target.value)}
+          >
             <option value="">La finalul programului</option>
-            {positionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            {positionOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </label>
-        <label className="label">Notă, opțional
-          <input className="input" maxLength={PUBLIC_LIMITS.notes} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ex: cântare de final" />
+        <label className="label">
+          Notă, opțional
+          <input
+            className="input"
+            maxLength={PUBLIC_LIMITS.notes}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Ex: cântare de final"
+          />
         </label>
       </div>
 
       <div className="public-contribution-block">
         <h3>Caută cântare</h3>
         <div className="inline-form public-search-row">
-          <input className="input" maxLength={PUBLIC_LIMITS.query} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Caută după titlu, număr sau text, cu/fără diacritice" onKeyDown={(event) => { if (event.key === "Enter") search(); }} />
-          <button className="btn btn-compact" type="button" disabled={isPending} onClick={search}>{isPending ? "Caut…" : "Caută"}</button>
+          <input
+            className="input"
+            maxLength={PUBLIC_LIMITS.query}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Caută după titlu, număr sau text, cu/fără diacritice"
+            onKeyDown={(event) => {
+              if (event.key === "Enter") search();
+            }}
+          />
+          <button className="btn btn-compact" type="button" disabled={isPending} onClick={search}>
+            {isPending ? "Caut…" : "Caută"}
+          </button>
         </div>
         <div className="list compact-list public-search-results-list">
           {results.map((song) => (
@@ -116,8 +163,22 @@ export function PublicContributionPanel({ slug, positionOptions }: { slug: strin
                 ) : null}
               </div>
               <div className="inline-form nowrap">
-                <button className="btn btn-compact" type="button" disabled={isPending} onClick={() => add(song, false)}>Propune</button>
-                <button className="btn secondary btn-compact" type="button" disabled={isPending} onClick={() => add(song, true)}>Backup</button>
+                <button
+                  className="btn btn-compact"
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => add(song, false)}
+                >
+                  Propune
+                </button>
+                <button
+                  className="btn secondary btn-compact"
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => add(song, true)}
+                >
+                  Backup
+                </button>
               </div>
             </div>
           ))}
@@ -129,7 +190,9 @@ export function PublicContributionPanel({ slug, positionOptions }: { slug: strin
           <div className="inline-modal-card">
             <h3>{error ? "Nu am putut finaliza" : "Confirmare"}</h3>
             <p className={error ? "error" : "success"}>{error || message}</p>
-            <button className="btn btn-compact" type="button" onClick={() => setModalOpen(false)}>Închide</button>
+            <button className="btn btn-compact" type="button" onClick={() => setModalOpen(false)}>
+              Închide
+            </button>
           </div>
         </div>
       ) : null}

@@ -1,13 +1,14 @@
 # SongApp v67 / 0.11.2 — Fotografie discretă și maximum patru programe
 
 ## Instalare
+
 1. Oprește aplicația locală cu Ctrl+C.
 2. Extrage acest ZIP peste D:\Apps\song.app, cu înlocuire. Păstrează .env.local și local-assets.
 3. În SQL Editor al ACELUIAȘI proiect Supabase:
    - dacă V66 este deja aplicat, rulează numai supabase/updates/UPDATE-V67.sql;
    - dacă te-ai oprit la V65, rulează UPDATE-V66.sql, apoi UPDATE-V67.sql;
    - dacă nu ai aplicat nici V65, rulează V65 → V66 → V67.
-   V67 trebuie aplicat ultimul. Nu rula INSTALL-NEW.sql și nu reimporta cântările.
+     V67 trebuie aplicat ultimul. Nu rula INSTALL-NEW.sql și nu reimporta cântările.
 4. PowerShell:
    Set-Location "D:\Apps\song.app"
    npm ci
@@ -19,7 +20,9 @@
 Arhiva include cumulativ și actualizările V65/V66. Nu face push sau deploy automat.
 
 ## Programe pentru vizitatori
+
 Pe pagina de intrare apar maximum patru programe, fără paginare:
+
 - un singur program deja început: cel mai recent după data întâlnirii, fie în curs, fie încheiat;
 - apoi următoarele programe viitoare, în ordinea apropiată, până la maximum patru în total;
 - dacă nu există un program trecut/în curs public, se pot afișa până la patru programe viitoare.
@@ -29,7 +32,9 @@ Nu se șterg programe și nu se dezactivează linkurile publice mai vechi deja d
 Sugestiile fără cont, aprobarea lor de către echipă și gestionarea sesiunilor expirate din V66 rămân disponibile.
 
 ## Fotografia bisericii
+
 Este folosită fotografia furnizată, convertită în WebP pentru livrare, fără regenerarea clădirii.
+
 - Desktop: 800 × 1196, 65.462 bytes (aproximativ 65 KB).
 - Mobil: 420 × 628, 21.894 bytes (aproximativ 22 KB).
 - Originalul PNG de aproximativ 3,5 MB nu este inclus în aplicație.
@@ -39,6 +44,7 @@ Browserul alege varianta potrivită prin picture/source. Încărcarea are priori
 Fișierele statice au nume cu versiune și cache public de lungă durată. Formularul și datele utilizatorului nu primesc această regulă de cache.
 
 ## Verificări
+
 95 teste automate trecute, inclusiv selecția exactă «ultimul început + următoarele», plafonul de patru, imposibilitatea de a cere pagini mai vechi prin RPC, scenariul fără programe trecute și lista goală.
 Build de producție Webpack și TypeScript trecute.
 Browser cu servicii simulate: două coloane desktop, una sub alta pe mobil, fotografie încărcată și decodată din varianta corectă, dimensiuni sub 80 KB / 30 KB, cache immutable pe imagini, lipsa paginării și lipsa scrollului orizontal. Capturile desktop și mobil au fost inspectate vizual.

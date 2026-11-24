@@ -1,2 +1,4 @@
-import {redirect} from 'next/navigation';
-export default function MomentsPage(){redirect('/collections#momente');}
+import { redirect } from "next/navigation";
+export default function MomentsPage() {
+  redirect("/collections#momente");
+}

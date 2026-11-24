@@ -38,4 +38,3 @@ npm run local
 - build Next.js: trecut după confirmarea avertismentului de securitate al frameworkului.
 
 Next.js 16.4.3 afișează un avertisment de securitate și recomandă upgrade. Upgrade-ul frameworkului trebuie făcut separat și retestat înainte de deploy.
-

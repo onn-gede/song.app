@@ -65,7 +65,9 @@ function splitWideWord(word: string, limit: number) {
 export function wrapPptxLine(value: string, limit = MAX_LINE_WIDTH) {
   const text = normalizedLine(value);
   if (!text) return [];
-  const words = text.split(" ").flatMap((word) => pptxLineWidth(word) > limit ? splitWideWord(word, limit) : [word]);
+  const words = text
+    .split(" ")
+    .flatMap((word) => (pptxLineWidth(word) > limit ? splitWideWord(word, limit) : [word]));
   const lines: string[] = [];
   let current = "";
   for (const word of words) {
@@ -88,9 +90,11 @@ export function validatePreparedSongPptxSlides(slides: PreparedSlide[]) {
   const issues: string[] = [];
   slides.forEach((slide, slideIndex) => {
     if (!slide.lines.length) issues.push(`Slide ${slideIndex + 1} nu conține text.`);
-    if (slide.lines.length > MAX_VISUAL_LINES) issues.push(`Slide ${slideIndex + 1} depășește ${MAX_VISUAL_LINES} rânduri.`);
+    if (slide.lines.length > MAX_VISUAL_LINES)
+      issues.push(`Slide ${slideIndex + 1} depășește ${MAX_VISUAL_LINES} rânduri.`);
     slide.lines.forEach((line, lineIndex) => {
-      if (pptxLineWidth(line) > MAX_LINE_WIDTH + 0.01) issues.push(`Slide ${slideIndex + 1}, rândul ${lineIndex + 1}, depășește lățimea sigură.`);
+      if (pptxLineWidth(line) > MAX_LINE_WIDTH + 0.01)
+        issues.push(`Slide ${slideIndex + 1}, rândul ${lineIndex + 1}, depășește lățimea sigură.`);
     });
   });
   return issues;
@@ -109,11 +113,11 @@ function sectionLabel(section: SongPptxSection) {
 export function prepareSongPptxSlides(sections: SongPptxSection[]) {
   const slides: PreparedSlide[] = [];
   for (const section of sections) {
-    const content = String(section.content || "").replace(/\r\n?/g, "\n").trim();
+    const content = String(section.content || "")
+      .replace(/\r\n?/g, "\n")
+      .trim();
     if (!content) continue;
-    const visualLines = content
-      .split("\n")
-      .flatMap(line => wrapPptxLine(line));
+    const visualLines = content.split("\n").flatMap((line) => wrapPptxLine(line));
     // Distribuie rândurile cât mai egal între slide-uri. De exemplu, o
     // strofă de 7 rânduri devine 4 + 3, nu 6 + 1.
     const slideCount = Math.ceil(visualLines.length / MAX_VISUAL_LINES);
@@ -134,10 +138,11 @@ export function prepareSongPptxSlides(sections: SongPptxSection[]) {
 }
 
 export function safeSongPptxFileName(title: string, number?: string | null) {
-  const cleanTitle = normalizedLine(title)
-    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
-    .replace(/\s+/g, " ")
-    .replace(/[. ]+$/g, "") || "Cântare";
+  const cleanTitle =
+    normalizedLine(title)
+      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/[. ]+$/g, "") || "Cântare";
   const cleanNumber = normalizedLine(number || "").replace(/[<>:"/\\|?*\u0000-\u001f]/g, "");
   return `${cleanNumber ? `${cleanNumber}. ` : ""}${cleanTitle}.pptx`;
 }
@@ -157,7 +162,7 @@ function bodyParagraph(line: string, italic: boolean) {
 
 function slideXml(title: string, number: string, slide: PreparedSlide, index: number) {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr><p:sp><p:nvSpPr><p:cNvPr id="34818" name="Rectangle 2"/><p:cNvSpPr><a:spLocks noGrp="1" noChangeArrowheads="1"/></p:cNvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="11522075" cy="503238"/></a:xfrm></p:spPr><p:txBody><a:bodyPr/><a:lstStyle/>${headerParagraph(title, number, slide.label, index === 0)}</p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id="34819" name="Rectangle 3"/><p:cNvSpPr><a:spLocks noGrp="1" noChangeArrowheads="1"/></p:cNvSpPr><p:nvPr><p:ph idx="1"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x="1189005" y="1025509"/><a:ext cx="10333070" cy="5454666"/></a:xfrm></p:spPr><p:txBody><a:bodyPr/><a:lstStyle/>${slide.lines.map(line => bodyParagraph(line, slide.italic)).join("")}</p:txBody></p:sp></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr><p:transition><p:strips dir="ld"/></p:transition><p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"/></p:par></p:tnLst></p:timing></p:sld>`;
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr><p:sp><p:nvSpPr><p:cNvPr id="34818" name="Rectangle 2"/><p:cNvSpPr><a:spLocks noGrp="1" noChangeArrowheads="1"/></p:cNvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="11522075" cy="503238"/></a:xfrm></p:spPr><p:txBody><a:bodyPr/><a:lstStyle/>${headerParagraph(title, number, slide.label, index === 0)}</p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id="34819" name="Rectangle 3"/><p:cNvSpPr><a:spLocks noGrp="1" noChangeArrowheads="1"/></p:cNvSpPr><p:nvPr><p:ph idx="1"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x="1189005" y="1025509"/><a:ext cx="10333070" cy="5454666"/></a:xfrm></p:spPr><p:txBody><a:bodyPr/><a:lstStyle/>${slide.lines.map((line) => bodyParagraph(line, slide.italic)).join("")}</p:txBody></p:sp></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr><p:transition><p:strips dir="ld"/></p:transition><p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"/></p:par></p:tnLst></p:timing></p:sld>`;
 }
 
 function slideRelsXml() {
@@ -189,25 +194,65 @@ export async function buildSongPptx(template: ArrayBuffer | Uint8Array, input: S
   }
 
   for (const path of Object.keys(zip.files)) {
-    if (/^ppt\/slides\/slide\d+\.xml$/.test(path) || /^ppt\/slides\/_rels\/slide\d+\.xml\.rels$/.test(path)) zip.remove(path);
+    if (/^ppt\/slides\/slide\d+\.xml$/.test(path) || /^ppt\/slides\/_rels\/slide\d+\.xml\.rels$/.test(path))
+      zip.remove(path);
   }
 
-  const slideIds = slides.map((_, index) => `<p:sldId id="${1000 + index}" r:id="rId${100 + index}"/>`).join("");
-  const newPresentation = replaceRequired(presentation, /<p:sldIdLst>[\s\S]*?<\/p:sldIdLst>/, `<p:sldIdLst>${slideIds}</p:sldIdLst>`, "lista de slide-uri");
+  const slideIds = slides
+    .map((_, index) => `<p:sldId id="${1000 + index}" r:id="rId${100 + index}"/>`)
+    .join("");
+  const newPresentation = replaceRequired(
+    presentation,
+    /<p:sldIdLst>[\s\S]*?<\/p:sldIdLst>/,
+    `<p:sldIdLst>${slideIds}</p:sldIdLst>`,
+    "lista de slide-uri",
+  );
 
-  const withoutOldSlideRels = presentationRels.replace(new RegExp(`<Relationship\\b(?=[^>]*Type="${SLIDE_RELATIONSHIP.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}")[^>]*/>`, "g"), "");
-  const newSlideRels = slides.map((_, index) => `<Relationship Id="rId${100 + index}" Type="${SLIDE_RELATIONSHIP}" Target="slides/slide${index + 1}.xml"/>`).join("");
-  const newPresentationRels = replaceRequired(withoutOldSlideRels, /<\/Relationships>/, `${newSlideRels}</Relationships>`, "relațiile prezentării");
+  const withoutOldSlideRels = presentationRels.replace(
+    new RegExp(
+      `<Relationship\\b(?=[^>]*Type="${SLIDE_RELATIONSHIP.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}")[^>]*/>`,
+      "g",
+    ),
+    "",
+  );
+  const newSlideRels = slides
+    .map(
+      (_, index) =>
+        `<Relationship Id="rId${100 + index}" Type="${SLIDE_RELATIONSHIP}" Target="slides/slide${index + 1}.xml"/>`,
+    )
+    .join("");
+  const newPresentationRels = replaceRequired(
+    withoutOldSlideRels,
+    /<\/Relationships>/,
+    `${newSlideRels}</Relationships>`,
+    "relațiile prezentării",
+  );
 
-  const withoutOldSlideTypes = contentTypes.replace(/<Override\b(?=[^>]*PartName="\/ppt\/slides\/slide\d+\.xml")[^>]*\/>/g, "");
-  const newSlideTypes = slides.map((_, index) => `<Override PartName="/ppt/slides/slide${index + 1}.xml" ContentType="${SLIDE_CONTENT_TYPE}"/>`).join("");
-  const newContentTypes = replaceRequired(withoutOldSlideTypes, /<\/Types>/, `${newSlideTypes}</Types>`, "tipurile de conținut");
+  const withoutOldSlideTypes = contentTypes.replace(
+    /<Override\b(?=[^>]*PartName="\/ppt\/slides\/slide\d+\.xml")[^>]*\/>/g,
+    "",
+  );
+  const newSlideTypes = slides
+    .map(
+      (_, index) =>
+        `<Override PartName="/ppt/slides/slide${index + 1}.xml" ContentType="${SLIDE_CONTENT_TYPE}"/>`,
+    )
+    .join("");
+  const newContentTypes = replaceRequired(
+    withoutOldSlideTypes,
+    /<\/Types>/,
+    `${newSlideTypes}</Types>`,
+    "tipurile de conținut",
+  );
 
   zip.file(presentationPath, newPresentation);
   zip.file(presentationRelsPath, newPresentationRels);
   zip.file(contentTypesPath, newContentTypes);
   slides.forEach((slide, index) => {
-    zip.file(`ppt/slides/slide${index + 1}.xml`, slideXml(title, normalizedLine(input.number || ""), slide, index));
+    zip.file(
+      `ppt/slides/slide${index + 1}.xml`,
+      slideXml(title, normalizedLine(input.number || ""), slide, index),
+    );
     zip.file(`ppt/slides/_rels/slide${index + 1}.xml.rels`, slideRelsXml());
   });
 
@@ -216,7 +261,11 @@ export async function buildSongPptx(template: ArrayBuffer | Uint8Array, input: S
   if (appXml) zip.file(appPath, appXml.replace(/<Slides>\d+<\/Slides>/, `<Slides>${slides.length}</Slides>`));
   const corePath = "docProps/core.xml";
   const coreXml = await zip.file(corePath)?.async("string");
-  if (coreXml) zip.file(corePath, coreXml.replace(/<dc:title>[\s\S]*?<\/dc:title>/, `<dc:title>${xmlEscape(title)}</dc:title>`));
+  if (coreXml)
+    zip.file(
+      corePath,
+      coreXml.replace(/<dc:title>[\s\S]*?<\/dc:title>/, `<dc:title>${xmlEscape(title)}</dc:title>`),
+    );
 
   return zip.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 6 } });
 }

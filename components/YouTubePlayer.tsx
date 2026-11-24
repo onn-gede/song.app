@@ -16,17 +16,40 @@ export function YouTubePlayer({ url, title }: { url: string; title: string }) {
       </div>
       {playing ? (
         <div className="youtube-embed-wrap">
-          <iframe src={embed} title={`YouTube · ${title}`} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+          <iframe
+            src={embed}
+            title={`YouTube · ${title}`}
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
         </div>
       ) : (
         <div className="youtube-song-preview">
-          {thumbnail ? <button className="youtube-song-thumbnail" type="button" onClick={() => setPlaying(true)} aria-label={`Redă ${title} în SongApp`}>
-            <img src={thumbnail} alt={`Previzualizare YouTube pentru ${title}`} width="160" height="90" loading="lazy" referrerPolicy="no-referrer" />
-            <span aria-hidden="true">▶</span>
-          </button> : null}
+          {thumbnail ? (
+            <button
+              className="youtube-song-thumbnail"
+              type="button"
+              onClick={() => setPlaying(true)}
+              aria-label={`Redă ${title} în SongApp`}
+            >
+              <img
+                src={thumbnail}
+                alt={`Previzualizare YouTube pentru ${title}`}
+                width="160"
+                height="90"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+              <span aria-hidden="true">▶</span>
+            </button>
+          ) : null}
           <div className="inline-form youtube-song-actions">
-            <button className="btn btn-compact" type="button" onClick={() => setPlaying(true)}>Redă în SongApp</button>
-            <a className="btn secondary btn-compact" href={url} target="_blank" rel="noreferrer">Deschide YouTube</a>
+            <button className="btn btn-compact" type="button" onClick={() => setPlaying(true)}>
+              Redă în SongApp
+            </button>
+            <a className="btn secondary btn-compact" href={url} target="_blank" rel="noreferrer">
+              Deschide YouTube
+            </a>
           </div>
         </div>
       )}
@@ -34,4 +57,3 @@ export function YouTubePlayer({ url, title }: { url: string; title: string }) {
     </section>
   );
 }
-

@@ -1,14 +1,97 @@
-import type {Metadata} from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
-import {notFound} from "next/navigation";
-import {createPublicClient} from "@/lib/supabase/public";
-import {CopyButton} from "@/components/CopyButton";
-import {PublicWishlistSuggestions} from "@/components/PublicWishlistSuggestions";
-import {YouTubePlayButton} from "@/components/YouTubePlayButton";
+import { notFound } from "next/navigation";
+import { createPublicClient } from "@/lib/supabase/public";
+import { CopyButton } from "@/components/CopyButton";
+import { PublicWishlistSuggestions } from "@/features/wishlist/components/PublicWishlistSuggestions";
+import { YouTubePlayButton } from "@/components/YouTubePlayButton";
 
-export const dynamic="force-dynamic";
-type PageProps={params:Promise<{slug:string}>};
-type PublicWishlist={id:string;name:string;notes:string|null;public_slug:string;updated_at:string;items:Array<{id:string;position:number;notes:string|null;song:{id:string;title:string;default_key:string|null;youtube_url:string|null}}>};
-async function load(slug:string){const {data}=await createPublicClient().rpc("get_public_wishlist_v103",{p_slug:slug});return data as PublicWishlist|null;}
-export async function generateMetadata({params}:PageProps):Promise<Metadata>{const {slug}=await params;const wishlist=await load(slug);return {title:wishlist?`${wishlist.name} | SongApp BCBgiroc`:"Wishlist | SongApp BCBgiroc",description:wishlist?.notes||"Wishlist public de cântări"};}
-export default async function PublicWishlistPage({params}:PageProps){const {slug}=await params;const wishlist=await load(slug);if(!wishlist)notFound();const base=(process.env.NEXT_PUBLIC_SITE_URL||"http://localhost:3000").replace(/\/$/,"");return <main className="public-wishlist-page"><header className="public-wishlist-hero"><div><div className="eyebrow">SongApp BCBgiroc · Wishlist public</div><h1>{wishlist.name}</h1>{wishlist.notes?<p>{wishlist.notes}</p>:null}</div><div className="inline-form"><CopyButton text={`${base}/wishlist/${slug}`}/><Link className="btn secondary btn-compact" href="/login">Autentificare</Link></div></header><section className="card public-wishlist-list"><div className="section-header-row"><div><h2>Cântări propuse</h2><p className="muted small">{wishlist.items.length} {wishlist.items.length===1?"cântare":"cântări"} în listă</p></div></div>{wishlist.items.length?<div className="playlist-items">{wishlist.items.map((item,index)=><article className="playlist-song-row public-wishlist-song" key={item.id}><span className="program-position">{index+1}</span><div className="playlist-song-copy"><div className="playlist-song-heading"><strong>{item.song.title}</strong><div className="badges compact-badges">{item.song.default_key?<span className="badge">Tonalitate {item.song.default_key}</span>:null}{item.song.youtube_url?<YouTubePlayButton url={item.song.youtube_url} title={item.song.title}/>:null}</div></div>{item.notes?<p className="muted small">{item.notes}</p>:null}</div></article>)}</div>:<p className="surface-empty">Lista este încă goală. Poți adăuga prima cântare mai jos.</p>}</section><PublicWishlistSuggestions slug={slug}/><footer className="public-wishlist-footer">Wishlist public colaborativ · echipa poate elimina oricând un element</footer></main>;}
+export const dynamic = "force-dynamic";
+type PageProps = { params: Promise<{ slug: string }> };
+type PublicWishlist = {
+  id: string;
+  name: string;
+  notes: string | null;
+  public_slug: string;
+  updated_at: string;
+  items: Array<{
+    id: string;
+    position: number;
+    notes: string | null;
+    song: { id: string; title: string; default_key: string | null; youtube_url: string | null };
+  }>;
+};
+async function load(slug: string) {
+  const { data } = await createPublicClient().rpc("get_public_wishlist_v103", { p_slug: slug });
+  return data as PublicWishlist | null;
+}
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const wishlist = await load(slug);
+  return {
+    title: wishlist ? `${wishlist.name} | SongApp BCBgiroc` : "Wishlist | SongApp BCBgiroc",
+    description: wishlist?.notes || "Wishlist public de cântări",
+  };
+}
+export default async function PublicWishlistPage({ params }: PageProps) {
+  const { slug } = await params;
+  const wishlist = await load(slug);
+  if (!wishlist) notFound();
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+  return (
+    <main className="public-wishlist-page">
+      <header className="public-wishlist-hero">
+        <div>
+          <div className="eyebrow">SongApp BCBgiroc · Wishlist public</div>
+          <h1>{wishlist.name}</h1>
+          {wishlist.notes ? <p>{wishlist.notes}</p> : null}
+        </div>
+        <div className="inline-form">
+          <CopyButton text={`${base}/wishlist/${slug}`} />
+          <Link className="btn secondary btn-compact" href="/login">
+            Autentificare
+          </Link>
+        </div>
+      </header>
+      <section className="card public-wishlist-list">
+        <div className="section-header-row">
+          <div>
+            <h2>Cântări propuse</h2>
+            <p className="muted small">
+              {wishlist.items.length} {wishlist.items.length === 1 ? "cântare" : "cântări"} în listă
+            </p>
+          </div>
+        </div>
+        {wishlist.items.length ? (
+          <div className="playlist-items">
+            {wishlist.items.map((item, index) => (
+              <article className="playlist-song-row public-wishlist-song" key={item.id}>
+                <span className="program-position">{index + 1}</span>
+                <div className="playlist-song-copy">
+                  <div className="playlist-song-heading">
+                    <strong>{item.song.title}</strong>
+                    <div className="badges compact-badges">
+                      {item.song.default_key ? (
+                        <span className="badge">Tonalitate {item.song.default_key}</span>
+                      ) : null}
+                      {item.song.youtube_url ? (
+                        <YouTubePlayButton url={item.song.youtube_url} title={item.song.title} />
+                      ) : null}
+                    </div>
+                  </div>
+                  {item.notes ? <p className="muted small">{item.notes}</p> : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="surface-empty">Lista este încă goală. Poți adăuga prima cântare mai jos.</p>
+        )}
+      </section>
+      <PublicWishlistSuggestions slug={slug} />
+      <footer className="public-wishlist-footer">
+        Wishlist public colaborativ · echipa poate elimina oricând un element
+      </footer>
+    </main>
+  );
+}

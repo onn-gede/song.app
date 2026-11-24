@@ -1,5 +1,5 @@
 import { formatDateTime } from "@/lib/format";
-import type { RecentUsage } from "@/app/(app)/meetings/actions";
+import type { RecentUsage } from "@/features/meetings/types";
 
 export function getRecentUsageTooltip(usage?: RecentUsage) {
   if (!usage) return null;
@@ -8,7 +8,13 @@ export function getRecentUsageTooltip(usage?: RecentUsage) {
   return `Folosită recent: ${formatDateTime(usage.last_used_at)}${meeting}${count}`;
 }
 
-export function RecentUsageIcon({ usage, label = "Folosită recent" }: { usage?: RecentUsage; label?: string }) {
+export function RecentUsageIcon({
+  usage,
+  label = "Folosită recent",
+}: {
+  usage?: RecentUsage;
+  label?: string;
+}) {
   const tooltip = getRecentUsageTooltip(usage);
   if (!tooltip) return null;
 

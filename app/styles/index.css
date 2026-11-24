@@ -1,0 +1,6 @@
+/* Ordinea importurilor este intenționată: baza, componentele, densitatea și corecțiile de pagină/mobil. */
+@import "./base.css";
+@import "./components.css";
+@import "./density.css";
+@import "./welcome.css";
+@import "./mobile.css";

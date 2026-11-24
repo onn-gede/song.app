@@ -86,26 +86,42 @@ export function ReviewBulkStatusList({ files }: Props) {
         </div>
       </div>
 
-      {selectedIds.map((id) => <input key={id} type="hidden" name="file_ids" value={id} />)}
+      {selectedIds.map((id) => (
+        <input key={id} type="hidden" name="file_ids" value={id} />
+      ))}
 
-      {pending ? <div className="notice">Se actualizează statusul pentru {selected.size} importuri...</div> : null}
+      {pending ? (
+        <div className="notice">Se actualizează statusul pentru {selected.size} importuri...</div>
+      ) : null}
       {state.message ? <div className="notice success">{state.message}</div> : null}
       {state.error ? <div className="error">{state.error}</div> : null}
 
       <div className="list compact-list">
         {files.map((file: any) => {
           const song = Array.isArray(file.songs) ? file.songs[0] : file.songs;
-          const collection = Array.isArray(file.song_collections) ? file.song_collections[0] : file.song_collections;
+          const collection = Array.isArray(file.song_collections)
+            ? file.song_collections[0]
+            : file.song_collections;
           const checked = selected.has(file.id);
           return (
-            <div className={`row compact-row review-select-row ${checked ? "is-selected" : ""}`} key={file.id}>
+            <div
+              className={`row compact-row review-select-row ${checked ? "is-selected" : ""}`}
+              key={file.id}
+            >
               <label className="import-row-check" aria-label="Selectează import">
-                <input type="checkbox" checked={checked} onChange={() => toggleOne(file.id)} disabled={pending} />
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleOne(file.id)}
+                  disabled={pending}
+                />
               </label>
               <div className="row-main">
                 <div className="row-title">{song?.title || file.file_name}</div>
                 <div className="badges compact-badges">
-                  <span className={file.import_status === "approved" ? "badge" : "badge warning"}>{statusLabel(file.import_status)}</span>
+                  <span className={file.import_status === "approved" ? "badge" : "badge warning"}>
+                    {statusLabel(file.import_status)}
+                  </span>
                   {collection?.short_code ? <span className="badge">{collection.short_code}</span> : null}
                   {song?.default_key ? <span className="badge">Tonalitate: {song.default_key}</span> : null}
                   {song?.bpm ? <span className="badge">{song.bpm} BPM</span> : null}
@@ -116,8 +132,16 @@ export function ReviewBulkStatusList({ files }: Props) {
                 {file.parser_notes ? <p className="small compact-note-clean">{file.parser_notes}</p> : null}
               </div>
               <div className="inline-form nowrap">
-                {song?.id ? <Link className="btn secondary btn-compact" href={`/songs/${song.id}`}>Vezi</Link> : null}
-                {song?.id ? <Link className="btn btn-compact" href={`/songs/${song.id}/lyrics`}>Verifică versuri</Link> : null}
+                {song?.id ? (
+                  <Link className="btn secondary btn-compact" href={`/songs/${song.id}`}>
+                    Vezi
+                  </Link>
+                ) : null}
+                {song?.id ? (
+                  <Link className="btn btn-compact" href={`/songs/${song.id}/lyrics`}>
+                    Verifică versuri
+                  </Link>
+                ) : null}
               </div>
             </div>
           );

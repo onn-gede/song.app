@@ -8,19 +8,18 @@
     "skipLibCheck": true,
     "rootDir": ".",
     "outDir": "dist-worker",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
   "include": [
-    "scripts/external-sync-worker.ts",
+    "legacy/external-sync/worker.ts",
     "tests/**/*.ts",
-    "lib/external-sync/**/*.ts",
+    "legacy/external-sync/lib/**/*.ts",
     "lib/library.ts",
     "lib/presentation.ts",
     "lib/song-pptx.ts",
     "lib/youtube-suggestions.ts",
     "lib/songTextCleanup.ts",
     "lib/section-editor.ts"
-  ]
+  ],
+  "exclude": ["tests/e2e/**"]
 }

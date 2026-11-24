@@ -1,0 +1,140 @@
+"use client";
+import Link from "next/link";
+import { useEffect, useState, useTransition } from "react";
+import { listMeetingsAction } from "@/features/meetings/server/actions";
+import type { MeetingOption } from "@/features/meetings/types";
+import { moveWishlistSongToMeetingAction } from "@/features/wishlist/server/actions";
+
+export function MoveWishlistSongDialog({
+  playlistId,
+  itemId,
+  title,
+  onMoved,
+}: {
+  playlistId: string;
+  itemId: string;
+  title: string;
+  onMoved: (data: unknown) => void;
+}) {
+  const [open, setOpen] = useState(false),
+    [meetings, setMeetings] = useState<MeetingOption[]>([]),
+    [error, setError] = useState(""),
+    [movedTo, setMovedTo] = useState<MeetingOption | null>(null),
+    [pending, start] = useTransition();
+  useEffect(() => {
+    if (!open || meetings.length) return;
+    start(async () => {
+      try {
+        setMeetings(await listMeetingsAction());
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Programele nu au putut fi încărcate.");
+      }
+    });
+  }, [open, meetings.length]);
+  const move = (meeting: MeetingOption, isBackup: boolean) => {
+    setError("");
+    start(async () => {
+      try {
+        const data = await moveWishlistSongToMeetingAction({
+          playlistId,
+          itemId,
+          meetingId: meeting.id,
+          isBackup,
+        });
+        onMoved(data);
+        setMovedTo(meeting);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Cântarea nu a putut fi mutată.");
+      }
+    });
+  };
+  return (
+    <>
+      <button type="button" className="btn secondary btn-compact" onClick={() => setOpen(true)}>
+        Mută în program
+      </button>
+      {open ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setOpen(false);
+          }}
+        >
+          <section
+            className="modal-card wishlist-move-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`move-${itemId}`}
+          >
+            <div className="top-row">
+              <div>
+                <div className="eyebrow">Mută din wishlist</div>
+                <h2 id={`move-${itemId}`}>{title}</h2>
+              </div>
+              <button className="icon-btn" type="button" aria-label="Închide" onClick={() => setOpen(false)}>
+                ×
+              </button>
+            </div>
+            {movedTo ? (
+              <div className="success">
+                <p>
+                  Cântarea a fost mutată în <strong>{movedTo.title}</strong>.
+                </p>
+                <Link className="btn btn-compact" href={`/meetings/${movedTo.id}`}>
+                  Deschide programul
+                </Link>
+              </div>
+            ) : (
+              <>
+                <p className="muted small">
+                  Alege un program activ sau viitor. După salvare, cântarea este eliminată din wishlist.
+                </p>
+                {pending && !meetings.length ? <p>Se încarcă programele…</p> : null}
+                <div className="wishlist-meeting-list">
+                  {meetings.map((meeting) => (
+                    <article className="card-soft" key={meeting.id}>
+                      <div>
+                        <strong>{meeting.title}</strong>
+                        <small>
+                          {new Intl.DateTimeFormat("ro-RO", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          }).format(new Date(meeting.meeting_date))}
+                        </small>
+                      </div>
+                      <div className="inline-form">
+                        <button
+                          className="btn btn-compact"
+                          disabled={pending}
+                          onClick={() => move(meeting, false)}
+                        >
+                          În program
+                        </button>
+                        <button
+                          className="btn secondary btn-compact"
+                          disabled={pending}
+                          onClick={() => move(meeting, true)}
+                        >
+                          În backup
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                {!pending && !meetings.length ? (
+                  <p className="surface-empty">Nu există programe active sau viitoare.</p>
+                ) : null}
+              </>
+            )}
+            {error ? (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
+    </>
+  );
+}

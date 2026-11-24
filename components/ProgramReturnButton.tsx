@@ -30,5 +30,9 @@ export function ProgramReturnButton() {
   }, [pathname]);
 
   if (!href || !pathname.startsWith("/songs/")) return null;
-  return <Link className="program-return-button print-hide" href={href}>← Înapoi la program</Link>;
+  return (
+    <Link className="program-return-button print-hide" href={href}>
+      ← Înapoi la program
+    </Link>
+  );
 }

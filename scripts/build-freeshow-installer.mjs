@@ -22,11 +22,17 @@ for (const [, filePath] of files) {
 const zip = new JSZip();
 for (const [name, filePath] of files) {
   let content = fs.readFileSync(filePath);
-  if (name.toLowerCase().endsWith(".ps1") && !(content[0] === 0xef && content[1] === 0xbb && content[2] === 0xbf)) {
+  if (
+    name.toLowerCase().endsWith(".ps1") &&
+    !(content[0] === 0xef && content[1] === 0xbb && content[2] === 0xbf)
+  ) {
     content = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), content]);
   }
   zip.file(name, content);
 }
 fs.mkdirSync(path.dirname(output), { recursive: true });
-fs.writeFileSync(output, await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 9 } }));
+fs.writeFileSync(
+  output,
+  await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 9 } }),
+);
 console.log(`Installer FreeShow pregătit: ${output}`);

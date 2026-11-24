@@ -7,7 +7,10 @@ const STORAGE_URL = "songapp:freeshow-url";
 type ConnectorState = { online: boolean; message: string };
 
 export function FreeShowConnectorStatus() {
-  const [state, setState] = useState<ConnectorState>({ online: false, message: "Se verifică starea conectorului…" });
+  const [state, setState] = useState<ConnectorState>({
+    online: false,
+    message: "Se verifică starea conectorului…",
+  });
 
   useEffect(() => {
     let active = true;
@@ -26,12 +29,14 @@ export function FreeShowConnectorStatus() {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("offline");
-        const result = await response.json() as { ok?: boolean; freeshowConnected?: boolean };
+        const result = (await response.json()) as { ok?: boolean; freeshowConnected?: boolean };
         if (!active || !result.ok) throw new Error("offline");
-        const freeShowText = result.freeshowConnected === false ? " FreeShow nu răspunde încă." : " FreeShow este disponibil.";
+        const freeShowText =
+          result.freeshowConnected === false ? " FreeShow nu răspunde încă." : " FreeShow este disponibil.";
         setState({ online: true, message: `Conector activ.${freeShowText}` });
       } catch {
-        if (active) setState({ online: false, message: "Conector oprit sau indisponibil pe acest calculator." });
+        if (active)
+          setState({ online: false, message: "Conector oprit sau indisponibil pe acest calculator." });
       } finally {
         window.clearTimeout(timeout);
       }
@@ -51,14 +56,16 @@ export function FreeShowConnectorStatus() {
     };
   }, []);
 
-  return <div
-    className={`workspace-connector-status ${state.online ? "online" : "offline"}`}
-    data-status={state.message}
-    title={state.message}
-    aria-label={`FreeShow Sync: ${state.message}`}
-    tabIndex={0}
-  >
-    <span className="workspace-connector-dot" aria-hidden="true"/>
-    <span>FreeShow Sync</span>
-  </div>;
+  return (
+    <div
+      className={`workspace-connector-status ${state.online ? "online" : "offline"}`}
+      data-status={state.message}
+      title={state.message}
+      aria-label={`FreeShow Sync: ${state.message}`}
+      tabIndex={0}
+    >
+      <span className="workspace-connector-dot" aria-hidden="true" />
+      <span>FreeShow Sync</span>
+    </div>
+  );
 }

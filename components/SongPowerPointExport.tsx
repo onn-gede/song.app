@@ -20,7 +20,9 @@ export function SongPowerPointExport({ title, number, sections }: Props) {
       const response = await fetch("/templates/songapp-song-template.pptx", { cache: "force-cache" });
       if (!response.ok) throw new Error("Șablonul PowerPoint nu este disponibil.");
       const bytes = await buildSongPptx(await response.arrayBuffer(), { title, number, sections });
-      const blob = new Blob([new Uint8Array(bytes).buffer], { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
+      const blob = new Blob([new Uint8Array(bytes).buffer], {
+        type: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -36,10 +38,21 @@ export function SongPowerPointExport({ title, number, sections }: Props) {
     }
   }
 
-  return <>
-    <button className="btn secondary btn-compact" type="button" onClick={() => void download()} disabled={busy}>
-      {busy ? "Se pregătește…" : "Exportă PPTX ↓"}
-    </button>
-    {error ? <span className="error small" role="alert">{error}</span> : null}
-  </>;
+  return (
+    <>
+      <button
+        className="btn secondary btn-compact"
+        type="button"
+        onClick={() => void download()}
+        disabled={busy}
+      >
+        {busy ? "Se pregătește…" : "Exportă PPTX ↓"}
+      </button>
+      {error ? (
+        <span className="error small" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </>
+  );
 }

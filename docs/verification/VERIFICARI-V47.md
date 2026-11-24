@@ -23,6 +23,7 @@ Datele Supabase ale utilizatorului nu au fost accesate. Actualizarea trebuie
 rulată în proiectul existent înainte de utilizarea funcțiilor noi.
 
 Scenarii UI în Chromium, cu build de producție și Supabase simulat:
+
 - Salvări repetate, mutare principal/backup, săgeți și tragere.
 - Solist și observații; responsabili program; print și mobil fără depășire orizontală.
 - 13 răspunsuri vechi forțate nu anulează salvările confirmate.
@@ -31,6 +32,6 @@ Scenarii UI în Chromium, cu build de producție și Supabase simulat:
 - Formularele publice sunt închise inițial; importul manual afișează întâi titlul și versurile.
 - Selecția tuturor grupurilor afișate și confirmarea unificării au fost executate în UI.
 - Butonul din Colecții a fost apăsat și deschide raportul gamelor.
-Fără erori JavaScript în aceste scenarii.
+  Fără erori JavaScript în aceste scenarii.
 
 Raportul Game Tineri a fost deschis și cu rol viewer activ în testul UI.

@@ -24,10 +24,10 @@ Continuă după ce fiecare comandă se încheie cu succes. Deschide http://local
 
 Catalogul verificat din 29.10.2026 este inclus în `data/book-catalogs`, astfel încât rezultatul să nu depindă de descărcări sau de conversia PowerPoint pe laptop. Nu trebuie instalat LibreOffice. Pregătirea s-a făcut din API-ul https://www.cantaricrestine.ro/documentatie-api.php, exclusiv categoriile `cr` și `cn`. Fișierele PPT fără descriere API au fost convertite, apoi au fost citite slide-urile curente și casetele cu versuri, separat de titluri, note, numere și șablon.
 
-| Destinație | Înregistrări API | Cântări distincte pregătite |
-| --- | ---: | ---: |
-| Cartea roșie - Cântările Evangheliei (`cr`) | 1200 | 601, numerotate 001–601 |
-| Cartea Neagră - Cântările Evangheliei (`cn`) | 482 | 266 |
+| Destinație                                   | Înregistrări API | Cântări distincte pregătite |
+| -------------------------------------------- | ---------------: | --------------------------: |
+| Cartea roșie - Cântările Evangheliei (`cr`)  |             1200 |     601, numerotate 001–601 |
+| Cartea Neagră - Cântările Evangheliei (`cn`) |              482 |                         266 |
 
 Cartea Neagră are 265 înregistrări numerotate (001–264 și 500, exact ca în sursă) și o cântare distinctă fără număr, „Așa cum sunt”. Variantele neenumerotate cu corespondent sigur sunt legate de aceeași piesă, fără dublare. Nu inventăm numerele care lipsesc din API. Cele 482 de înregistrări nu reprezintă 482 de cântări distincte.
 

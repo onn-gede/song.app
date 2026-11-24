@@ -2,10 +2,10 @@ name: Validate SongApp
 on:
   push:
     paths-ignore:
-      - 'ops/heartbeat.json'
+      - "ops/heartbeat.json"
   pull_request:
     paths-ignore:
-      - 'ops/heartbeat.json'
+      - "ops/heartbeat.json"
 permissions:
   contents: read
 jobs:
@@ -16,13 +16,28 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: "22"
           package-manager-cache: false
       - run: npm ci
       - run: npm audit --audit-level=moderate
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-only
-      - run: npm run typecheck
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

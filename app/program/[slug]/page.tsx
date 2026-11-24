@@ -1,14 +1,14 @@
-import {songProgramMetadata} from '@/lib/program-display';
-import {ProgramSongTags} from '@/components/ProgramSongTags';
-import {PublicSuggestions} from "@/components/PublicSuggestions";
-import {MeetingProgramBoard} from "@/components/MeetingProgramBoard";
-import type {ProgramItem} from "@/lib/meeting-state";
+import { songProgramMetadata } from "@/lib/program-display";
+import { ProgramSongTags } from "@/components/ProgramSongTags";
+import { PublicSuggestions } from "@/components/PublicSuggestions";
+import { MeetingProgramBoard } from "@/components/MeetingProgramBoard";
+import type { ProgramItem } from "@/lib/meeting-state";
 import Link from "next/link";
-import {requireProfile,canEdit} from '@/lib/auth';
-import {SharedProgramEditor} from '@/components/SharedProgramEditor';
-import {ProgramChangeTracker,ChangedProgramItem} from '@/components/ProgramChangeTracker';
+import { requireProfile, canEdit } from "@/lib/auth";
+import { SharedProgramEditor } from "@/components/SharedProgramEditor";
+import { ProgramChangeTracker, ChangedProgramItem } from "@/components/ProgramChangeTracker";
 import { MeetingStatusBadge } from "@/components/MeetingStatus";
-import { collectionStyle,momentStyle,type CollectionSource } from "@/lib/collection-colors";
+import { collectionStyle, momentStyle, type CollectionSource } from "@/lib/collection-colors";
 import { PublicProgramLive } from "@/components/PublicProgramLive";
 import { publicProgramVersion } from "@/lib/public-program-version";
 import { meetingStatus } from "@/lib/meeting-state";
@@ -18,9 +18,10 @@ import { CopyButton } from "@/components/CopyButton";
 import { PrintButton } from "@/components/PrintButton";
 import { PublicContributionPanel } from "@/components/PublicContributionPanel";
 import { PublicTextContributionForm } from "@/components/PublicTextContributionForm";
-import {loadPublicProgram} from "@/lib/public-program-data";
+import { loadPublicProgram } from "@/lib/public-program-data";
 import { formatDateTime } from "@/lib/format";
 import type { Metadata } from "next";
+import { currentTimeMs } from "@/lib/clock";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -38,14 +39,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description,
     alternates: { canonical: url },
     openGraph: { title, description, url, siteName: "SongApp BCBgiroc", type: "website" },
-    twitter: { card: "summary", title, description }
+    twitter: { card: "summary", title, description },
   };
 }
 
 type PublicMeetingItem = {
- id:string;performance_structure?:string|null;
- moment_kind?:string|null;moment_color?:string;moment_opacity?:number;
-  is_congregational?:boolean; selected_source_id?:string|null; sources?:CollectionSource[];
+  id: string;
+  performance_structure?: string | null;
+  moment_kind?: string | null;
+  moment_color?: string;
+  moment_opacity?: number;
+  is_congregational?: boolean;
+  selected_source_id?: string | null;
+  sources?: CollectionSource[];
   position: number;
   responsible_name?: string | null;
   item_type: string;
@@ -56,15 +62,17 @@ type PublicMeetingItem = {
   selected_bpm: number | null;
   notes: string | null;
   song: null | {
-    id?:string; title: string;
+    id?: string;
+    title: string;
     lyrics_text: string | null;
     default_key: string | null;
     bpm: number | null;
-    structure: string | null;verse_count?:number|null;
-    source_summary?: string | null;youtube_url?:string|null;
+    structure: string | null;
+    verse_count?: number | null;
+    source_summary?: string | null;
+    youtube_url?: string | null;
   };
 };
-
 
 type PublicContribution = {
   id: string;
@@ -79,22 +87,26 @@ type PublicContribution = {
   contributor_name: string | null;
   notes: string | null;
   song: null | {
-    id?:string; title: string;
+    id?: string;
+    title: string;
     lyrics_text: string | null;
     default_key: string | null;
     bpm: number | null;
-    structure: string | null;verse_count?:number|null;
-    source_summary?: string | null;youtube_url?:string|null;
+    structure: string | null;
+    verse_count?: number | null;
+    source_summary?: string | null;
+    youtube_url?: string | null;
   };
 };
 
 const itemTypeLabels: Record<string, string> = {
-  text: "Poezie",other:"Diverse",
+  text: "Poezie",
+  other: "Diverse",
   prayer: "Rugăciune",
   encouragement: "Îndemn",
   message: "Mesaj",
   break: "Pauză",
-  song: "Cântare"
+  song: "Cântare",
 };
 
 function sourceBadge(song?: { source_summary?: string | null } | null) {
@@ -113,28 +125,46 @@ function LyricsDetails({ text }: { text?: string | null }) {
 }
 
 function PublicItem({ item, index }: { item: PublicMeetingItem; index: number }) {
-  const metadata=songProgramMetadata(item,item.song);const {source}=metadata;
+  const metadata = songProgramMetadata(item, item.song);
+  const { source } = metadata;
   return (
-    <ChangedProgramItem id={item.id}><div style={item.song?collectionStyle(source):momentStyle(item)} data-source-color={item.song?source?.color||"unassigned":undefined} className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}>
-      <div className="program-position">{index + 1}</div>
-      <div className="program-main">
-        <div className="program-title public-program-title-compact">{item.song?.title || item.custom_title || "Element"}</div>
-        <div className="badges compact-badges">
-          <span className="badge">{item.song ? "Cântare" : (itemTypeLabels[item.moment_kind||item.item_type] || "Element")}</span>
-          {item.song && item.responsible_name ? <span className="badge">Solist: {item.responsible_name}</span> : null}
-          {item.song?<ProgramSongTags metadata={metadata}/>:null}
-          {item.is_backup ? <span className="badge backup">backup</span> : null}
+    <ChangedProgramItem id={item.id}>
+      <div
+        style={item.song ? collectionStyle(source) : momentStyle(item)}
+        data-source-color={item.song ? source?.color || "unassigned" : undefined}
+        className={`public-program-item ${!item.song ? "public-moment-v48" : ""} ${item.is_backup ? "public-backup-item" : ""}`}
+      >
+        <div className="program-position">{index + 1}</div>
+        <div className="program-main">
+          <div className="program-title public-program-title-compact">
+            {item.song?.title || item.custom_title || "Element"}
+          </div>
+          <div className="badges compact-badges">
+            <span className="badge">
+              {item.song ? "Cântare" : itemTypeLabels[item.moment_kind || item.item_type] || "Element"}
+            </span>
+            {item.song && item.responsible_name ? (
+              <span className="badge">Solist: {item.responsible_name}</span>
+            ) : null}
+            {item.song ? <ProgramSongTags metadata={metadata} /> : null}
+            {item.is_backup ? <span className="badge backup">backup</span> : null}
+          </div>
+          {item.song ? (
+            <LyricsDetails text={item.song.lyrics_text} />
+          ) : (
+            <p className="program-moment-observations">{item.custom_text}</p>
+          )}
+          {item.notes ? <p className="muted small public-item-notes">{item.notes}</p> : null}
         </div>
-        {item.song ? <LyricsDetails text={item.song.lyrics_text} /> : <p className="program-moment-observations">{item.custom_text}</p>}
-        {item.notes ? <p className="muted small public-item-notes">{item.notes}</p> : null}
       </div>
-    </div></ChangedProgramItem>
+    </ChangedProgramItem>
   );
 }
 
 function PublicContributionItem({ item, index }: { item: PublicContribution; index: number }) {
   const title = item.song?.title || item.custom_title || "Propunere";
-  const statusLabel = item.status === "accepted" ? "acceptată" : item.status === "rejected" ? "respinsă" : "în așteptare";
+  const statusLabel =
+    item.status === "accepted" ? "acceptată" : item.status === "rejected" ? "respinsă" : "în așteptare";
   return (
     <div className={`public-program-item public-external-item public-external-item-${item.status}`}>
       <div className="program-position external-position">E{index + 1}</div>
@@ -143,16 +173,27 @@ function PublicContributionItem({ item, index }: { item: PublicContribution; ind
         <div className="badges compact-badges">
           <span className="badge external-badge">propusă extern</span>
           <span className="badge">{statusLabel}</span>
-          <span className="badge">{item.song ? "Cântare" : (itemTypeLabels[item.contribution_type] || "Element")}</span>
+          <span className="badge">
+            {item.song ? "Cântare" : itemTypeLabels[item.contribution_type] || "Element"}
+          </span>
           {sourceBadge(item.song)}
-          {item.proposed_position ? <span className="badge">poziție propusă: {item.proposed_position}</span> : null}
+          {item.proposed_position ? (
+            <span className="badge">poziție propusă: {item.proposed_position}</span>
+          ) : null}
           {item.is_backup ? <span className="badge backup">backup</span> : null}
           {item.contributor_name ? <span className="badge">{item.contributor_name}</span> : null}
           {item.song?.default_key ? <span className="badge">Tonalitate: {item.song.default_key}</span> : null}
         </div>
-        {item.song ? <LyricsDetails text={item.song.lyrics_text} /> : <LyricsDetails text={item.custom_text} />}
+        {item.song ? (
+          <LyricsDetails text={item.song.lyrics_text} />
+        ) : (
+          <LyricsDetails text={item.custom_text} />
+        )}
         {item.notes ? <p className="muted small public-item-notes">{item.notes}</p> : null}
-        <p className="muted small public-history-time">Trimisă: {formatDateTime(item.created_at)}{item.reviewed_at ? ` · Procesată: ${formatDateTime(item.reviewed_at)}` : ""}</p>
+        <p className="muted small public-history-time">
+          Trimisă: {formatDateTime(item.created_at)}
+          {item.reviewed_at ? ` · Procesată: ${formatDateTime(item.reviewed_at)}` : ""}
+        </p>
       </div>
     </div>
   );
@@ -162,7 +203,11 @@ function buildPositionOptions(items: PublicMeetingItem[]) {
   const main = items.filter((item) => !item.is_backup).sort((a, b) => a.position - b.position);
   const options = [{ value: "1", label: "La început" }];
   main.forEach((item, index) => {
-    const title = item.song?.title || item.custom_title || itemTypeLabels[item.moment_kind||item.item_type] || "Element";
+    const title =
+      item.song?.title ||
+      item.custom_title ||
+      itemTypeLabels[item.moment_kind || item.item_type] ||
+      "Element";
     options.push({ value: String(index + 2), label: `După ${index + 1}. ${title}` });
   });
   return options;
@@ -176,78 +221,134 @@ export default async function PublicProgramPage({ params }: PageProps) {
 
   const meeting = (data as any).meeting;
   const items = (((data as any).items || []) as PublicMeetingItem[]).sort((a, b) => a.position - b.position);
-  const normalized:ProgramItem[]=items.map(item=>({...item,song_id:item.song?.id||null,songs:item.song?{...item.song,id:item.song.id||item.id}:null}));
+  const normalized: ProgramItem[] = items.map((item) => ({
+    ...item,
+    song_id: item.song?.id || null,
+    songs: item.song ? { ...item.song, id: item.song.id || item.id } : null,
+  }));
   const mainItems = items.filter((item) => !item.is_backup);
   const backupItems = items.filter((item) => item.is_backup);
-  const contributions = (((data as any).contributions || []) as PublicContribution[]);
-  const contributionHistory = (((data as any).contribution_history || []) as PublicContribution[]);
+  const contributions = ((data as any).contributions || []) as PublicContribution[];
+  const contributionHistory = ((data as any).contribution_history || []) as PublicContribution[];
   const positionOptions = buildPositionOptions(items);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const publicUrl = `${siteUrl}/program/${slug}`;
 
   // Sharing remains anonymous/read-only. Only an active editor gets mutation controls.
-  const context=await requireProfile().catch(()=>null);
-  if(context&&canEdit(context.profile.role)&&meeting.id){
-   const {data:snapshot,error:snapshotError}=await context.supabase.rpc('get_meeting_snapshot_v46',{p_meeting_id:meeting.id});
-   if(!snapshotError&&snapshot)return <ProgramChangeTracker items={snapshot.items||[]} persistent storageKey={slug}><main className="public-page public-page-v10 public-v48"><PublicProgramLive slug={slug} version={publicProgramVersion(data)}/><header className="public-header"><h1>{meeting.title}</h1><p>{formatDateTime(meeting.meeting_date)}</p></header><SharedProgramEditor meetingId={meeting.id} initial={snapshot} title={meeting.title} date={meeting.meeting_date} programKind={meeting.program_kind} publicSlug={slug}/></main></ProgramChangeTracker>;
+  const context = await requireProfile().catch(() => null);
+  if (context && canEdit(context.profile.role) && meeting.id) {
+    const { data: snapshot, error: snapshotError } = await context.supabase.rpc("get_meeting_snapshot_v46", {
+      p_meeting_id: meeting.id,
+    });
+    if (!snapshotError && snapshot)
+      return (
+        <ProgramChangeTracker items={snapshot.items || []} persistent storageKey={slug}>
+          <main className="public-page public-page-v10 public-v48">
+            <PublicProgramLive slug={slug} version={publicProgramVersion(data)} />
+            <header className="public-header">
+              <h1>{meeting.title}</h1>
+              <p>{formatDateTime(meeting.meeting_date)}</p>
+            </header>
+            <SharedProgramEditor
+              meetingId={meeting.id}
+              initial={snapshot}
+              title={meeting.title}
+              date={meeting.meeting_date}
+              programKind={meeting.program_kind}
+              publicSlug={slug}
+            />
+          </main>
+        </ProgramChangeTracker>
+      );
   }
   return (
-    <ProgramChangeTracker items={items} persistent storageKey={slug}><main className="public-page public-page-v10 public-v48">
-      <PublicProgramLive slug={slug} version={publicProgramVersion(data)} />
-      <MeetingPrintDocument title={meeting.title} date={meeting.meeting_date} programKind={meeting.program_kind} principal={meeting.principal_responsible || null} secondary={meeting.secondary_responsibles || []} items={normalized} />
-      <header className="public-header public-header-v10">
-        <div>
-          <div className="eyebrow">SongApp BCBgiroc · Program partajat</div>
-          <h1>{meeting.title}</h1>
-          <MeetingStatusBadge date={meeting.meeting_date} initialNow={Date.now()}/>
-          <span className="program-kind-text">{meeting.program_kind==='rehearsal'?'Repetiție':'Program oficial'}</span>
-          <p>{formatDateTime(meeting.meeting_date)}</p>
-          {meeting.principal_responsible ? <p>Responsabil principal: {meeting.principal_responsible}</p> : null}
-          {meeting.secondary_responsibles?.length ? <p>Responsabili secundari: {meeting.secondary_responsibles.join(", ")}</p> : null}
-        </div>
-        <div className="inline-form print-hide">
-          <Link className="btn secondary" href="/login">Autentificare</Link><CopyButton text={publicUrl} />
-          <PrintButton />
-        </div>
-      </header>
-
-      {meeting.allow_contributions?<PublicSuggestions slug={slug} positionOptions={positionOptions}/>:null}
-      <section className="card public-program-card">
-        <div className="program-group-header">
+    <ProgramChangeTracker items={items} persistent storageKey={slug}>
+      <main className="public-page public-page-v10 public-v48">
+        <PublicProgramLive slug={slug} version={publicProgramVersion(data)} />
+        <MeetingPrintDocument
+          title={meeting.title}
+          date={meeting.meeting_date}
+          programKind={meeting.program_kind}
+          principal={meeting.principal_responsible || null}
+          secondary={meeting.secondary_responsibles || []}
+          items={normalized}
+        />
+        <header className="public-header public-header-v10">
           <div>
-            <div className="eyebrow">Ordinea programului</div>
-            <h2>Program principal</h2>
+            <div className="eyebrow">SongApp BCBgiroc · Program partajat</div>
+            <h1>{meeting.title}</h1>
+            <MeetingStatusBadge date={meeting.meeting_date} initialNow={currentTimeMs()} />
+            <span className="program-kind-text">
+              {meeting.program_kind === "rehearsal" ? "Repetiție" : "Program oficial"}
+            </span>
+            <p>{formatDateTime(meeting.meeting_date)}</p>
+            {meeting.principal_responsible ? (
+              <p>Responsabil principal: {meeting.principal_responsible}</p>
+            ) : null}
+            {meeting.secondary_responsibles?.length ? (
+              <p>Responsabili secundari: {meeting.secondary_responsibles.join(", ")}</p>
+            ) : null}
           </div>
-        </div>
-        <section className="meeting-v48 program-surface-v65"><MeetingProgramBoard meetingId={meeting.id} items={normalized} canManage={false} returnHref={`/program/${slug}`} publicSlug={slug}/></section>
+          <div className="inline-form print-hide">
+            <Link className="btn secondary" href="/login">
+              Autentificare
+            </Link>
+            <CopyButton text={publicUrl} />
+            <PrintButton />
+          </div>
+        </header>
 
-        {contributions.length > 0 ? (
-          <details className="public-external-block print-hide"><summary>Propuneri externe ({contributions.length})</summary>
-            <div className="eyebrow external-eyebrow">Propuneri externe neaprobate</div>
-            <div className="public-program-list">
-              {contributions.map((item, index) => <PublicContributionItem key={item.id} item={item} index={index} />)}
+        {meeting.allow_contributions ? (
+          <PublicSuggestions slug={slug} positionOptions={positionOptions} />
+        ) : null}
+        <section className="card public-program-card">
+          <div className="program-group-header">
+            <div>
+              <div className="eyebrow">Ordinea programului</div>
+              <h2>Program principal</h2>
+            </div>
+          </div>
+          <section className="meeting-v48 program-surface-v65">
+            <MeetingProgramBoard
+              meetingId={meeting.id}
+              items={normalized}
+              canManage={false}
+              returnHref={`/program/${slug}`}
+              publicSlug={slug}
+            />
+          </section>
+
+          {contributions.length > 0 ? (
+            <details className="public-external-block print-hide">
+              <summary>Propuneri externe ({contributions.length})</summary>
+              <div className="eyebrow external-eyebrow">Propuneri externe neaprobate</div>
+              <div className="public-program-list">
+                {contributions.map((item, index) => (
+                  <PublicContributionItem key={item.id} item={item} index={index} />
+                ))}
+              </div>
+            </details>
+          ) : null}
+        </section>
+
+        {contributionHistory.length > 0 ? (
+          <details className="card public-program-card print-hide history-toggle-card">
+            <summary className="history-toggle-summary">
+              <span>Vezi istoricul propunerilor</span>
+              <span className="badge">{contributionHistory.length}</span>
+            </summary>
+            <div className="history-toggle-content">
+              <div className="eyebrow">Istoric propuneri</div>
+              <h2>Ultimele propuneri trimise</h2>
+              <div className="public-program-list">
+                {contributionHistory.map((item, index) => (
+                  <PublicContributionItem key={item.id} item={item} index={index} />
+                ))}
+              </div>
             </div>
           </details>
         ) : null}
-      </section>
-
-
-
-      {contributionHistory.length > 0 ? (
-        <details className="card public-program-card print-hide history-toggle-card">
-          <summary className="history-toggle-summary">
-            <span>Vezi istoricul propunerilor</span>
-            <span className="badge">{contributionHistory.length}</span>
-          </summary>
-          <div className="history-toggle-content">
-            <div className="eyebrow">Istoric propuneri</div>
-            <h2>Ultimele propuneri trimise</h2>
-            <div className="public-program-list">
-              {contributionHistory.map((item, index) => <PublicContributionItem key={item.id} item={item} index={index} />)}
-            </div>
-          </div>
-        </details>
-      ) : null}
-    </main></ProgramChangeTracker>
+      </main>
+    </ProgramChangeTracker>
   );
 }

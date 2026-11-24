@@ -24,11 +24,28 @@ export function LyricsPasteField() {
   }
   return (
     <div className="lyrics-paste-field">
-      <label className="label" htmlFor="manual-lyrics">Versuri <span className="muted small">(opțional)</span></label>
-      <textarea ref={field} id="manual-lyrics" className="textarea import-lyrics" name="lyrics_text" autoCapitalize="sentences" autoCorrect="on" spellCheck placeholder={"Strofa 1\n...\n\nRefren\n...\n\nStrofa 2\n..."} />
+      <label className="label" htmlFor="manual-lyrics">
+        Versuri <span className="muted small">(opțional)</span>
+      </label>
+      <textarea
+        ref={field}
+        id="manual-lyrics"
+        className="textarea import-lyrics"
+        name="lyrics_text"
+        autoCapitalize="sentences"
+        autoCorrect="on"
+        spellCheck
+        placeholder={"Strofa 1\n...\n\nRefren\n...\n\nStrofa 2\n..."}
+      />
       <div className="inline-form mobile-paste-actions">
-        <button className="btn secondary btn-compact" type="button" onClick={paste}>Lipește din clipboard</button>
-        {message ? <span className="muted small" role="status">{message}</span> : null}
+        <button className="btn secondary btn-compact" type="button" onClick={paste}>
+          Lipește din clipboard
+        </button>
+        {message ? (
+          <span className="muted small" role="status">
+            {message}
+          </span>
+        ) : null}
       </div>
     </div>
   );

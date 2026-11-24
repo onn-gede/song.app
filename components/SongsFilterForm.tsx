@@ -68,26 +68,34 @@ export function SongsFilterForm({
       action="/songs"
       onSubmit={(event) => saveFilters(new FormData(event.currentTarget))}
     >
-      <label className="label">Colecție
+      <label className="label">
+        Colecție
         <select className="select" name="collection" defaultValue={selectedCollection}>
           <option value="">Toate colecțiile</option>
           {collections.map((collection) => (
-            <option key={collection.id} value={collection.id}>{collection.name}</option>
+            <option key={collection.id} value={collection.id}>
+              {collection.name}
+            </option>
           ))}
         </select>
       </label>
-      <label className="label">Categorie
+      <label className="label">
+        Categorie
         <select className="select" name="category" defaultValue={selectedCategory}>
           <option value="">Toate categoriile</option>
           {categories.map((category) => (
-            <option key={category.id} value={category.id}>{category.name}</option>
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
           ))}
         </select>
       </label>
-      <label className="label">Număr
+      <label className="label">
+        Număr
         <input className="input" name="number" defaultValue={selectedNumber} placeholder="ex: 352" />
       </label>
-      <label className="label">Status import
+      <label className="label">
+        Status import
         <select className="select" name="status" defaultValue={selectedStatus}>
           <option value="">Toate</option>
           <option value="needs_review">De verificat</option>
@@ -95,23 +103,42 @@ export function SongsFilterForm({
           <option value="failed">Eșuate</option>
         </select>
       </label>
-      <label className="label">Tonalitate
+      <label className="label">
+        Tonalitate
         <select className="select" name="key" defaultValue={selectedKey}>
           <option value="">Toate</option>
-          {keys.map((key) => <option key={String(key)} value={String(key)}>{String(key)}</option>)}
+          {keys.map((key) => (
+            <option key={String(key)} value={String(key)}>
+              {String(key)}
+            </option>
+          ))}
         </select>
       </label>
-      <label className="label">Ordine
+      <label className="label">
+        Ordine
         <select className="select" name="sort" defaultValue={selectedSort}>
           <option value="title_asc">Alfabetic A-Z</option>
           <option value="title_desc">Alfabetic Z-A</option>
           <option value="source_number_asc">Număr crescător</option>
           <option value="source_number_desc">Număr descrescător</option>
-          <option value="created_desc">Adăugate recent</option><option value="last_sung">Cântate recent în programe</option><option value="most_sung">Cele mai des cântate</option>
+          <option value="created_desc">Adăugate recent</option>
+          <option value="last_sung">Cântate recent în programe</option>
+          <option value="most_sung">Cele mai des cântate</option>
         </select>
       </label>
-      <button className="btn btn-compact" type="submit">Aplică</button>
-      <button className="btn secondary btn-compact" type="button" onClick={() => { clearSavedFilters(); router.push("/songs?page=1"); }}>Resetează</button>
+      <button className="btn btn-compact" type="submit">
+        Aplică
+      </button>
+      <button
+        className="btn secondary btn-compact"
+        type="button"
+        onClick={() => {
+          clearSavedFilters();
+          router.push("/songs?page=1");
+        }}
+      >
+        Resetează
+      </button>
     </form>
   );
 }

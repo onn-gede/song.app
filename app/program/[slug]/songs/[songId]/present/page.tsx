@@ -3,11 +3,14 @@ import { SongPresentation } from "@/components/SongPresentation";
 import { createClient } from "@/lib/supabase/server";
 import { stripRepeatedSongTitleLines } from "@/lib/songTextCleanup";
 
-type PageProps = { params: Promise<{ slug: string; songId: string }>;searchParams:Promise<{projection?:string;channel?:string}> };
+type PageProps = {
+  params: Promise<{ slug: string; songId: string }>;
+  searchParams: Promise<{ projection?: string; channel?: string }>;
+};
 
-export default async function PublicSongPresentationPage({ params,searchParams }: PageProps) {
+export default async function PublicSongPresentationPage({ params, searchParams }: PageProps) {
   const { slug, songId } = await params;
-  const {projection,channel:rawChannel}=await searchParams;
+  const { projection, channel: rawChannel } = await searchParams;
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("get_shared_meeting_v79", { p_public_slug: slug });
   if (error || !data) notFound();
@@ -16,13 +19,28 @@ export default async function PublicSongPresentationPage({ params,searchParams }
   if (!item?.song) notFound();
 
   const lyrics = stripRepeatedSongTitleLines(item.song.lyrics_text || "", item.song.title);
-  const slides = lyrics.split(/\r?\n\s*\r?\n/).map((content: string, index: number) => ({
-    id: `public-${songId}-${index}`,
-    label: `Secțiunea ${index + 1}`,
-    content: content.trim(),
-    lyricsOnly: true,
-  })).filter((slide: { content: string }) => slide.content.length > 0);
+  const slides = lyrics
+    .split(/\r?\n\s*\r?\n/)
+    .map((content: string, index: number) => ({
+      id: `public-${songId}-${index}`,
+      label: `Secțiunea ${index + 1}`,
+      content: content.trim(),
+      lyricsOnly: true,
+    }))
+    .filter((slide: { content: string }) => slide.content.length > 0);
 
-  const channel=/^[a-z0-9-]{1,100}$/i.test(rawChannel||"")?rawChannel:undefined;
-  return <SongPresentation songId={songId} title={item.song.title} slides={slides} fallbackLyrics={lyrics} defaultKey={item.selected_key || item.song.default_key} lyricsOnly returnHref={`/program/${slug}`} projectionMode={projection==="1"&&!!channel} controlChannel={channel}/>;
+  const channel = /^[a-z0-9-]{1,100}$/i.test(rawChannel || "") ? rawChannel : undefined;
+  return (
+    <SongPresentation
+      songId={songId}
+      title={item.song.title}
+      slides={slides}
+      fallbackLyrics={lyrics}
+      defaultKey={item.selected_key || item.song.default_key}
+      lyricsOnly
+      returnHref={`/program/${slug}`}
+      projectionMode={projection === "1" && !!channel}
+      controlChannel={channel}
+    />
+  );
 }

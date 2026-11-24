@@ -46,8 +46,10 @@ async function uniqueShortCode(baseCode: string) {
 export async function createCollectionAction(formData: FormData) {
   await requireProfile("editor");
   const name = readString(formData, "name");
-  const color=readString(formData,"color");const opacity=Number(formData.get("opacity")||100);if(![25,50,75,100].includes(opacity))throw new Error("Intensitate invalidă.");
-  if(!validCollectionColor(color))throw new Error("Alege o culoare validă.");
+  const color = readString(formData, "color");
+  const opacity = Number(formData.get("opacity") || 100);
+  if (![25, 50, 75, 100].includes(opacity)) throw new Error("Intensitate invalidă.");
+  if (!validCollectionColor(color)) throw new Error("Alege o culoare validă.");
   const requestedShortCode = readString(formData, "short_code");
   const description = readString(formData, "description");
   const sourceType = readString(formData, "source_type") || "manual";
@@ -60,11 +62,12 @@ export async function createCollectionAction(formData: FormData) {
 
   const { error } = await supabase.from("song_collections").insert({
     name,
-    color,opacity,
+    color,
+    opacity,
     short_code: shortCode,
     description: description || null,
     source_type: sourceType,
-    is_active: true
+    is_active: true,
   });
 
   if (error) throw new Error(error.message);
@@ -81,8 +84,10 @@ export async function updateCollectionAction(formData: FormData) {
   await requireProfile("editor");
   const collectionId = readString(formData, "collection_id");
   const name = readString(formData, "name");
-  const color=readString(formData,"color");const opacity=Number(formData.get("opacity")||100);if(![25,50,75,100].includes(opacity))throw new Error("Intensitate invalidă.");
-  if(!validCollectionColor(color))throw new Error("Alege o culoare validă.");
+  const color = readString(formData, "color");
+  const opacity = Number(formData.get("opacity") || 100);
+  if (![25, 50, 75, 100].includes(opacity)) throw new Error("Intensitate invalidă.");
+  if (!validCollectionColor(color)) throw new Error("Alege o culoare validă.");
   const shortCode = readString(formData, "short_code");
   const description = readString(formData, "description");
   const sourceType = readString(formData, "source_type") || "manual";
@@ -98,13 +103,16 @@ export async function updateCollectionAction(formData: FormData) {
     .from("song_collections")
     .update({
       name,
-      color,opacity,
+      color,
+      opacity,
       short_code: normalizeCode(shortCode),
       description: description || null,
       source_type: sourceType,
-      is_active: isActive
+      is_active: isActive,
     })
-    .eq("id", collectionId).select("id").single();
+    .eq("id", collectionId)
+    .select("id")
+    .single();
 
   if (error) throw new Error(error.message);
 
@@ -115,7 +123,6 @@ export async function updateCollectionAction(formData: FormData) {
   revalidatePath("/program", "layout");
   refresh();
 }
-
 
 export async function deleteCollectionAction(formData: FormData) {
   await requireProfile("editor");
@@ -129,7 +136,9 @@ export async function deleteCollectionAction(formData: FormData) {
   const { error } = await supabase
     .from("song_collections")
     .delete()
-    .eq("id", collectionId).select("id").single();
+    .eq("id", collectionId)
+    .select("id")
+    .single();
 
   if (error) throw new Error(error.message);
 
@@ -141,13 +150,20 @@ export async function deleteCollectionAction(formData: FormData) {
   refresh();
 }
 
-export async function updateMomentStyleAction(formData:FormData){
-  const {supabase}=await requireProfile("editor");
-  const color=readString(formData,"color");
-  const opacity=Number(formData.get("opacity")||100);
-  if(!validCollectionColor(color)||![25,50,75,100].includes(opacity))throw new Error("Alege o culoare și o intensitate valide.");
-  const {error}=await supabase.rpc("set_program_moment_style_v80",{p_color:color,p_opacity:opacity});
-  if(error)throw new Error(error.message);
-  revalidatePath("/collections");revalidatePath("/meetings","layout");revalidatePath("/program","layout");revalidatePath("/dashboard");
+export async function updateMomentStyleAction(formData: FormData) {
+  const { supabase } = await requireProfile("editor");
+  const color = readString(formData, "color");
+  const opacity = Number(formData.get("opacity") || 100);
+  if (!validCollectionColor(color) || ![25, 50, 75, 100].includes(opacity))
+    throw new Error("Alege o culoare și o intensitate valide.");
+  const { error } = await supabase.rpc("set_program_moment_style_v80", {
+    p_color: color,
+    p_opacity: opacity,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/collections");
+  revalidatePath("/meetings", "layout");
+  revalidatePath("/program", "layout");
+  revalidatePath("/dashboard");
   refresh();
 }
