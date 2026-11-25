@@ -15,11 +15,13 @@ export function SongUsageCorrection({
   title,
   entry,
   onSaved,
+  compact = false,
 }: {
   songId: string;
   title?: string;
   entry?: Entry;
   onSaved?: () => void;
+  compact?: boolean;
 }) {
   const router = useRouter(),
     [open, setOpen] = useState(false),
@@ -83,16 +85,29 @@ export function SongUsageCorrection({
     }
   }
   return (
-    <div className="usage-correction">
+    <div className={`usage-correction${compact ? " usage-correction-compact" : ""}`}>
       <button
         type="button"
-        className="btn secondary btn-compact"
+        className={compact ? "usage-remove-button" : "btn secondary btn-compact"}
         title={
-          entry?.is_excluded ? "Include din nou folosirea în statistici" : "Corectează folosirea în istoric"
+          compact
+            ? "Elimină din cântate recent"
+            : entry?.is_excluded
+              ? "Include din nou folosirea în statistici"
+              : "Corectează folosirea în istoric"
         }
+        aria-label={compact ? `Elimină ${title || "cântarea"} din cântate recent` : undefined}
         onClick={load}
       >
-        {entry?.is_excluded ? "Restabilește" : entry ? "Exclude" : "Elimină din recente"}
+        {compact ? (
+          <span aria-hidden="true">×</span>
+        ) : entry?.is_excluded ? (
+          "Restabilește"
+        ) : entry ? (
+          "Exclude"
+        ) : (
+          "Elimină din recente"
+        )}
       </button>
       {open ? (
         <div className="usage-correction-panel" role="group" aria-label="Corectare istoric">

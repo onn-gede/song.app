@@ -9421,3 +9421,171 @@ where s.is_active
 
 notify pgrst, 'reload schema';
 commit;
+
+
+-- FILE: 073_v109_lyrics_confirmation.sql
+begin;
+
+create table if not exists public.song_lyrics_confirmations_v109(
+  song_id uuid primary key references public.songs(id) on delete cascade,
+  candidate_hash text not null,
+  confirmed_by uuid references public.profiles(id) on delete set null,
+  confirmed_at timestamptz not null default now()
+);
+alter table public.song_lyrics_confirmations_v109 enable row level security;
+revoke all on public.song_lyrics_confirmations_v109 from public,anon,authenticated;
+grant select on public.song_lyrics_confirmations_v109 to authenticated;
+grant all on public.song_lyrics_confirmations_v109 to service_role;
+drop policy if exists song_lyrics_confirmations_read_v109 on public.song_lyrics_confirmations_v109;
+create policy song_lyrics_confirmations_read_v109
+  on public.song_lyrics_confirmations_v109 for select to authenticated
+  using(public.current_user_role() is not null);
+
+create or replace function public.youth_lyric_candidate_v106(p_song uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path=public
+as $$
+declare v_result jsonb;
+begin
+  if not public.can_edit_content() then raise exception 'Acces interzis.' using errcode='42501'; end if;
+  select candidate into v_result
+  from (
+    select jsonb_build_object(
+      'id',s.id,'title',s.title,'number',src.song_number,'sectionId',v.id,
+      'before',coalesce(v.content,s.lyrics_text),'after',s.title||E'\n'||coalesce(v.content,s.lyrics_text),
+      'hash',md5(jsonb_build_array(s.title,s.lyrics_text,v.id,v.content)::text)
+    ) candidate
+    from public.songs s
+    join lateral(
+      select ss.song_number
+      from public.song_sources ss
+      join public.song_collections c on c.id=ss.collection_id
+      where ss.song_id=s.id and (upper(c.short_code)='TINERI' or lower(c.name)='tineri')
+      order by ss.id limit 1
+    ) src on true
+    left join lateral(
+      select id,content from public.song_sections
+      where song_id=s.id and section_type='verse'
+      order by position,id limit 1
+    ) v on true
+    where s.id=p_song and s.is_active and length(trim(s.title))>=4
+      and nullif(trim(coalesce(v.content,s.lyrics_text)),'') is not null
+      and public.normalize_song_title_for_duplicates(split_part(regexp_replace(coalesce(v.content,s.lyrics_text),'^[[:space:]]*[0-9]+[.): -]+','','i'),E'\n',1))
+          <>public.normalize_song_title_for_duplicates(s.title)
+      and not exists(
+        select 1 from regexp_split_to_table(coalesce(v.content,s.lyrics_text),E'\n') ln
+        where public.normalize_song_title_for_duplicates(regexp_replace(ln,'^[[:space:]]*[0-9]+[.): -]+','','i'))
+              =public.normalize_song_title_for_duplicates(s.title)
+      )
+      and not exists(
+        select 1 from public.youth_lyric_repairs_v65 b where b.song_id=s.id and b.reverted_at is null
+      )
+  ) candidates
+  where not exists(
+    select 1 from public.song_lyrics_confirmations_v109 c
+    where c.song_id=p_song and c.candidate_hash=candidates.candidate->>'hash'
+  );
+  return v_result;
+end $$;
+revoke all on function public.youth_lyric_candidate_v106(uuid) from public,anon;
+grant execute on function public.youth_lyric_candidate_v106(uuid) to authenticated;
+
+create or replace function public.confirm_song_lyrics_v109(p_song uuid,p_hash text)
+returns boolean
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare v_candidate jsonb;
+begin
+  if not public.can_edit_content() then raise exception 'Acces interzis.' using errcode='42501'; end if;
+  perform 1 from public.songs where id=p_song for update;
+  if not found then raise exception 'Cântarea nu mai există.'; end if;
+  v_candidate:=public.youth_lyric_candidate_v106(p_song);
+  if v_candidate is null or v_candidate->>'hash' is distinct from p_hash then
+    raise exception 'Versurile au fost modificate sau nu mai necesită confirmare.';
+  end if;
+  insert into public.song_lyrics_confirmations_v109(song_id,candidate_hash,confirmed_by,confirmed_at)
+  values(p_song,p_hash,auth.uid(),now())
+  on conflict(song_id) do update set
+    candidate_hash=excluded.candidate_hash,
+    confirmed_by=excluded.confirmed_by,
+    confirmed_at=excluded.confirmed_at;
+  insert into public.activity_log_v48(actor_id,event_type,resource_type,resource_id,details)
+  values(auth.uid(),'lyrics.confirm','songs',p_song::text,jsonb_build_object('candidate_hash',p_hash));
+  return true;
+end $$;
+revoke all on function public.confirm_song_lyrics_v109(uuid,text) from public,anon;
+grant execute on function public.confirm_song_lyrics_v109(uuid,text) to authenticated;
+
+create or replace function public.backup_tables_v64() returns text[] language sql immutable as $$
+ select array['song_collections','program_moment_style_v80','songs','rehearsal_playlists_v84','rehearsal_playlist_items_v84','public_wishlist_contributions_v103','categories','bible_versions','bible_books','bible_verses','bible_references','song_files','song_sources','song_sections','song_categories','song_bible_references','meetings','meeting_items','meeting_share_links','public_meeting_contributions','external_sources','external_song_refs','song_link_imports','youth_key_reference_v46','youth_key_applied_v46','song_usage_exclusions_v65','youth_lyric_repairs_v65','song_lyrics_confirmations_v109'];
+$$;
+revoke all on function public.backup_tables_v64() from public,anon,authenticated;
+
+notify pgrst,'reload schema';
+commit;
+
+begin;
+
+-- Permite încărcarea integrală numai la cererea explicită a interfeței.
+-- Paginarea obișnuită rămâne la 50 de elemente.
+create or replace function public.list_song_library_v46(
+  p_collection uuid default null, p_category uuid default null, p_number text default null,
+  p_status text default null, p_key text default null, p_sort text default 'title_asc',
+  p_page integer default 1, p_page_size integer default 50, p_query text default null
+) returns jsonb language sql stable security invoker set search_path = public as $$
+with usage as materialized (
+  select song_id,count(*) as times_sung,max(meeting_date) as last_used_at
+  from public.song_performance_occurrences_v46 group by song_id
+), filtered as materialized (
+  select s.id,s.title,s.default_key,s.bpm,s.structure,s.created_at,coalesce(u.times_sung,0) as times_sung,u.last_used_at,
+    (select min(nullif(regexp_replace(src.song_number,'[^0-9]','','g'),'')::numeric)
+       from public.song_sources src where src.song_id=s.id
+       and (p_collection is null or src.collection_id=p_collection)) as source_number
+  from public.songs s left join usage u on u.song_id=s.id
+  where s.is_active
+    and (p_sort not in ('most_sung','last_sung') or coalesce(u.times_sung,0)>0)
+    and (nullif(trim(p_query),'') is null
+      or s.search_vector @@ plainto_tsquery('simple',public.unaccent(p_query))
+      or s.search_text ilike '%'||lower(public.unaccent(p_query))||'%'
+      or exists(select 1 from public.song_sources ss where ss.song_id=s.id and
+        (public.song_number_fold_v57(ss.song_number)=public.song_number_fold_v57(p_query) or ss.song_number ilike '%'||p_query||'%' or lower(public.unaccent(coalesce(ss.source_title,''))) ilike '%'||lower(public.unaccent(p_query))||'%')))
+    and (p_key is null or s.default_key=p_key)
+    and (p_collection is null or exists(select 1 from public.song_sources src where src.song_id=s.id and src.collection_id=p_collection))
+    and (p_category is null or exists(select 1 from public.song_categories c where c.song_id=s.id and c.category_id=p_category))
+    and (nullif(trim(p_number),'') is null or exists(select 1 from public.song_sources src where src.song_id=s.id and (public.song_number_fold_v57(src.song_number)=public.song_number_fold_v57(p_number) or src.song_number ilike '%'||p_number||'%' or src.source_title ilike '%'||p_number||'%')))
+    and (p_status is null or exists(select 1 from public.song_files f where f.song_id=s.id and f.import_status::text=p_status))
+), paged as (
+  select * from filtered
+  order by
+    case when exists(select 1 from public.song_sources ex where ex.song_id=filtered.id and public.song_number_fold_v57(ex.song_number)=public.song_number_fold_v57(p_query) and trim(coalesce(p_query,''))<>'') then 0 else 1 end,
+    case when p_sort='most_sung' then times_sung end desc nulls last,
+    case when p_sort in ('most_sung','last_sung') then last_used_at end desc nulls last,
+    case when p_sort='created_desc' then created_at end desc,
+    case when p_sort='source_number_asc' then source_number end asc nulls last,
+    case when p_sort='source_number_desc' then source_number end desc nulls last,
+    case when p_sort='title_desc' then title end desc,
+    case when p_sort<>'title_desc' then title end asc,
+    id
+  limit least(greatest(coalesce(p_page_size,50),1),2000)
+  offset (greatest(coalesce(p_page,1),1)::bigint-1)*least(greatest(coalesce(p_page_size,50),1),2000)
+)
+select jsonb_build_object(
+  'total',(select count(*) from filtered),
+  'keys',(select coalesce(jsonb_agg(k.default_key order by k.default_key),'[]'::jsonb) from (select distinct default_key from public.songs where is_active and default_key is not null) k),
+  'songs',coalesce((select jsonb_agg(to_jsonb(p)-'source_number' || jsonb_build_object(
+    'song_sources',(select coalesce(jsonb_agg(jsonb_build_object('source_id',ss.id,'song_number',ss.song_number,'source_title',ss.source_title,'song_collections',jsonb_build_object('id',sc.id,'name',sc.name,'short_code',sc.short_code)) order by sc.name,ss.song_number,ss.id),'[]'::jsonb) from public.song_sources ss left join public.song_collections sc on sc.id=ss.collection_id where ss.song_id=p.id),
+    'song_categories',(select coalesce(jsonb_agg(jsonb_build_object('categories',jsonb_build_object('id',c.id,'name',c.name,'slug',c.slug)) order by c.name),'[]'::jsonb) from public.song_categories x join public.categories c on c.id=x.category_id where x.song_id=p.id),
+    'song_files',(select coalesce(jsonb_agg(jsonb_build_object('import_status',sf.import_status) order by sf.created_at,sf.id),'[]'::jsonb) from public.song_files sf where sf.song_id=p.id)
+  )) from paged p),'[]'::jsonb)
+);
+$$;
+revoke all on function public.list_song_library_v46(uuid,uuid,text,text,text,text,integer,integer,text) from public,anon;
+grant execute on function public.list_song_library_v46(uuid,uuid,text,text,text,text,integer,integer,text) to authenticated;
+
+notify pgrst,'reload schema';
+commit;

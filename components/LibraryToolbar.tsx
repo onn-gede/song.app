@@ -1,51 +1,69 @@
 "use client";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  DEFAULT_LIBRARY_SORT,
+  LIBRARY_FILTER_COOKIE,
+  LIBRARY_FILTER_STORAGE_KEY,
+  serializeLibraryFilters,
+  type LibraryFilterValues,
+} from "@/lib/library";
 import { Icon } from "./Icon";
 type Option = { id: string; name: string; short_code?: string | null };
-type Values = {
-  q: string;
-  collection: string;
-  category: string;
-  key: string;
-  number: string;
-  status: string;
-  sort: string;
-};
+type Values = LibraryFilterValues;
 export function LibraryToolbar({
   collections,
   categories,
   keys,
+  initialFilters,
+  defaultCollection,
 }: {
   collections: Option[];
   categories: Option[];
   keys: string[];
+  initialFilters: Values;
+  defaultCollection: string;
 }) {
   const params = useSearchParams(),
     router = useRouter();
   const signature = params.toString();
-  const initial = () =>
-    Object.fromEntries(
-      ["q", "collection", "category", "key", "number", "status", "sort"].map((k) => [
-        k,
-        params.get(k) || (k === "sort" ? "title_asc" : ""),
-      ]),
-    ) as Values;
+  const initial = (): Values => ({
+    q: params.get("q") ?? initialFilters.q,
+    collection: params.get("collection") ?? initialFilters.collection,
+    category: params.get("category") ?? initialFilters.category,
+    key: params.get("key") ?? initialFilters.key,
+    number: params.get("number") ?? initialFilters.number,
+    status: params.get("status") ?? initialFilters.status,
+    sort: params.get("sort") ?? initialFilters.sort,
+    view: params.get("view") === "all" || initialFilters.view === "all" ? "all" : "paged",
+  });
   const [values, setValues] = useState<Values>(initial);
   const [advanced, setAdvanced] = useState(!!(params.get("number") || params.get("status")));
   const [pending, start] = useTransition();
   const first = useRef(true);
   const submittedQuery = useRef(params.get("q") || "");
   const input = useRef<HTMLInputElement>(null);
+  const persist = (next: Values) => {
+    const serialized = serializeLibraryFilters(next);
+    try {
+      localStorage.setItem(LIBRARY_FILTER_STORAGE_KEY, serialized);
+    } catch {}
+    document.cookie = `${LIBRARY_FILTER_COOKIE}=${serialized}; Path=/; Max-Age=31536000; SameSite=Lax`;
+  };
   useEffect(() => {
     submittedQuery.current = params.get("q") || "";
-    setValues(initial());
+    const next = initial();
+    setValues(next);
+    persist(next);
+    // `initialFilters` is refreshed by the server when the URL changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
   const navigate = (next: Values) => {
     submittedQuery.current = next.q;
+    persist(next);
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries(next))
-      if (v.trim() && !(k === "sort" && v === "title_asc")) p.set(k, v.trim());
+      if (v.trim() && !(k === "view" && v === "paged")) p.set(k, v.trim());
     p.set("page", "1");
     start(() => router.replace(`/songs?${p}`, { scroll: false }));
   };
@@ -64,11 +82,17 @@ export function LibraryToolbar({
     if (apply) navigate(next);
   };
   const clear = () => {
-    const next = { q: "", collection: "", category: "", key: "", number: "", status: "", sort: "title_asc" };
+    const next: Values = {
+      q: "",
+      collection: defaultCollection,
+      category: "",
+      key: "",
+      number: "",
+      status: "",
+      sort: DEFAULT_LIBRARY_SORT,
+      view: "paged",
+    };
     setValues(next);
-    try {
-      localStorage.removeItem("songapp:songs-filters:v1");
-    } catch {}
     navigate(next);
   };
   useEffect(() => {
@@ -206,6 +230,17 @@ export function LibraryToolbar({
             <option value="created_desc">Adăugate recent</option>
             <option value="source_number_asc">Număr: crescător</option>
             <option value="source_number_desc">Număr: descrescător</option>
+          </select>
+        </label>
+        <label className="library-mobile-view">
+          <Icon name="list" size={17} />
+          <select
+            aria-label="Afișarea listei pe mobil"
+            value={values.view}
+            onChange={(e) => change("view", e.target.value)}
+          >
+            <option value="paged">Cu paginare</option>
+            <option value="all">Fără paginare · scroll continuu</option>
           </select>
         </label>
       </div>

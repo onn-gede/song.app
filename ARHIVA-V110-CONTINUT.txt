@@ -1,0 +1,22 @@
+SongApp v110 / 0.39.0
+
+Arhivă completă, nu patch.
+
+Include:
+- filtrele bibliotecii persistă până când sunt schimbate sau resetate;
+- filtrul inițial este colecția Cântări tineri, cu numerele în ordine descrescătoare;
+- opțiune mobilă fără paginare, cu scroll continuu;
+- listă de cântări mai compactă pe mobil;
+- utilizările trecute sunt ascunse și apar numai la apăsarea indicatorului roșu de lângă tonalitate;
+- toate funcționalitățile și remedierile din v109.2;
+- codul sursă, testele, scripturile și documentația;
+- migrațiile și update-urile SQL istorice.
+
+Nu include:
+- node_modules;
+- .next sau dist-worker;
+- .env.local ori alte secrete;
+- cache-uri locale.
+
+Actualizare SQL necesară:
+supabase/updates/UPDATE-V110.sql

@@ -79,6 +79,7 @@ export function CreateMeetingModal() {
                 try {
                   const id = await createMeetingAction(data);
                   setCreated(id);
+                  window.dispatchEvent(new Event("songapp:force-loader"));
                   router.push(`/meetings/${id}`);
                 } catch (e) {
                   locked.current = false;

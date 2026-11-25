@@ -2294,6 +2294,11 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       assert.equal(new Set([...page1.songs, ...page2.songs].map((s: any) => s.id)).size, 100);
       assert.equal((await scalar("select public.list_song_library(p_page=>105)")).songs.length, 5);
       assert.equal((await scalar("select public.list_song_library(p_key=>'F#')")).total, 0);
+      const continuous = await scalar(
+        "select public.list_song_library_v46(p_page=>1,p_page_size=>2000,p_sort=>'source_number_desc')",
+      );
+      assert.equal(continuous.total, 5205);
+      assert.equal(continuous.songs.length, 2000);
     });
     await t.test("v44 search combines with filters and retains pagination accuracy", async () => {
       await asUser(ADMIN);
@@ -2676,6 +2681,32 @@ test("migrations, RLS, library pagination, duplicate and durable queue", async (
       ]);
       assert.equal(await scalar("select default_key from public.songs where id=$1", [unsafe]), null);
       await db.query("delete from public.songs where id=any($1::uuid[])", [[automatic, manual, unsafe]]);
+    });
+    await t.test("v109 confirms correct youth lyrics until their text changes", async () => {
+      await asUser(ADMIN);
+      const collection = await scalar("select id from public.song_collections where short_code='TINERI'");
+      const song = await scalar(
+        "insert into public.songs(title,lyrics_text) values('Titlu confirmat v109',E'Primul vers existent\\nAl doilea vers') returning id",
+      );
+      await db.query(
+        "insert into public.song_sources(song_id,collection_id,song_number) values($1,$2,'V109')",
+        [song, collection],
+      );
+      const candidate = await scalar("select public.youth_lyric_candidate_v106($1)", [song]);
+      assert.equal(candidate.id, song);
+      assert.equal(
+        await scalar("select public.confirm_song_lyrics_v109($1,$2)", [song, candidate.hash]),
+        true,
+      );
+      assert.equal(await scalar("select public.youth_lyric_candidate_v106($1)", [song]), null);
+      await db.query("update public.songs set lyrics_text=lyrics_text||E'\\nVers nou' where id=$1", [song]);
+      assert.equal((await scalar("select public.youth_lyric_candidate_v106($1)", [song])).id, song);
+      await db.exec("reset role");
+      assert.ok(
+        (await scalar("select public.backup_tables_v64()")).includes("song_lyrics_confirmations_v109"),
+      );
+      await asUser(ADMIN);
+      await db.query("delete from public.songs where id=$1", [song]);
     });
     await t.test(
       "v47 numbering and manual collection are automatic and generic link import is idempotent",

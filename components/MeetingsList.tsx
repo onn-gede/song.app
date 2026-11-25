@@ -63,7 +63,7 @@ function MeetingCard({ meeting, status }: { meeting: Row; status: MeetingState }
   return (
     <Link
       href={`/meetings/${meeting.id}`}
-      className={`meeting-card-v44 ${meeting.program_kind === "rehearsal" ? "is-rehearsal" : "is-official"}`}
+      className={`meeting-card-v44 ${meeting.program_kind === "rehearsal" ? "is-rehearsal" : "is-official"} status-${status}`}
     >
       <div className="meeting-card-top">
         <span className={`meeting-date-tile${meeting.is_template ? " is-template" : ""}`}>
@@ -120,7 +120,7 @@ function MeetingTable({ meetings, now }: { meetings: Row[]; now: number }) {
             return (
               <tr
                 key={meeting.id}
-                className={meeting.program_kind === "rehearsal" ? "is-rehearsal" : "is-official"}
+                className={`${meeting.program_kind === "rehearsal" ? "is-rehearsal" : "is-official"} status-${status}`}
               >
                 <td>
                   <Link href={`/meetings/${meeting.id}`}>

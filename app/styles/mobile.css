@@ -79,16 +79,19 @@
     position: fixed;
     left: 50%;
     right: auto;
-    bottom: max(14px, env(safe-area-inset-bottom));
+    bottom: max(58px, calc(env(safe-area-inset-bottom) + 48px));
     z-index: 950;
     width: min(520px, calc(100vw - 44px));
-    min-height: 46px;
+    min-height: 54px;
+    padding: 13px 22px;
+    font-size: 15px;
+    font-weight: 750;
     transform: translateX(-50%);
     box-shadow: 0 10px 28px rgba(24, 69, 48, 0.28);
   }
   .song-edit-layout,
   .review-layout {
-    padding-bottom: 76px;
+    padding-bottom: 132px;
   }
   .program-actions-v10 {
     gap: 3px !important;
@@ -104,6 +107,23 @@
   }
   .program-actions-v10 .mini-action-grid {
     gap: 2px;
+  }
+  .program-return-button {
+    left: 50% !important;
+    right: auto !important;
+    bottom: max(58px, calc(env(safe-area-inset-bottom) + 48px)) !important;
+    width: min(520px, calc(100vw - 44px));
+    min-height: 52px;
+    justify-content: center;
+    transform: translateX(-50%);
+    font-size: 14px;
+  }
+  .projection-controller {
+    bottom: max(58px, calc(env(safe-area-inset-bottom) + 48px));
+  }
+  .projection-controller-actions .btn,
+  .projection-controller-actions button {
+    min-height: 44px;
   }
 }
 @media (pointer: coarse) {

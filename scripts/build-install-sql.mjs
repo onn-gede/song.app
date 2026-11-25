@@ -242,3 +242,8 @@ fs.writeFileSync(
   "-- Actualizare v108 peste v106/v107. Păstrează tonalitățile introduse manual și completează numai valorile lipsă identificate sigur în colecția de tineri.\n" +
     read("072_v108_youth_keys.sql"),
 );
+fs.writeFileSync(
+  "supabase/updates/UPDATE-V109.sql",
+  "-- Actualizare v109 peste v108. Adaugă confirmarea sigură a versurilor deja corecte și o include în backup.\n" +
+    read("073_v109_lyrics_confirmation.sql"),
+);

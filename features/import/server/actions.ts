@@ -13,7 +13,6 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { parseFreeShow } from "@/lib/freeshow";
 import { normalizeYouTubeUrl } from "@/lib/youtube";
-import { isYouthCollection } from "@/lib/youtube-suggestions";
 import {
   PRESENTATION_FILE_LIMIT_BYTES,
   SERVER_ACTION_UPLOAD_LIMIT_BYTES,
@@ -1003,7 +1002,7 @@ export async function importTextSongAction(formData: FormData) {
     });
     if (error || !createdSongId) throw new Error(error?.message || "Cântarea nu a putut fi adăugată.");
     await assignInitialCategory(String(createdSongId), formData);
-    await saveYouthYouTubeLink(String(createdSongId), collectionId, formData);
+    await saveImportYouTubeLink(String(createdSongId), formData);
     revalidatePath("/dashboard");
     revalidatePath("/songs");
     revalidatePath("/collections");
@@ -1024,7 +1023,7 @@ export async function importTextSongAction(formData: FormData) {
     songNumber,
   });
   await assignInitialCategory(String(createdSongId), formData);
-  await saveYouthYouTubeLink(String(createdSongId), collectionId, formData);
+  await saveImportYouTubeLink(String(createdSongId), formData);
 
   revalidatePath("/dashboard");
   revalidatePath("/songs");
@@ -1034,17 +1033,10 @@ export async function importTextSongAction(formData: FormData) {
   redirect(`/songs/${createdSongId}/lyrics`);
 }
 
-async function saveYouthYouTubeLink(songId: string, collectionId: string, formData: FormData) {
+async function saveImportYouTubeLink(songId: string, formData: FormData) {
   const raw = readString(formData, "youtube_url");
   if (!raw) return;
   const { supabase } = await requireProfile("editor");
-  const { data: collection } = await supabase
-    .from("song_collections")
-    .select("name,short_code")
-    .eq("id", collectionId)
-    .maybeSingle();
-  if (!isYouthCollection(collection))
-    throw new Error("Sugestia YouTube poate fi salvată la import doar pentru colecția de tineri.");
   const { error } = await supabase
     .from("songs")
     .update({ youtube_url: normalizeYouTubeUrl(raw) })

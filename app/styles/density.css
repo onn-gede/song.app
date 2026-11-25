@@ -2206,13 +2206,17 @@ body {
 }
 @media (max-width: 650px) {
   .song-library-row {
-    grid-template-columns: 29px minmax(0, 1fr) 42px;
+    grid-template-columns: 23px minmax(0, 1fr) auto;
+    gap: 6px;
+    min-height: 68px;
+    padding: 0 9px;
   }
   .song-library-actions {
     grid-column: 2 / -1;
     justify-content: flex-start;
-    gap: 8px;
-    padding-bottom: 10px;
+    gap: 5px;
+    padding-bottom: 6px;
+    margin-top: -4px;
   }
   .song-library-key {
     grid-column: 3;
@@ -2221,6 +2225,32 @@ body {
   .song-library-content {
     grid-column: 2;
     grid-row: 1;
+    gap: 3px;
+    padding: 8px 0;
+  }
+  .song-library-mark {
+    width: 23px;
+    height: 28px;
+  }
+  .song-library-title {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+  .song-library-meta {
+    font-size: 10px;
+    line-height: 1.3;
+    gap: 4px;
+  }
+  .song-library-key {
+    align-self: start;
+    padding-top: 8px;
+  }
+  .song-library-key > span,
+  .song-usage-disclosure summary {
+    min-height: 23px;
+    min-width: 26px;
+    padding: 2px 4px;
+    font-size: 10px;
   }
   .inline-category form {
     width: 100%;
@@ -4204,6 +4234,348 @@ body {
 @media print {
   .projection-controller {
     display: none !important;
+  }
+}
+
+/* v109 · claritate program, confirmări și export administrativ */
+.first-verse-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+.first-verse-action-row > details {
+  min-width: 0;
+}
+.lyrics-correct-button {
+  border-color: #77a982 !important;
+  background: #eff8ef !important;
+  color: #1f6337 !important;
+  font-weight: 700 !important;
+}
+.backup-export-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+.backup-export-actions > div {
+  padding: 15px;
+  border: 1px solid #dce6d8;
+  border-radius: 11px;
+  background: #f9fbf7;
+}
+.backup-export-actions p {
+  min-height: 34px;
+  margin: 5px 0 11px;
+}
+.dashboard-recent-row {
+  position: relative;
+  border-bottom: 1px solid #edf0ea;
+}
+.dashboard-recent-row .dashboard-list-row {
+  padding-right: 48px;
+  border-bottom: 0;
+}
+.dashboard-recent-row .usage-correction-compact {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+.usage-remove-button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #d9e1d5;
+  border-radius: 7px;
+  background: #fff;
+  color: #7d8b7b;
+  cursor: pointer;
+  font: 600 20px/1 inherit;
+}
+.usage-remove-button:hover,
+.usage-remove-button:focus-visible {
+  border-color: #d7a1a1;
+  background: #fff3f3;
+  color: #b42323;
+}
+.usage-correction-compact .usage-correction-panel {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: min(430px, calc(100vw - 42px));
+  z-index: 30;
+  box-sizing: border-box;
+  background: #fff;
+  box-shadow: 0 14px 40px #172b2226;
+}
+.meeting-card-v44.status-finished,
+.meetings-table tr.status-finished,
+.meetings-table tr.status-finished td,
+.meetings-table tr.status-finished td:first-child {
+  border-color: #dde1dc !important;
+  background: #f1f3f1 !important;
+  color: #7d847d !important;
+  box-shadow: none;
+}
+.meeting-card-v44.status-finished h2,
+.meeting-card-v44.status-finished p,
+.meeting-card-v44.status-finished .meeting-kind-line,
+.meeting-card-v44.status-finished .meeting-card-bottom,
+.meetings-table tr.status-finished strong,
+.meetings-table tr.status-finished small,
+.meetings-table tr.status-finished a {
+  color: #7d847d !important;
+}
+.meeting-card-v44.status-finished .meeting-date-tile,
+.meetings-table tr.status-finished .meeting-status {
+  filter: grayscale(1);
+  opacity: 0.72;
+}
+.meeting-v48 .program-title-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start !important;
+  gap: 5px !important;
+}
+.meeting-v48 .program-title-wrap > .program-title {
+  grid-row: 1;
+  width: 100%;
+}
+.meeting-v48 .program-title-wrap > .badges {
+  grid-row: 2;
+  width: 100%;
+  margin-top: 1px;
+}
+.workspace-v44 .meeting-v48 .badges .congregational-toggle:not(.is-selected) {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: #9ba59a;
+  border-style: dashed !important;
+  opacity: 0.72;
+}
+
+/* Loader unic pentru pornire și tranzițiile de pagină. */
+.app-global-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 24px;
+  background: #f5f7f1;
+  color: #173e2c;
+}
+.app-loader-content {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  width: min(620px, 100%);
+  text-align: center;
+}
+.app-loader-mark {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+  background: #245b40;
+  color: #fff;
+  font-size: 26px;
+  box-shadow: 0 9px 25px #245b4026;
+}
+.app-loader-name {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.app-loader-content blockquote {
+  max-width: 590px;
+  margin: 13px 0 0;
+  color: #526653;
+  font-size: clamp(14px, 2vw, 17px);
+  line-height: 1.65;
+}
+.app-loader-content blockquote b {
+  color: #a15f1b;
+  font-weight: 800;
+}
+.app-loader-content cite {
+  color: #315e42;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.app-loader-progress {
+  width: min(220px, 56vw);
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #245b40 0 35%, #dfe9df 35%);
+  animation: boot-progress 0.9s ease-in-out infinite alternate;
+  transform-origin: left;
+}
+.app-loader-content small {
+  color: #7b897d;
+}
+.initial-app-loader.app-global-loader {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  animation: loader-delayed-reveal 0.01s linear 1.8s forwards;
+  transition:
+    opacity 0.22s ease,
+    visibility 0.22s ease;
+}
+.initial-app-loader.app-global-loader.is-ready {
+  animation: none !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+@keyframes loader-delayed-reveal {
+  to {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .first-verse-action-row,
+  .backup-export-actions {
+    grid-template-columns: 1fr;
+  }
+  .lyrics-correct-button {
+    width: 100%;
+    justify-content: center;
+  }
+  .program-item-v10 .program-actions-v10 {
+    grid-column: 2;
+    width: 100%;
+    max-width: 100%;
+    justify-content: center !important;
+    margin-top: 5px;
+  }
+  .program-item-v10 .program-main,
+  .program-item-v10 .program-title-line-v10,
+  .program-item-v10 .program-title-wrap,
+  .program-item-v10 .program-title-wrap > .badges {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .program-item-v10 .program-title-wrap > .badges {
+    position: static;
+    overflow: visible;
+  }
+}
+
+@media print {
+  .meeting-print-document {
+    color: #152219 !important;
+    font:
+      10pt/1.45 "Aptos",
+      "Segoe UI",
+      Arial,
+      sans-serif !important;
+  }
+  .meeting-print-document header {
+    padding: 0 0 13pt !important;
+    border-bottom: 2pt solid #315e42 !important;
+    margin-bottom: 15pt !important;
+  }
+  .meeting-print-document .print-eyebrow {
+    display: block;
+    margin-bottom: 4pt;
+    color: #55715d;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .meeting-print-document h1 {
+    margin: 0 0 10pt !important;
+    color: #183d28 !important;
+    font-size: 21pt !important;
+  }
+  .print-program-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6pt 18pt;
+  }
+  .meeting-print-document .print-program-meta p {
+    display: grid;
+    gap: 1pt;
+    margin: 0;
+  }
+  .meeting-print-document .print-program-meta span {
+    color: #6e796f;
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .meeting-print-document .print-program-meta strong {
+    color: #1e2d23;
+    font-size: 9.5pt;
+  }
+  .meeting-print-document h2 {
+    margin-top: 15pt !important;
+    padding-bottom: 4pt;
+    border-bottom: 0.7pt solid #cad4c9;
+    color: #315e42 !important;
+    font-size: 12pt !important;
+  }
+  .meeting-print-document .print-program-list {
+    list-style: none;
+    padding: 0 !important;
+    counter-reset: program-item;
+  }
+  .meeting-print-document .print-program-list > li {
+    position: relative;
+    min-height: 24pt;
+    padding: 7pt 8pt 7pt 33pt !important;
+    border: 0.7pt solid #dbe2da !important;
+    border-left: 3pt solid var(--collection-color, #718173) !important;
+    border-radius: 5pt;
+    margin-bottom: 5pt;
+    background: #fff !important;
+    counter-increment: program-item;
+  }
+  .meeting-print-document .print-program-list > li::before {
+    content: counter(program-item);
+    position: absolute;
+    top: 7pt;
+    left: 8pt;
+    display: grid;
+    place-items: center;
+    width: 18pt;
+    height: 18pt;
+    border-radius: 50%;
+    background: #edf3eb;
+    color: #315e42;
+    font-size: 9pt;
+    font-weight: 800;
+  }
+  .meeting-print-document .print-item-heading strong {
+    color: #152219 !important;
+    font-size: 10.5pt;
+  }
+  .meeting-print-document .print-item-heading span {
+    color: #526154;
+    font-size: 8.5pt !important;
+  }
+  .meeting-print-document .print-source-meta,
+  .meeting-print-document small,
+  .meeting-print-document .print-item-text {
+    color: #566159 !important;
+    font-size: 8.5pt !important;
   }
 }
 

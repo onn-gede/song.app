@@ -5,7 +5,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { assertSourceUrl, extractLinks, parseResurseSong } from "../legacy/external-sync/lib/parser";
 import { processNextSyncUnit } from "../legacy/external-sync/lib/worker";
 import { buildProgramSlides, type PresentationItem } from "../lib/presentation";
-import { libraryPage, libraryHref } from "../lib/library";
+import {
+  DEFAULT_LIBRARY_SORT,
+  libraryFilterValues,
+  libraryPage,
+  libraryHref,
+  parseLibraryFilters,
+  serializeLibraryFilters,
+} from "../lib/library";
 
 const songHtml =
   "<h1>Cântare de test</h1><p>1. Prima linie pentru testul cântării</p><p>A doua linie pentru test</p><p>Resurse înrudite</p><p>Nu importa acest text</p>";
@@ -84,6 +91,18 @@ test("pagination keeps filters and rejects malformed page values", () => {
   assert.equal(url.searchParams.get("category"), "a");
   assert.equal(url.searchParams.get("page"), "3");
   assert.ok(!url.searchParams.has("deleted"));
+});
+test("song library filters persist safely and retain continuous mobile view", () => {
+  const filters = libraryFilterValues(
+    { collection: "tineri-id", sort: "source_number_desc", view: "all" },
+    { sort: DEFAULT_LIBRARY_SORT },
+  );
+  assert.deepEqual(parseLibraryFilters(serializeLibraryFilters(filters)), filters);
+  const url = new URL(libraryHref(filters, 1), "http://localhost");
+  assert.equal(url.searchParams.get("collection"), "tineri-id");
+  assert.equal(url.searchParams.get("sort"), "source_number_desc");
+  assert.equal(url.searchParams.get("view"), "all");
+  assert.equal(parseLibraryFilters("not-json"), null);
 });
 function fakeClient(job: unknown) {
   const calls: Array<{ name: string; args: any }> = [];

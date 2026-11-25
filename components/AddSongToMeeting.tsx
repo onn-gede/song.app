@@ -113,6 +113,7 @@ export function AddSongToMeeting({
         receipt.current = null;
         setCreatedMeetingId(meetingId);
         setMessage("Programul a fost creat și cântarea a fost adăugată.");
+        window.dispatchEvent(new Event("songapp:force-loader"));
         await loadMeetings();
       } catch (error) {
         creationLock.current = false;

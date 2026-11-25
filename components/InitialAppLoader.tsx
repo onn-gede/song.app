@@ -1,24 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppLoaderContent } from "./AppLoaderContent";
 
 export function InitialAppLoader() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(frame);
+    const delay = 1800;
+    const visibleFor = 4000;
+    const elapsed = performance.now();
+    if (elapsed < delay) {
+      setReady(true);
+      return;
+    }
+    const remaining = Math.max(0, delay + visibleFor - elapsed);
+    const timer = window.setTimeout(() => setReady(true), remaining);
+    return () => window.clearTimeout(timer);
   }, []);
   return (
     <div
-      className={`initial-app-loader${ready ? " is-ready" : ""}`}
+      className={`initial-app-loader app-global-loader${ready ? " is-ready" : ""}`}
       role="status"
       aria-live="polite"
       aria-label="Se încarcă SongApp"
       style={{ backgroundColor: "#f5f7f1", color: "#173e2c" }}
     >
-      <span aria-hidden="true">♫</span>
-      <strong>SongApp</strong>
-      <i aria-hidden="true" />
+      <AppLoaderContent />
     </div>
   );
 }

@@ -89,7 +89,7 @@ export function PublicPrograms({
                 prefetch={false}
                 key={m.slug}
                 href={`/program/${encodeURIComponent(m.slug)}`}
-                className={`welcome-program${m.phase === "in_progress" ? " is-live" : ""}`}
+                className={`welcome-program${m.phase === "in_progress" ? " is-live" : ""}${m.phase === "finished" ? " is-past" : ""}`}
               >
                 <time className="welcome-date" dateTime={m.date}>
                   <strong>

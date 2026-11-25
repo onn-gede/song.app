@@ -6,31 +6,66 @@ import { LibraryToolbar } from "@/components/LibraryToolbar";
 import { SongsBulkList } from "@/components/SongsBulkList";
 import { Icon } from "@/components/Icon";
 import { requireProfile, canEdit } from "@/lib/auth";
-import { PAGE_SIZE, libraryPage, libraryHref, type LibraryFilters } from "@/lib/library";
+import {
+  DEFAULT_LIBRARY_SORT,
+  LIBRARY_ALL_PAGE_SIZE,
+  LIBRARY_FILTER_COOKIE,
+  PAGE_SIZE,
+  hasExplicitLibraryFilters,
+  libraryFilterValues,
+  libraryPage,
+  libraryHref,
+  parseLibraryFilters,
+  type LibraryFilters,
+} from "@/lib/library";
+import { cookies } from "next/headers";
 export default async function SongsPage({ searchParams }: { searchParams?: Promise<LibraryFilters> }) {
-  const params = (await searchParams) || {},
-    page = libraryPage(params.page);
+  const requestedParams = (await searchParams) || {};
   const { supabase, profile } = await requireProfile();
   const editable = canEdit(profile.role);
-  const [{ data: collections }, { data: categories }, { data: result, error }] = await Promise.all([
+  const [{ data: collections }, { data: categories }] = await Promise.all([
     supabase.from("song_collections").select("id,name,short_code,color,opacity,is_active").order("name"),
     supabase.from("categories").select("id,name,slug").order("name"),
-    supabase.rpc("list_song_library_v46", {
-      p_collection: params.collection || null,
-      p_category: params.category || null,
-      p_number: params.number || null,
-      p_status: params.status || null,
-      p_key: params.key || null,
-      p_sort: params.sort || "title_asc",
-      p_page: page,
-      p_page_size: PAGE_SIZE,
-      p_query: params.q || null,
-    }),
   ]);
+  const youthCollection = (collections || []).find((collection) => {
+    const identity = `${collection.short_code || ""} ${collection.name || ""}`
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    return identity.includes("tineri");
+  });
+  const defaults = libraryFilterValues(
+    {},
+    {
+      collection: youthCollection?.id || "",
+      sort: DEFAULT_LIBRARY_SORT,
+    },
+  );
+  const saved = hasExplicitLibraryFilters(requestedParams)
+    ? null
+    : parseLibraryFilters((await cookies()).get(LIBRARY_FILTER_COOKIE)?.value);
+  const params: LibraryFilters = hasExplicitLibraryFilters(requestedParams)
+    ? requestedParams
+    : { ...defaults, ...(saved || {}) };
+  const filters = libraryFilterValues(params, defaults);
+  const unpaginated = filters.view === "all";
+  const pageSize = unpaginated ? LIBRARY_ALL_PAGE_SIZE : PAGE_SIZE;
+  const page = unpaginated ? 1 : libraryPage(requestedParams.page);
+  const { data: result, error } = await supabase.rpc("list_song_library_v46", {
+    p_collection: filters.collection || null,
+    p_category: filters.category || null,
+    p_number: filters.number || null,
+    p_status: filters.status || null,
+    p_key: filters.key || null,
+    p_sort: filters.sort,
+    p_page: page,
+    p_page_size: pageSize,
+    p_query: filters.q || null,
+  });
   const songs = result?.songs || [],
     total = Number(result?.total || 0),
-    pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  if (!error && page > pageCount) redirect(libraryHref(params, pageCount));
+    pageCount = unpaginated ? 1 : Math.max(1, Math.ceil(total / pageSize));
+  if (!error && !unpaginated && page > pageCount) redirect(libraryHref(params, pageCount));
   return (
     <div className="library-page-v44">
       <UsageRefresh />
@@ -53,16 +88,18 @@ export default async function SongsPage({ searchParams }: { searchParams?: Promi
         collections={(collections || []).filter((c) => c.is_active)}
         categories={categories || []}
         keys={result?.keys || []}
+        initialFilters={filters}
+        defaultCollection={defaults.collection}
       />
-      {params.q &&
-      (params.collection ||
-        params.category ||
-        params.key ||
-        params.number ||
-        params.status ||
-        ["most_sung", "last_sung"].includes(params.sort || "")) ? (
-        <Link className="text-link-v44" href={libraryHref({ q: params.q }, 1)}>
-          Caută „{params.q}” în toate cântările și colecțiile
+      {filters.q &&
+      (filters.collection ||
+        filters.category ||
+        filters.key ||
+        filters.number ||
+        filters.status ||
+        ["most_sung", "last_sung"].includes(filters.sort)) ? (
+        <Link className="text-link-v44" href={libraryHref({ q: filters.q, sort: filters.sort }, 1)}>
+          Caută „{filters.q}” în toate colecțiile
         </Link>
       ) : null}
       <div className="library-quick-sorts" aria-label="Ordonări rapide">
@@ -73,9 +110,9 @@ export default async function SongsPage({ searchParams }: { searchParams?: Promi
         ].map(([sort, label]) => (
           <Link
             key={sort}
-            className={"btn " + (params.sort === sort ? "" : "secondary")}
-            aria-current={params.sort === sort ? "page" : undefined}
-            href={libraryHref({ ...params, sort }, 1)}
+            className={"btn " + (filters.sort === sort ? "" : "secondary")}
+            aria-current={filters.sort === sort ? "page" : undefined}
+            href={libraryHref({ ...filters, sort }, 1)}
           >
             {label}
           </Link>
@@ -96,31 +133,35 @@ export default async function SongsPage({ searchParams }: { searchParams?: Promi
         <section className="library-results-v44" aria-label="Lista cântărilor">
           <div className="library-results-heading">
             <span>
-              {params.q
-                ? `Rezultate pentru „${params.q}”`
+              {filters.q
+                ? `Rezultate pentru „${filters.q}”`
                 : (
                     {
                       most_sung: "Cele mai des cântate",
                       last_sung: "Cântate recent în programe",
                       created_desc: "Cele mai recente cântări adăugate",
                     } as Record<string, string>
-                  )[params.sort || ""] || "Biblioteca de cântări"}
+                  )[filters.sort] || "Biblioteca de cântări"}
             </span>
             <small role="status">
-              {total
-                ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} din ${total.toLocaleString("ro-RO")}`
-                : "Niciun rezultat"}
+              {total && unpaginated
+                ? `${total.toLocaleString("ro-RO")} cântări · scroll continuu`
+                : total
+                  ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} din ${total.toLocaleString("ro-RO")}`
+                  : "Niciun rezultat"}
             </small>
           </div>
-          <LibraryPagination position="top" filters={params} page={page} pages={pageCount} />
+          {!unpaginated ? (
+            <LibraryPagination position="top" filters={filters} page={page} pages={pageCount} />
+          ) : null}
           <SongsBulkList
-            key={`${page}:${JSON.stringify(params)}`}
+            key={`${page}:${JSON.stringify(filters)}`}
             songs={songs}
             categories={categories || []}
             collections={collections || []}
             canManage={editable}
           />
-          <LibraryPagination filters={params} page={page} pages={pageCount} />
+          {!unpaginated ? <LibraryPagination filters={filters} page={page} pages={pageCount} /> : null}
         </section>
       )}
     </div>

@@ -28,20 +28,30 @@ export function MeetingPrintDocument({
   return (
     <article className="meeting-print-document">
       <header>
+        <span className="print-eyebrow">SongApp · Program</span>
         <h1>{title}</h1>
-        <p>
-          {formatDateTime(date)} · {programKind === "rehearsal" ? "Repetiție" : "Program oficial"}
-        </p>
-        {principal ? (
+        <div className="print-program-meta">
           <p>
-            <strong>Responsabil principal:</strong> {principal}
+            <span>Data și ora</span>
+            <strong>{formatDateTime(date)}</strong>
           </p>
-        ) : null}
-        {secondary.length ? (
           <p>
-            <strong>Responsabili secundari:</strong> {secondary.join(", ")}
+            <span>Tip</span>
+            <strong>{programKind === "rehearsal" ? "Repetiție" : "Program oficial"}</strong>
           </p>
-        ) : null}
+          {principal ? (
+            <p>
+              <span>Responsabil principal</span>
+              <strong>{principal}</strong>
+            </p>
+          ) : null}
+          {secondary.length ? (
+            <p>
+              <span>Responsabili secundari</span>
+              <strong>{secondary.join(", ")}</strong>
+            </p>
+          ) : null}
+        </div>
       </header>
       {[false, true].map((backup) => {
         const group = items
@@ -51,7 +61,7 @@ export function MeetingPrintDocument({
         return (
           <section key={String(backup)}>
             <h2>{backup ? "Cântări backup" : "Program principal"}</h2>
-            <ol>
+            <ol className="print-program-list">
               {group.map((item) => {
                 const metadata = songProgramMetadata(item, item.songs);
                 const { source, musicalKey, bpm, verseCount, structure } = metadata;

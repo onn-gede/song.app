@@ -140,6 +140,8 @@ export default async function ImportPage() {
 
               <LyricsPasteField />
 
+              <ManualYouTubeSuggestion youthCollectionIds={youthCollectionIds} />
+
               <label className="label">
                 Categorie inițială <span className="muted small">(opțional)</span>
                 <select className="select" name="category_id" defaultValue="">
@@ -180,8 +182,6 @@ export default async function ImportPage() {
                   </div>
 
                   <SongMetadataFields />
-
-                  <ManualYouTubeSuggestion youthCollectionIds={youthCollectionIds} />
 
                   <label className="label">
                     Note interne

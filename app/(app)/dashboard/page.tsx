@@ -179,7 +179,7 @@ export default async function DashboardPage() {
           </div>
           {recentUsage?.length ? (
             recentUsage.map((s: any) => (
-              <div key={s.song_id}>
+              <div key={s.song_id} className="dashboard-recent-row">
                 <Link href={`/songs/${s.song_id}`} className="dashboard-list-row">
                   <span className="small-music">
                     <Icon name="music" />
@@ -190,7 +190,7 @@ export default async function DashboardPage() {
                   </span>
                   <span className="usage-pill">{s.times_used}×</span>
                 </Link>
-                {editable ? <SongUsageCorrection songId={s.song_id} title={s.title} /> : null}
+                {editable ? <SongUsageCorrection songId={s.song_id} title={s.title} compact /> : null}
               </div>
             ))
           ) : (

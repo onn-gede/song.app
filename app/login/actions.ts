@@ -2,7 +2,7 @@
 
 import { logAuthFailure } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export type LoginState = { error?: string; message?: string };
@@ -71,6 +71,13 @@ export async function signInAction(_prevState: LoginState, formData: FormData): 
     await supabase.auth.signOut();
     return { error: "Autentificarea nu poate fi finalizată. Administrator: verifică UPDATE-V48.sql." };
   }
+  (await cookies()).set("songapp_login_loader", "1", {
+    path: "/",
+    maxAge: 60,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: false,
+  });
   redirect("/dashboard");
 }
 

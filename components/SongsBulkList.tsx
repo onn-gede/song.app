@@ -162,27 +162,33 @@ export function SongsBulkList({
                     </span>
                   ) : null}
                 </span>
-                <span className="song-library-usage">
-                  {song.last_used_at ? (
-                    <>
-                      Ultima:{" "}
-                      <time dateTime={song.last_used_at}>
-                        {new Date(song.last_used_at).toLocaleDateString("ro-RO", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          timeZone: "Europe/Bucharest",
-                        })}
-                      </time>{" "}
-                      · {song.times_sung} {song.times_sung === 1 ? "program" : "programe"}
-                    </>
-                  ) : (
-                    "Fără utilizări în programe trecute"
-                  )}
-                </span>
               </Link>
               <div className="song-library-key">
                 {song.default_key ? <span>{song.default_key}</span> : <small>—</small>}
+                {song.last_used_at && Number(song.times_sung || 0) > 0 ? (
+                  <details className="song-usage-disclosure">
+                    <summary
+                      title="Utilizări în programe trecute"
+                      aria-label={`${song.times_sung} utilizări în programe trecute`}
+                    >
+                      {song.times_sung}×
+                    </summary>
+                    <div>
+                      <strong>Utilizări în programe trecute</strong>
+                      <span>
+                        Ultima:{" "}
+                        <time dateTime={song.last_used_at}>
+                          {new Date(song.last_used_at).toLocaleDateString("ro-RO", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            timeZone: "Europe/Bucharest",
+                          })}
+                        </time>
+                      </span>
+                    </div>
+                  </details>
+                ) : null}
               </div>
               <div className="song-library-tempo">
                 {song.bpm ? (

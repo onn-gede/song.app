@@ -113,6 +113,39 @@ export function ExportPackageButton({ meetingId }: { meetingId?: string }) {
     </div>
   );
 }
+
+export function ExportDatabaseButton() {
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState("");
+  async function run() {
+    setBusy(true);
+    setStatus("Pregătesc exportul bazei de date…");
+    try {
+      const { data, error } = await createClient().rpc("export_package_v64", { p_meeting: null });
+      if (error || !data) throw new Error(error?.message || "Exportul nu a returnat date.");
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      save(
+        new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" }),
+        `SongApp-baza-de-date-${stamp}.json`,
+      );
+      setStatus("Exportul JSON a fost descărcat. Fișierele atașate nu sunt incluse.");
+    } catch (error) {
+      setStatus(`Eroare: ${(error as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div>
+      <button className="btn secondary" type="button" disabled={busy} onClick={run}>
+        {busy ? "Se pregătește…" : "Exportă baza de date (.json) ↓"}
+      </button>
+      <span className="small" role="status" style={{ display: "block" }}>
+        {status}
+      </span>
+    </div>
+  );
+}
 type Loaded = Awaited<ReturnType<typeof readPackage>>;
 type Report = {
   ticket: string;

@@ -27,19 +27,21 @@ export function ManualYouTubeSuggestion({ youthCollectionIds }: { youthCollectio
   const isYouth = youthCollectionIds.includes(collectionId);
   return (
     <div ref={root}>
-      <input type="hidden" name="youtube_url" value={url} />
+      <label className="label manual-youtube-field">
+        Link YouTube <span className="muted small">(opțional)</span>
+        <input
+          className="input"
+          type="url"
+          inputMode="url"
+          name="youtube_url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://www.youtube.com/watch?v=..."
+        />
+        <small>Poți lipi linkul direct și de pe mobil.</small>
+      </label>
       {isYouth ? (
         <>
-          <label className="label">
-            Link YouTube confirmat
-            <input
-              className="input"
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="Alege o sugestie sau lipește un link"
-            />
-          </label>
           <YouTubeSuggestion query={title} collectionId={collectionId} onSelect={setUrl} />
         </>
       ) : null}

@@ -94,6 +94,23 @@ export async function updateSongMetadataAction(formData: FormData) {
   redirect(`/songs/${songId}`);
 }
 
+export async function confirmSongLyricsAction(formData: FormData) {
+  const { supabase } = await requireProfile("editor");
+  const songId = readString(formData, "song_id");
+  const candidateHash = readString(formData, "candidate_hash");
+  if (!/^[0-9a-f-]{36}$/i.test(songId) || !/^[0-9a-f]{32}$/i.test(candidateHash))
+    throw new Error("Confirmarea versurilor este incompletă sau expirată.");
+  const { error } = await supabase.rpc("confirm_song_lyrics_v109", {
+    p_song: songId,
+    p_hash: candidateHash,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/songs/${songId}`);
+  revalidatePath("/admin/lyrics-repair");
+  refresh();
+  redirect(`/songs/${songId}?lyrics_confirmed=1`);
+}
+
 function readBoolean(formData: FormData, key: string) {
   return formData.get(key) === "on" || formData.get(key) === "true";
 }

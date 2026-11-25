@@ -1,0 +1,25 @@
+SongApp v109.2 / 0.38.2
+
+Arhivă completă, nu patch.
+
+Include:
+- confirmarea că versurile unei cântări sunt deja corecte, invalidată automat după editarea textului;
+- loader contextual: apare imediat timp de 4 secunde după login și după crearea unui program; în rest apare numai dacă încărcarea depășește 1,8 secunde și alternează zece versete;
+- acțiuni mobile centrate, mai mari și ridicate deasupra insignei Netlify;
+- programe trecute afișate gri în liste și pe pagina publică;
+- titlul cântării separat de metadate în program și marcaj clar pentru „Cântare comun” inactivă;
+- buton compact × pentru eliminarea din cântate recent;
+- export JSON separat al bazei de date;
+- câmp YouTube vizibil la adăugarea manuală, inclusiv pe mobil;
+- format Print / PDF reorganizat pentru A4;
+- codul sursă, testele, scripturile și documentația;
+- migrațiile și update-urile SQL istorice.
+
+Nu include:
+- node_modules;
+- .next sau dist-worker;
+- .env.local ori alte secrete;
+- cache-uri locale.
+
+Actualizare SQL necesară:
+supabase/updates/UPDATE-V109.sql

@@ -3,6 +3,8 @@ import { AuditPrintTracker } from "@/components/AuditPrintTracker";
 import type { Metadata, Viewport } from "next";
 import "./styles/index.css";
 import { InitialAppLoader } from "@/components/InitialAppLoader";
+import { NavigationLoadingOverlay } from "@/components/NavigationLoadingOverlay";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "SongApp BCBgiroc",
@@ -24,6 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ro" style={{ backgroundColor: "#f5f7f1" }}>
       <body style={{ backgroundColor: "#f5f7f1" }}>
         <InitialAppLoader />
+        <Suspense fallback={null}>
+          <NavigationLoadingOverlay />
+        </Suspense>
         <ConnectionStatus />
         {children}
         <AuditPrintTracker />
